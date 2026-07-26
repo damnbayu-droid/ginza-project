@@ -269,8 +269,48 @@ export async function POST(req: NextRequest) {
 
   // 3. Fallback simulation if no API key is set
   const simulatedText = simulateReply(prompt, lang);
+  // Non-blocking sync to MyAI OS Master Data Center
+  (async () => {
+    try {
+      if (supabaseAdmin) {
+        const isVoice = body.isVoiceMode || prompt.includes("[voice]");
+        const recordId = crypto.randomUUID();
+        const responseText = gatewayText || direct.text || simulatedText || "";
+
+        await supabaseAdmin.from("gw_data_center").insert({
+          id: recordId,
+          client_app_id: "c4fa9b89-8cf6-4d9c-a68f-3134664536fd", // MyAI Chat app id
+          field_key: isVoice ? "voice_chat_homepage" : GATEWAY_FIELD,
+          source_type: "chatbot_interaction",
+          document_type: isVoice ? "voice_chat" : "text_chat",
+          extracted_data: {
+            source_app: "myai-chat",
+            field_key: isVoice ? "voice_chat_homepage" : GATEWAY_FIELD,
+            provider_display: direct.provider || "Gemini",
+            user_message: prompt.substring(0, 1000),
+            ai_response: responseText.substring(0, 2000),
+            is_voice_mode: isVoice,
+            messages: [
+              ...history.map((m) => ({ role: m.role, content: m.content })),
+              { role: "user", content: prompt },
+              { role: "assistant", content: responseText },
+            ],
+            processed_at: new Date().toISOString(),
+          },
+          raw_text: `[${isVoice ? "VOICE CHAT" : "HOMEPAGE CHAT"}] User: ${prompt}\n---\nAI: ${responseText.slice(0, 500)}`,
+          language: lang,
+          tags: ["homepage", "myai-chat", isVoice ? "voice_interaction" : "text_chat", lang],
+          created_at: new Date().toISOString(),
+        });
+      }
+    } catch (e) {
+      console.warn("[homepage-chat] Ingestion to Data Center warning:", e);
+    }
+  })();
+
   if (wantStream) {
     return createTextStreamResponse(simulatedText, "gemini");
   }
   return NextResponse.json({ text: simulatedText, provider_used: "gemini" }, { headers: { "X-Provider-Used": "gemini" } });
 }
+
