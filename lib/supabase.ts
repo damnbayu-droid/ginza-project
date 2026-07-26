@@ -1,11 +1,31 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.GATEWAY_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseServiceRoleKey = process.env.GATEWAY_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const rawUrl = process.env.GATEWAY_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const rawServiceKey = process.env.GATEWAY_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+function isValidUrl(urlStr?: string): boolean {
+  if (!urlStr) return false;
+  if (urlStr.includes("<") || urlStr.includes(">")) return false;
+  try {
+    const parsed = new URL(urlStr);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function isValidKey(keyStr?: string): boolean {
+  if (!keyStr) return false;
+  if (keyStr.includes("<") || keyStr.includes(">")) return false;
+  return keyStr.trim().length > 0;
+}
+
+const supabaseUrl = isValidUrl(rawUrl) ? rawUrl! : "";
+const supabaseServiceRoleKey = isValidKey(rawServiceKey) ? rawServiceKey! : "";
 
 if (!supabaseUrl || !supabaseServiceRoleKey) {
   console.warn(
-    "[supabase-admin] Missing GATEWAY_SUPABASE_URL or GATEWAY_SUPABASE_SERVICE_ROLE_KEY. " +
+    "[supabase-admin] Missing or invalid GATEWAY_SUPABASE_URL or GATEWAY_SUPABASE_SERVICE_ROLE_KEY. " +
     "Server will operate in degraded mode without persistent storage."
   );
 }
@@ -22,3 +42,4 @@ export const supabaseAdmin = supabaseUrl && supabaseServiceRoleKey
   : null;
 
 export const isSupabaseReady = !!supabaseAdmin;
+

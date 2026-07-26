@@ -5,7 +5,7 @@ import fs from "fs";
 import path from "path";
 
 // Fallback to local db.json when Supabase is not ready
-const projectRoot = "/Users/bayu_1/Documents/0 MyAI OS/MyAI-OS-Console";
+const projectRoot = process.cwd();
 const dbJsonPath = path.resolve(projectRoot, "db.json");
 
 export interface DataCenterRecordInput {

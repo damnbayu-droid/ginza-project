@@ -14,12 +14,18 @@ const PUBLIC_PATHS = [
   "/api/auth/logout",
   "/api/auth/forgot-password",
   "/api/v1/chat/completions",
+  "/api/homepage/chat",
   "/_next",
   "/favicon.ico"
 ];
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  // Public MyAI OS chat homepage (consumer-facing, no login required)
+  if (pathname === "/") {
+    return NextResponse.next();
+  }
 
   // Allow public paths
   if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {

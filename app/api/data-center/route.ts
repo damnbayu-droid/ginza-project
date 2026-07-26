@@ -5,7 +5,7 @@ import { saveToDataCenter } from "@/lib/data-center";
 import fs from "fs";
 import path from "path";
 
-const projectRoot = "/Users/bayu_1/Documents/0 MyAI OS/MyAI-OS-Console";
+const projectRoot = process.cwd();
 const dbJsonPath = path.resolve(projectRoot, "db.json");
 
 // 1. GET ALL RECORDS (Enforces Admin Auth)

@@ -13,6 +13,7 @@ import { gptAdapter } from "./gpt";
 import { claudeAdapter } from "./claude";
 import { grokAdapter } from "./grok";
 import { deepseekAdapter } from "./deepseek";
+import { glmAdapter } from "./glm";
 
 export const PROVIDER_REGISTRY: Record<string, ProviderAdapter> = {
   gemini: geminiAdapter,
@@ -20,6 +21,7 @@ export const PROVIDER_REGISTRY: Record<string, ProviderAdapter> = {
   claude: claudeAdapter,
   grok: grokAdapter,
   deepseek: deepseekAdapter,
+  glm: glmAdapter,
 };
 
 /**

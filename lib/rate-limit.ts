@@ -110,4 +110,5 @@ export async function checkRateLimit(
 export const RATE_LIMITS = {
   LOGIN: { endpoint: "auth/login", maxRequests: 5, windowMinutes: 15 },
   GEMINI: { endpoint: "gemini/query", maxRequests: 20, windowMinutes: 60 },
+  HOMEPAGE_CHAT: { endpoint: "homepage/chat", maxRequests: 30, windowMinutes: 1 },
 } as const;

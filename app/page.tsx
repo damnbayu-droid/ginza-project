@@ -1,11 +1,5 @@
-import { redirect } from "next/navigation";
-import { getServerSession } from "@/lib/auth";
+import HomeApp from "@/components/homepage/HomeApp";
 
-export default async function HomePage() {
-  const session = await getServerSession();
-  if (session) {
-    redirect("/dashboard");
-  } else {
-    redirect("/login");
-  }
+export default function HomePage() {
+  return <HomeApp />;
 }

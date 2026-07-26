@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 
-const projectRoot = "/Users/bayu_1/Documents/0 MyAI OS/MyAI-OS-Console";
+const projectRoot = process.cwd();
 const dbJsonPath = path.resolve(projectRoot, "db.json");
 
 if (!fs.existsSync(dbJsonPath)) {

@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from "react";
-import { LayoutDashboard, AppWindow, Database, BarChart3, Settings, LogOut, Code, ChevronLeft, ChevronRight, Route, Sparkles, Server, Bot, DollarSign, ShieldCheck, Activity } from "lucide-react";
+import { LayoutDashboard, AppWindow, Database, BarChart3, Settings, LogOut, Code, ChevronLeft, ChevronRight, Route, Sparkles, Server, Bot, DollarSign, ShieldCheck, Activity, Layers } from "lucide-react";
 import { ViewType, Language } from "@/lib/types";
 import { translations } from "@/lib/i18n";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface SidebarProps {
   activeTab: ViewType;
@@ -46,15 +47,27 @@ export default function Sidebar({ activeTab, setActiveTab, lang, theme, adminEma
     } ${theme === 'dark' ? 'bg-[#0F1012]' : 'bg-[#F9FAFB]'}`}>
       
       {/* Brand Header */}
-      <div className={`p-4 border-b border-bento-border flex items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
-        <div className="p-2 rounded-lg bg-bento-accent-muted text-bento-accent shrink-0">
-          <Code className="h-5 w-5" id="brand-logo-icon" />
-        </div>
-        {!collapsed && (
-          <div className="overflow-hidden">
-            <h1 className="font-bold text-base tracking-tight truncate" id="sidebar-app-title">MyAI OS</h1>
-            <p className="text-[10px] font-medium tracking-widest uppercase opacity-60 text-bento-text-secondary">Ecosystem Console</p>
+      <div className={`p-4 border-b border-bento-border flex items-center justify-between`}>
+        <div className={`flex items-center ${collapsed ? 'justify-center w-full' : 'gap-3'}`}>
+          <div className="p-2 rounded-lg bg-bento-accent-muted text-bento-accent shrink-0">
+            <Code className="h-5 w-5" id="brand-logo-icon" />
           </div>
+          {!collapsed && (
+            <div className="overflow-hidden">
+              <h1 className="font-bold text-base tracking-tight truncate" id="sidebar-app-title">MyAI OS</h1>
+              <p className="text-[10px] font-medium tracking-widest uppercase opacity-60 text-bento-text-secondary">Ecosystem Console</p>
+            </div>
+          )}
+        </div>
+
+        {!collapsed && (
+          <Link
+            href="/ecosystem"
+            title="Buka Ecosystem Consoles"
+            className="p-1.5 rounded-lg bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-500/30 transition-colors"
+          >
+            <Layers className="h-4 w-4" />
+          </Link>
         )}
       </div>
 

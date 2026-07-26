@@ -29,6 +29,8 @@ export async function importEnvProviderKeys(): Promise<void> {
     { envVar: "GROK_API_KEY1", provider: "grok", label: "Grok Key 1", priority: 0 },
     // Deepseek Keys
     { envVar: "DEEPSEEK_API_KEY1", provider: "deepseek", label: "Deepseek Key 1", priority: 0 },
+    // GLM Keys
+    { envVar: "GLM_API_KEY1", provider: "glm", label: "GLM Key 1", priority: 0 },
   ];
 
   if (!supabaseAdmin) return;
@@ -93,7 +95,8 @@ export async function importEnvProviderKeys(): Promise<void> {
         dbKey.label?.startsWith("GPT Key ") || 
         dbKey.label?.startsWith("Claude Key ") || 
         dbKey.label?.startsWith("Grok Key ") ||
-        dbKey.label?.startsWith("Deepseek Key ");
+        dbKey.label?.startsWith("Deepseek Key ") ||
+        dbKey.label?.startsWith("GLM Key ");
       
       if (isLegacyAutoImported) {
         // Delete it from the DB!
