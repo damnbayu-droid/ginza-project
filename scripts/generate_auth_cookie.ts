@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { SignJWT } from "jose";
 
-const projectRoot = "/Users/bayu_1/Documents/0 MyAI OS/MyAI-OS-Console";
+const projectRoot = process.cwd();
 const envPath = path.resolve(projectRoot, ".env.local");
 if (fs.existsSync(envPath)) {
   const envContent = fs.readFileSync(envPath, "utf8");

@@ -5,52 +5,83 @@ import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { PROVIDER_REGISTRY } from "@/lib/provider-adapters";
 import { parseUploadedFile } from "@/lib/file-parser";
 import type { HomeChatMessage, Language } from "@/lib/types";
+import { searchKamusEntries } from "@/lib/kamus-parser";
 
-const SYSTEM_PROMPT_ID = `Anda adalah MyAI Operating System (MyAI OS) dari domain myai.nexus.
+const AI_NAME = process.env.NEXT_PUBLIC_AI_NAME || "Bogani AI";
+const WEBSITE_NAME = process.env.NEXT_PUBLIC_WEBSITE_NAME || "MongondowPedia";
+const PROJECT_NAME = process.env.NEXT_PUBLIC_PROJECT_NAME || "Ginza Project";
+
+const SYSTEM_PROMPT_ID = `Anda adalah ${AI_NAME}, asisten kecerdasan buatan cerdas untuk platform ${WEBSITE_NAME} (${PROJECT_NAME}).
 Asisten AI generasi terbaru yang sangat responsif, cerdas, bersahabat, profesional, dan serbaguna.
 Berikan jawaban yang rapi dengan format Markdown (gunakan bold, list, dan code block yang bersih).
 Selalu gunakan Bahasa Indonesia kecuali pengguna bertanya dalam bahasa lain.`;
 
-const SYSTEM_PROMPT_EN = `You are MyAI Operating System (MyAI OS) from the myai.nexus domain.
+const SYSTEM_PROMPT_EN = `You are ${AI_NAME}, the intelligent AI assistant for ${WEBSITE_NAME} (${PROJECT_NAME}).
 A next-generation AI assistant that is highly responsive, intelligent, friendly, professional, and versatile.
 Reply with clean Markdown formatting (bold, lists, and clean code blocks).
 Default to English since the user is asking in English.`;
 
 const GATEWAY_FIELD = "chatbot_myai_home";
 
+function getKamusContext(userPrompt: string): string {
+  try {
+    const tokens = userPrompt.split(/\s+/).filter((t) => t.length >= 2);
+    const matchedWords = new Set<string>();
+    for (const token of tokens) {
+      const searchRes = searchKamusEntries({ query: token, limit: 5 });
+      for (const item of searchRes.items) {
+        matchedWords.add(item.word);
+        if (matchedWords.size >= 25) break;
+      }
+      if (matchedWords.size >= 25) break;
+    }
+    if (matchedWords.size > 0) {
+      return `\n\n--- KONTEKS KOSA KATA KAMUS MONGONDOWPEDIA (${matchedWords.size} KATA TERHUBUNG) ---\n` +
+        Array.from(matchedWords).join(", ") +
+        `\n--- AKHIR KONTEKS KAMUS ---`;
+    }
+  } catch (e) {
+    console.warn("[homepage-chat] Failed retrieving kamus context:", e);
+  }
+  return "";
+}
+
 function buildPromptWithHistory(history: HomeChatMessage[], prompt: string): string {
-  if (!Array.isArray(history) || history.length === 0) return prompt;
+  const kamusCtx = getKamusContext(prompt);
+  const fullPrompt = prompt + kamusCtx;
+
+  if (!Array.isArray(history) || history.length === 0) return fullPrompt;
 
   const historyText = history
     .filter((m) => m.role === 'user' || m.role === 'assistant')
-    .map((m) => `${m.role === 'user' ? 'User' : 'MyAI OS'}: ${m.content}`)
+    .map((m) => `${m.role === 'user' ? 'User' : AI_NAME}: ${m.content}`)
     .join("\n\n");
 
-  return `${historyText}\n\nUser: ${prompt}`;
+  return `${historyText}\n\nUser: ${fullPrompt}`;
 }
 
 function simulateReply(prompt: string, lang: Language): string {
   const lower = prompt.toLowerCase();
   if (lang === 'en') {
-    if (lower.includes("who are you") || lower.includes("myai")) {
-      return "I'm **MyAI Operating System (MyAI OS)** from `myai.nexus`. A fast, intelligent AI assistant built to help with productivity, analysis, coding, and everyday conversation.";
+    if (lower.includes("who are you") || lower.includes("bogani") || lower.includes("mongondowpedia")) {
+      return `I am **${AI_NAME}**, the AI assistant for **${WEBSITE_NAME}** (*${PROJECT_NAME}*). A fast, intelligent AI assistant built to help with research, information, analysis, and everyday conversations.`;
     }
     if (lower.includes("hi") || lower.includes("hello")) {
-      return "Hello! How can **MyAI OS** help you today?";
+      return `Hello! How can **${AI_NAME}** assist you on **${WEBSITE_NAME}** today?`;
     }
-    return `Thanks for reaching out to **MyAI OS**! Your question about *"${prompt}"* has been received. I'm ready to help you analyze, design ideas, or build technical solutions in detail. Anything else you'd like to add?`;
+    return `Thanks for reaching out to **${AI_NAME}** on **${WEBSITE_NAME}**! Your question about *"${prompt}"* has been received. I'm ready to help you explore, analyze, and build detailed answers. Anything else you'd like to ask?`;
   }
 
-  if (lower.includes("siapa kamu") || lower.includes("myai")) {
-    return "Saya adalah **MyAI Operating System (MyAI OS)** dari `myai.nexus`. Asisten AI cerdas berkecepatan tinggi yang dirancang untuk membantu Anda menyelesaikan berbagai tugas produktivitas, analisis, koding, dan percakapan harian secara efisien.";
+  if (lower.includes("siapa kamu") || lower.includes("bogani") || lower.includes("mongondowpedia")) {
+    return `Saya adalah **${AI_NAME}**, asisten AI cerdas untuk platform **${WEBSITE_NAME}** (*${PROJECT_NAME}*). Saya dirancang untuk membantu Anda menjelajahi informasi, ensiklopedia, analisis, koding, serta percakapan harian.`;
   }
   if (lower.includes("halo") || lower.includes("hi") || lower.includes("hello")) {
-    return "Halo! Ada yang bisa **MyAI OS** bantu untuk Anda hari ini?";
+    return `Halo! Ada yang bisa **${AI_NAME}** bantu untuk Anda di **${WEBSITE_NAME}** hari ini?`;
   }
   if (lower.includes("fitur") || lower.includes("voice") || lower.includes("suara")) {
-    return "Saat ini **MyAI OS** mendukung mode **Teks**, **Suara**, dan **Unggah Dokumen/Gambar**. Fitur video sedang disiapkan untuk pembaruan berikutnya di `myai.nexus`.";
+    return `Saat ini **${AI_NAME}** mendukung mode **Teks**, **Suara**, dan **Unggah Dokumen/Gambar** untuk melayani pengguna **${WEBSITE_NAME}**.`;
   }
-  return `Terima kasih telah menghubungi **MyAI OS**! Pertanyaan Anda tentang *"${prompt}"* telah diproses. Saya siap membantu Anda menganalisis, merancang ide, atau membuat solusi teknis secara detail. Ada hal spesifik lain yang ingin ditambahkan?`;
+  return `Terima kasih telah menghubungi **${AI_NAME}** di **${WEBSITE_NAME}**! Pertanyaan Anda tentang *"${prompt}"* telah diproses. Saya siap membantu Anda menganalisis dan memberikan informasi detail. Ada hal spesifik lain yang ingin ditanyakan?`;
 }
 
 /**

@@ -3,22 +3,22 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "MyAI OS Console",
-    template: "%s — MyAI OS"
+    default: "MongondowPedia — Ginza Project",
+    template: "%s — MongondowPedia"
   },
-  description: "MyAI OS adalah AI Gateway terpusat untuk ekosistem Bali Enterprises Group (termasuk afiliasi seperti Indonesian Visas, Tropic Tech, Wellness Bali, dan Bali Help), menyatukan integrasi kecerdasan buatan untuk seluruh produk grup. Dipersiapkan menjadi pelopor infrastruktur AI lokal Indonesia.",
+  description: "MongondowPedia adalah platform ensiklopedia dan portal informasi terpadu yang didukung oleh Bogani AI (Ginza Project).",
   openGraph: {
-    title: "MyAI OS Console",
-    description: "MyAI OS adalah AI Gateway terpusat untuk ekosistem Bali Enterprises Group, menyatukan integrasi kecerdasan buatan untuk seluruh produk grup. Dipersiapkan menjadi pelopor infrastruktur AI lokal Indonesia.",
-    url: "https://myai.bali.technology",
-    siteName: "MyAI OS",
+    title: "MongondowPedia — Bogani AI",
+    description: "Platform Ensiklopedia & Portal Informasi Mongondow didukung oleh Bogani AI.",
+    url: "https://mongondowpedia.com",
+    siteName: "MongondowPedia",
     locale: "id_ID",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "MyAI OS Console",
-    description: "AI Gateway terpusat untuk ekosistem Bali Enterprises Group.",
+    title: "MongondowPedia — Bogani AI",
+    description: "Platform Ensiklopedia & Portal Informasi Mongondow (Ginza Project).",
   }
 };
 

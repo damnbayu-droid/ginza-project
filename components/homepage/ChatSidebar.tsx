@@ -19,7 +19,9 @@ import {
   LogOut,
   UserCheck,
   UserX,
-  ShieldCheck
+  ShieldCheck,
+  BookOpen,
+  Database
 } from "lucide-react";
 import Link from "next/link";
 import { HomeChatSession, Language } from "@/lib/types";
@@ -111,8 +113,7 @@ export default function ChatSidebar({
         <div className="p-3.5 flex items-center justify-between border-b border-[#262626]">
           <div className="flex items-center gap-2">
             <h1 className="font-semibold text-sm tracking-tight text-white flex items-center gap-2">
-              <span>MyAI OS</span>
-              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">veronica 1</span>
+              <span>MongondowPedia</span>
             </h1>
           </div>
 
@@ -153,6 +154,27 @@ export default function ChatSidebar({
             </div>
             <span className="text-[9px] font-semibold bg-blue-500 text-white px-1.5 py-0.5 rounded-full">Aktif</span>
           </button>
+
+          {/* Navigation Items: Kamus & Knowledge */}
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <Link
+              href="/kamus"
+              onClick={onCloseMobile}
+              className="py-2 px-2.5 rounded-xl bg-[#212121] hover:bg-[#2b2b2b] text-gray-300 hover:text-white border border-[#333] text-xs font-semibold flex items-center gap-2 transition-all"
+            >
+              <BookOpen className="w-4 h-4 text-emerald-400 shrink-0" />
+              <span className="truncate">Kamus</span>
+            </Link>
+
+            <Link
+              href="/knowledge"
+              onClick={onCloseMobile}
+              className="py-2 px-2.5 rounded-xl bg-[#212121] hover:bg-[#2b2b2b] text-gray-300 hover:text-white border border-[#333] text-xs font-semibold flex items-center gap-2 transition-all"
+            >
+              <Database className="w-4 h-4 text-blue-400 shrink-0" />
+              <span className="truncate">Knowledge</span>
+            </Link>
+          </div>
         </div>
 
         {/* Search Bar */}
@@ -284,7 +306,7 @@ export default function ChatSidebar({
                   className="w-full py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs flex items-center justify-center gap-2 transition-all shadow-md"
                 >
                   <LogIn className="w-4 h-4" />
-                  <span>Login Admin (Bayu)</span>
+                  <span>Masuk / Login</span>
                 </Link>
               </div>
             )}
@@ -299,7 +321,7 @@ export default function ChatSidebar({
             <div className="flex items-center justify-between border-b border-[#333] pb-4">
               <h3 className="font-semibold text-base flex items-center gap-2">
                 <Settings className="w-5 h-5 text-blue-400" />
-                {lang === 'id' ? 'Pengaturan MyAI OS' : 'MyAI OS Settings'}
+                {lang === 'id' ? 'Pengaturan MongondowPedia' : 'MongondowPedia Settings'}
               </h3>
               <button
                 onClick={() => setShowSettingsModal(false)}

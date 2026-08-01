@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 
 // Manually load env from .env.local
-const projectRoot = "/Users/bayu_1/Documents/0 MyAI OS/MyAI-OS-Console";
+const projectRoot = process.cwd();
 const envPath = path.resolve(projectRoot, ".env.local");
 if (fs.existsSync(envPath)) {
   const file = fs.readFileSync(envPath, "utf8");

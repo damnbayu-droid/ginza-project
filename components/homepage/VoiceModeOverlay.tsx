@@ -174,8 +174,8 @@ export default function VoiceModeOverlay({
         <div className="flex items-center gap-3">
           <MyAILogo size="sm" />
           <div className="text-left">
-            <h2 className="text-sm font-semibold tracking-wide text-white/90">MyAI OS Voice Mode</h2>
-            <p className="text-xs text-white/50">myai.nexus • Mode Suara Langsung</p>
+            <h2 className="text-sm font-semibold tracking-wide text-white/90">Bogani AI Voice Mode</h2>
+            <p className="text-xs text-white/50">MongondowPedia • Mode Suara Langsung</p>
           </div>
         </div>
 
@@ -228,8 +228,8 @@ export default function VoiceModeOverlay({
         <div className="text-center space-y-2 max-w-md px-4">
           <p className="text-lg font-medium text-white/90">
             {status === 'listening' && (lang === 'id' ? 'Mendengarkan Anda...' : 'Listening to you...')}
-            {status === 'processing' && (lang === 'id' ? 'MyAI OS sedang berpikir...' : 'MyAI OS is thinking...')}
-            {status === 'speaking' && (lang === 'id' ? 'MyAI OS sedang berbicara...' : 'MyAI OS is speaking...')}
+            {status === 'processing' && (lang === 'id' ? 'Bogani AI sedang berpikir...' : 'Bogani AI is thinking...')}
+            {status === 'speaking' && (lang === 'id' ? 'Bogani AI sedang berbicara...' : 'Bogani AI is speaking...')}
             {status === 'idle' && (lang === 'id' ? 'Tekan Mikrofon untuk Mulai' : 'Tap Microphone to Speak')}
           </p>
 

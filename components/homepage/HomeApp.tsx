@@ -164,7 +164,7 @@ export default function HomeApp() {
 
       if (!response.ok) {
         const errBody = await response.json().catch(() => ({}));
-        throw new Error(errBody.error || "Gagal menerima balasan dari MyAI OS");
+        throw new Error(errBody.error || "Gagal menerima balasan dari Bogani AI");
       }
 
       const providerUsedHeader = response.headers.get("x-provider-used") || "gemini";
@@ -194,7 +194,7 @@ export default function HomeApp() {
         }
       } else {
         const data = await response.json();
-        accumulatedText = data.text || "Maaf, MyAI OS tidak menghasilkan respon.";
+        accumulatedText = data.text || "Maaf, Bogani AI tidak menghasilkan respon.";
 
         setChatSessions(prev =>
           prev.map(s => {
@@ -211,7 +211,7 @@ export default function HomeApp() {
       }
     } catch (err: any) {
       console.error("Error calling chat API:", err);
-      const errorMsgText = `⚠️ Terjadi kesalahan: ${err.message || "Gagal menghubungi MyAI OS AI Gateway"}`;
+      const errorMsgText = `⚠️ Terjadi kesalahan: ${err.message || "Gagal menghubungi Bogani AI Gateway"}`;
 
       setChatSessions(prev =>
         prev.map(s => {

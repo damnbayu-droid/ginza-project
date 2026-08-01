@@ -1,20 +1,56 @@
+# Ginza Project — MongondowPedia & Bogani AI
+
 <div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
+  <h2>MongondowPedia — Powered by Bogani AI</h2>
+  <p>Platform Ensiklopedia & Portal Informasi Mongondow (Ginza Project)</p>
 </div>
 
-# Run and deploy your AI Studio app
+---
 
-This contains everything you need to run your app locally.
+## 🚀 Overview
 
-View your app in AI Studio: https://ai.studio/apps/34bb5ba1-472b-4f44-8fe3-f86bdee449bc
+**MongondowPedia** adalah platform digital ensiklopedia dan portal informasi terpadu yang didukung oleh **Bogani AI**, asisten kecerdasan buatan cerdas untuk mengolah pengetahuan, literasi, serta layanan informasi Mongondow.
 
-## Run Locally
+- **Project Name:** Ginza Project
+- **Website Name:** MongondowPedia
+- **AI Assistant:** Bogani AI
 
-**Prerequisites:**  Node.js
+---
 
+## 🛠️ Quick Start
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### 1. Installation
+
+```bash
+npm install
+```
+
+### 2. Environment Setup
+
+Copy `.env.example` to `.env.local`:
+
+```bash
+cp .env.example .env.local
+```
+
+Ensure the project identity variables are present:
+
+```env
+NEXT_PUBLIC_PROJECT_NAME="Ginza Project"
+NEXT_PUBLIC_WEBSITE_NAME="MongondowPedia"
+NEXT_PUBLIC_AI_NAME="Bogani AI"
+```
+
+Configure your Gemini API key:
+
+```env
+GEMINI_API_KEY=your_gemini_api_key_here
+```
+
+### 3. Run Development Server
+
+```bash
+npm run dev
+```
+
+Visit `http://localhost:3000` to interact with **MongondowPedia** and **Bogani AI**.

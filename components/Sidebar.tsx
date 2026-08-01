@@ -54,8 +54,8 @@ export default function Sidebar({ activeTab, setActiveTab, lang, theme, adminEma
           </div>
           {!collapsed && (
             <div className="overflow-hidden">
-              <h1 className="font-bold text-base tracking-tight truncate" id="sidebar-app-title">MyAI OS</h1>
-              <p className="text-[10px] font-medium tracking-widest uppercase opacity-60 text-bento-text-secondary">Ecosystem Console</p>
+              <h1 className="font-bold text-base tracking-tight truncate" id="sidebar-app-title">MongondowPedia</h1>
+              <p className="text-[10px] font-medium tracking-widest uppercase opacity-60 text-bento-text-secondary">Bogani AI • Ginza Project</p>
             </div>
           )}
         </div>

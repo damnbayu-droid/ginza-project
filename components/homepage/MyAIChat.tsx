@@ -17,11 +17,14 @@ import {
   FileText,
   X,
   Lock,
-  LogIn
+  LogIn,
+  BookOpen,
+  Database
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import Link from "next/link";
 import MyAILogo from "./MyAILogo";
+import LoginModal from "@/components/LoginModal";
 import { HomeChatMessage, HomeChatSession, Language } from "@/lib/types";
 
 interface MyAIChatProps {
@@ -60,7 +63,8 @@ export default function MyAIChat({
   const [isListening, setIsListening] = useState(false);
   const [showPlusMenu, setShowPlusMenu] = useState(false);
   const [showModelDropdown, setShowModelDropdown] = useState(false);
-  const [selectedModelOverride, setSelectedModelOverride] = useState<string>("auto");
+  const [selectedModelOverride, setSelectedModelOverride] = useState<string | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
   const [featureNotice, setFeatureNotice] = useState<string | null>(null);
 
@@ -94,7 +98,7 @@ export default function MyAIChat({
   };
 
   const lastAssistantMsg = currentSession?.messages.filter(m => m.role === 'assistant' && m.content).slice(-1)[0];
-  const detectedProviderKey = selectedModelOverride !== 'auto'
+  const detectedProviderKey = selectedModelOverride !== null
     ? selectedModelOverride
     : (lastAssistantMsg?.providerUsed?.toLowerCase() || 'gemini');
 
@@ -264,7 +268,7 @@ export default function MyAIChat({
               onClick={() => setShowModelDropdown(!showModelDropdown)}
               className="flex items-center gap-2 text-sm font-semibold text-white/90 hover:text-white px-3 py-1.5 rounded-xl hover:bg-[#212121] transition-all border border-transparent hover:border-[#333]"
             >
-              <span className="font-sans">MyAI OS</span>
+              <span className="font-sans">Bogani AI</span>
               <span className={`text-[10px] font-mono px-2 py-0.5 rounded-md border font-bold ${currentModelDisplay.color} ${currentModelDisplay.border}`}>
                 {currentModelDisplay.badge}
               </span>
@@ -302,16 +306,43 @@ export default function MyAIChat({
               </div>
             )}
           </div>
+
+          {/* Navigation Buttons: Kamus & Knowledge */}
+          <Link
+            href="/kamus"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#212121] hover:bg-[#2b2b2b] text-gray-300 hover:text-white border border-[#333] text-xs font-semibold transition-all shadow-sm"
+          >
+            <BookOpen className="w-4 h-4 text-emerald-400" />
+            <span>Kamus</span>
+          </Link>
+
+          <Link
+            href="/knowledge"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#212121] hover:bg-[#2b2b2b] text-gray-300 hover:text-white border border-[#333] text-xs font-semibold transition-all shadow-sm"
+          >
+            <Database className="w-4 h-4 text-blue-400" />
+            <span>Knowledge</span>
+          </Link>
         </div>
 
-        {/* Live Voice Mode Header CTA */}
-        <button
-          onClick={onOpenVoiceOverlay}
-          className="flex items-center gap-2 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-500/30 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shadow-sm group"
-        >
-          <Volume2 className="w-4 h-4 text-blue-400 animate-pulse group-hover:scale-110 transition-transform" />
-          <span>{lang === 'id' ? 'Suara Langsung' : 'Voice Mode'}</span>
-        </button>
+        {/* Right Action Items */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onOpenVoiceOverlay}
+            className="flex items-center gap-2 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-500/30 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shadow-sm group"
+          >
+            <Volume2 className="w-4 h-4 text-blue-400 animate-pulse group-hover:scale-110 transition-transform" />
+            <span>{lang === 'id' ? 'Suara Langsung' : 'Voice Mode'}</span>
+          </button>
+
+          <button
+            onClick={() => setShowLoginModal(true)}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-all shadow-md cursor-pointer"
+          >
+            <LogIn className="w-4 h-4" />
+            <span>Masuk / Login</span>
+          </button>
+        </div>
       </header>
 
       {/* Notice Banner */}
@@ -429,7 +460,7 @@ export default function MyAIChat({
                     onChange={(e) => setInputText(e.target.value)}
                     onKeyDown={handleKeyDown}
                     disabled={isGuestLocked}
-                    placeholder={isGuestLocked ? "Batas 2 obrolan gratis tercapai. Harap login admin." : (lang === 'id' ? "Tanyakan apa saja ke MyAI OS..." : "Ask anything to MyAI OS...")}
+                    placeholder={isGuestLocked ? "Batas 2 obrolan gratis tercapai. Harap login admin." : (lang === 'id' ? "Tanyakan apa saja ke Bogani AI..." : "Ask anything to Bogani AI...")}
                     className="flex-1 bg-transparent text-sm text-white placeholder-gray-500 focus:outline-none resize-none py-2 max-h-36 custom-scrollbar disabled:opacity-50"
                   />
 
@@ -508,7 +539,7 @@ export default function MyAIChat({
                   <div className={`space-y-2 max-w-[85%] ${isUser ? "items-end" : "items-start"}`}>
                     {!isUser && (
                       <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-semibold text-white">MyAI OS</span>
+                        <span className="text-[11px] font-semibold text-white">Bogani AI</span>
                         <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded border font-semibold ${msgModelConfig.color} ${msgModelConfig.border}`}>
                           {msgModelConfig.badge}
                         </span>
@@ -571,7 +602,7 @@ export default function MyAIChat({
                 <MyAILogo size="sm" />
                 <div className="p-4 rounded-2xl bg-[#212121] border border-[#2d2d2d] rounded-tl-none text-gray-400 flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-blue-400 animate-spin" />
-                  <span className="text-xs">{lang === 'id' ? 'MyAI OS sedang memproses secara real-time...' : 'MyAI OS is generating real-time response...'}</span>
+                  <span className="text-xs">{lang === 'id' ? 'Bogani AI sedang memproses secara real-time...' : 'Bogani AI is generating real-time response...'}</span>
                 </div>
               </div>
             )}
@@ -590,15 +621,15 @@ export default function MyAIChat({
             </div>
             <h3 className="text-sm font-semibold text-white">Batas Obrolan Gratis Tercapai (2/2)</h3>
             <p className="text-xs text-gray-300 max-w-md mx-auto">
-              Anda telah menggunakan 2 pertanyaan gratis sebagai Tamu. Silakan **Login sebagai Bayu (Admin)** untuk melanjutkan percakapan tanpa batas dengan MyAI OS.
+              Anda telah menggunakan 2 pertanyaan gratis sebagai Tamu. Silakan **Masuk / Login** untuk melanjutkan percakapan tanpa batas dengan Bogani AI di MongondowPedia.
             </p>
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-all shadow-lg"
+            <button
+              onClick={() => setShowLoginModal(true)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-all shadow-lg cursor-pointer"
             >
               <LogIn className="w-4 h-4" />
-              <span>Login Admin (Bayu) Sekarang</span>
-            </Link>
+              <span>Masuk / Login Sekarang</span>
+            </button>
           </div>
         </div>
       )}
@@ -684,7 +715,7 @@ export default function MyAIChat({
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={lang === 'id' ? "Tanyakan apa saja ke MyAI OS..." : "Ask anything to MyAI OS..."}
+                placeholder={lang === 'id' ? "Tanyakan apa saja ke Bogani AI..." : "Ask anything to Bogani AI..."}
                 className="flex-1 bg-transparent text-sm text-white placeholder-gray-500 focus:outline-none resize-none py-1.5 max-h-36 custom-scrollbar"
               />
 
@@ -715,16 +746,19 @@ export default function MyAIChat({
           </form>
 
           <p className="text-[11px] text-gray-500 text-center mt-2 font-sans">
-            MyAI OS is powered by AI. By using it, you agree to our Terms & Privacy Policy (myai.nexus).
+            BOGANI AI powered by MyAI OS (Ginza Project).
           </p>
         </div>
       )}
 
       {!hasMessages && (
         <p className="text-[11px] text-gray-500 text-center pb-4 px-4 font-sans shrink-0">
-          MyAI OS is powered by AI. By using it, you agree to our Terms & Privacy Policy (myai.nexus).
+          BOGANI AI powered by MyAI OS (Ginza Project).
         </p>
       )}
+
+      {/* Login Modal Popup */}
+      <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
     </div>
   );
 }

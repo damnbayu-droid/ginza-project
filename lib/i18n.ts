@@ -1,9 +1,9 @@
 export const translations = {
   id: {
     // General
-    appName: "MyAI OS Console",
-    tagline: "Satu pintu untuk semua kecerdasan buatan di ekosistem Anda.",
-    taglineSub: "Private Developer & Admin Panel untuk mengelola API keys dan shared knowledge base bisnis.",
+    appName: "MongondowPedia",
+    tagline: "Portal Ensiklopedia & Pengetahuan Mongondow didukung oleh Bogani AI.",
+    taglineSub: "Ginza Project — Pusat informasi, budaya, dan kecerdasan buatan Mongondow.",
     logout: "Keluar",
     search: "Cari...",
     save: "Simpan",
@@ -121,9 +121,9 @@ export const translations = {
   },
   en: {
     // General
-    appName: "MyAI OS Console",
-    tagline: "One gateway for every AI in your ecosystem.",
-    taglineSub: "Private Developer & Admin Panel to manage API keys and shared business knowledge base.",
+    appName: "MongondowPedia",
+    tagline: "Mongondow Encyclopedia & Knowledge Portal powered by Bogani AI.",
+    taglineSub: "Ginza Project — Mongondow information, culture, and artificial intelligence hub.",
     logout: "Log Out",
     search: "Search...",
     save: "Save",

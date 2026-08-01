@@ -1,6 +1,6 @@
 {
-  "name": "MyAI OS Console",
-  "description": "Private developer and admin console for managing AI API keys and a shared business knowledge base across multiple ecosystem products.",
+  "name": "MongondowPedia (Bogani AI)",
+  "description": "Platform Ensiklopedia & Portal Informasi Mongondow didukung oleh Bogani AI (Ginza Project).",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

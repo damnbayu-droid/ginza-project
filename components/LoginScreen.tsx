@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, FormEvent } from "react";
-import { Code, Mail, Lock, Globe, KeyRound, Eye, EyeOff, UserPlus, BookOpen, Code2, Layers, FileText } from "lucide-react";
+import { Code, Mail, Lock, Globe, Eye, EyeOff, BookOpen, Code2, Layers, FileText } from "lucide-react";
 import { Language } from "@/lib/types";
 import { translations } from "@/lib/i18n";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { supabaseClient } from "@/lib/supabase-client";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -18,7 +19,7 @@ export default function LoginScreen() {
   const [error, setError] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<'login' | 'forgot'>('login');
+  const [mode, setMode] = useState<'login' | 'register' | 'forgot'>('login');
   const [showPassword, setShowPassword] = useState(false);
 
   // Submit Handler for all modes
@@ -43,6 +44,22 @@ export default function LoginScreen() {
         } else {
           setError(data.error || t.loginError);
         }
+      } else if (mode === 'register') {
+        if (supabaseClient) {
+          const { error: signUpError } = await supabaseClient.auth.signUp({
+            email,
+            password,
+          });
+          if (signUpError) {
+            setError(signUpError.message);
+          } else {
+            setInfoMessage("Pendaftaran berhasil! Silakan cek email Anda untuk verifikasi akun.");
+            setMode('login');
+          }
+        } else {
+          setInfoMessage("Akun Anda telah dicatat untuk pendaftaran. Silakan login.");
+          setMode('login');
+        }
       } else if (mode === 'forgot') {
         const response = await fetch("/api/auth/forgot-password", {
           method: "POST",
@@ -52,7 +69,7 @@ export default function LoginScreen() {
 
         const data = await response.json();
         if (response.ok && data.success) {
-          setInfoMessage(data.message || "Password berhasil direset.");
+          setInfoMessage(data.message || "Tautan reset password telah dikirim.");
           setMode('login');
         } else {
           setError(data.error || "Gagal memproses reset sandi.");
@@ -62,6 +79,24 @@ export default function LoginScreen() {
       setError("Kesalahan koneksi server.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleOAuthLogin = async (provider: 'google' | 'facebook') => {
+    setError("");
+    setInfoMessage("");
+    if (supabaseClient) {
+      const { error: oauthError } = await supabaseClient.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (oauthError) {
+        setError(`Gagal terhubung ke ${provider}: ${oauthError.message}`);
+      }
+    } else {
+      setError(`Provider ${provider} sedang dikonfigurasi pada Supabase Gateway.`);
     }
   };
 
@@ -99,8 +134,8 @@ export default function LoginScreen() {
             <Code className="h-7 w-7" />
           </div>
           <div className="space-y-1">
-            <h1 className="text-2xl font-bold tracking-tight">{t.appName}</h1>
-            <p className="text-xs font-semibold tracking-widest uppercase opacity-60 font-mono">Ecosystem Control Panel</p>
+            <h1 className="text-2xl font-bold tracking-tight">MongondowPedia</h1>
+            <p className="text-xs font-semibold tracking-widest uppercase opacity-60 font-mono">Ginza Project • Bogani AI</p>
           </div>
           <div className="max-w-xs mx-auto">
             <p className="text-xs text-gray-400 font-medium leading-relaxed">{t.tagline}</p>
@@ -111,30 +146,32 @@ export default function LoginScreen() {
         <div className="p-8 rounded-3xl border bg-[#111215] border-[#1D1E22]" id="login-card">
           <div className="mb-6">
             <h2 className="text-base font-bold tracking-tight mb-1" id="login-card-title">
-              {mode === 'login' && t.loginTitle}
+              {mode === 'login' && "Masuk ke MongondowPedia"}
+              {mode === 'register' && "Daftar Akun Baru"}
               {mode === 'forgot' && "Lupa Password"}
             </h2>
             <p className="text-xs text-gray-500">
-              {mode === 'login' && t.loginSubtitle}
-              {mode === 'forgot' && "Reset password administrator ke sandi default ekosistem."}
+              {mode === 'login' && "Gunakan kredensial Anda untuk melanjutkan"}
+              {mode === 'register' && "Buat akun baru untuk mengakses semua fitur Bogani AI."}
+              {mode === 'forgot' && "Masukkan email Anda untuk menerima petunjuk reset password."}
             </p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {error && (
-              <div className="p-3 bg-red-500/10 text-red-400 text-xs font-semibold rounded-xl flex items-center gap-2">
+              <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-semibold rounded-xl flex items-center gap-2">
                 <span>⚠️ {error}</span>
               </div>
             )}
 
             {infoMessage && (
-              <div className="p-3 bg-emerald-500/10 text-emerald-400 text-xs font-semibold rounded-xl flex items-center gap-2">
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold rounded-xl flex items-center gap-2">
                 <span>📩 {infoMessage}</span>
               </div>
             )}
 
             {/* Email Field (all modes) */}
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 text-left">
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Email Address</label>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-3.5 h-4 w-4 text-gray-500 opacity-60" />
@@ -151,14 +188,18 @@ export default function LoginScreen() {
 
             {/* Password Field (login & register only) */}
             {mode !== 'forgot' && (
-              <div className="space-y-1.5">
+              <div className="space-y-1.5 text-left">
                 <div className="flex justify-between items-center">
                   <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Password</label>
                   {mode === 'login' && (
                     <button
                       type="button"
-                      onClick={() => setMode('forgot')}
-                      className="text-[10px] text-[#5B8DEF] hover:underline"
+                      onClick={() => {
+                        setMode('forgot');
+                        setError("");
+                        setInfoMessage("");
+                      }}
+                      className="text-xs text-[#5B8DEF] hover:underline font-medium"
                     >
                       Lupa Password?
                     </button>
@@ -174,12 +215,14 @@ export default function LoginScreen() {
                     placeholder={t.passwordPlaceholder}
                     className="w-full pl-10 pr-12 py-2.5 text-sm rounded-xl border focus:outline-none focus:ring-1 bg-[#1C1E24] border-[#25262B] text-white focus:ring-[#5B8DEF]"
                   />
+                  {/* Button Intip Password */}
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-gray-500 hover:text-white"
+                    title={showPassword ? "Sembunyikan password" : "Intip password"}
+                    className="absolute right-3 top-3 text-gray-500 hover:text-white transition-colors"
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showPassword ? <EyeOff className="h-4 w-4 text-[#5B8DEF]" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
               </div>
@@ -192,37 +235,32 @@ export default function LoginScreen() {
                 className="w-full py-2.5 rounded-xl font-bold text-sm text-white transition-all duration-150 bg-[#5B8DEF] hover:bg-[#497BE0] active:scale-[0.99] disabled:opacity-50"
               >
                 {loading ? t.loading : (
-                  mode === 'login' ? t.loginBtn :
-                  "Reset Sandi"
+                  mode === 'login' ? "Masuk Sekarang" :
+                  mode === 'register' ? "Daftar Akun Baru" :
+                  "Kirim Reset Sandi"
                 )}
               </button>
 
-              {/* Google SSO — UI only, OAuth logic pending */}
-              {mode === 'login' && (
-                <button
-                  type="button"
-                  id="google-sso-btn"
-                  disabled
-                  title="Google Sign-In — coming soon"
-                  className="w-full py-2.5 rounded-xl font-bold text-sm border border-[#25262B] bg-[#1C1E24] text-gray-400 flex items-center justify-center gap-2 cursor-not-allowed opacity-50"
-                  onClick={() => {
-                    // TODO: Integrate Google OAuth via NextAuth or Supabase Auth
-                    // Requires: Google Console OAuth2 credentials configured in environment
-                    // NEXT_PUBLIC_GOOGLE_CLIENT_ID + callback URL setup
-                  }}
-                >
-                  <svg className="h-4 w-4" viewBox="0 0 24 24">
-                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                  </svg>
-                  Continue with Google <span className="text-[10px] ml-1">(Segera Hadir)</span>
-                </button>
-              )}
+              {/* Notice & Mini CTA Daftar Akun */}
+              <div className="text-center text-xs text-gray-400 pt-1">
+                {mode === 'login' && (
+                  <p className="flex items-center justify-center gap-1.5">
+                    <span>Jika Anda belum terdaftar!</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMode('register');
+                        setError("");
+                        setInfoMessage("");
+                      }}
+                      className="text-emerald-400 font-bold hover:underline"
+                    >
+                      Daftar Akun
+                    </button>
+                  </p>
+                )}
 
-              {mode === 'forgot' && (
-                <div className="flex justify-center text-xs text-gray-400 pt-1">
+                {(mode === 'register' || mode === 'forgot') && (
                   <button
                     type="button"
                     onClick={() => {
@@ -234,6 +272,47 @@ export default function LoginScreen() {
                   >
                     Kembali ke Login
                   </button>
+                )}
+              </div>
+
+              {/* Social Login Buttons (Google & Facebook) */}
+              {mode === 'login' && (
+                <div className="space-y-2 pt-2">
+                  <div className="relative flex items-center justify-center">
+                    <div className="w-full border-t border-[#25262B]" />
+                    <span className="absolute bg-[#111215] px-3 text-[10px] uppercase font-bold text-gray-500">
+                      atau masuk dengan
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    {/* Google CTA */}
+                    <button
+                      type="button"
+                      onClick={() => handleOAuthLogin('google')}
+                      className="w-full py-2.5 rounded-xl font-bold text-xs border border-[#25262B] bg-[#1C1E24] text-white hover:bg-[#252832] flex items-center justify-center gap-2 transition-colors"
+                    >
+                      <svg className="h-4 w-4" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                      </svg>
+                      <span>Google</span>
+                    </button>
+
+                    {/* Facebook CTA */}
+                    <button
+                      type="button"
+                      onClick={() => handleOAuthLogin('facebook')}
+                      className="w-full py-2.5 rounded-xl font-bold text-xs border border-[#25262B] bg-[#1C1E24] text-white hover:bg-[#252832] flex items-center justify-center gap-2 transition-colors"
+                    >
+                      <svg className="h-4 w-4 fill-[#1877F2]" viewBox="0 0 24 24">
+                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                      </svg>
+                      <span>Facebook</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -248,32 +327,26 @@ export default function LoginScreen() {
               <Link
                 key={resource.label}
                 href={resource.href}
-                className="flex flex-col items-center gap-1.5 p-3 rounded-2xl border border-[#1D1E22] bg-[#111214] hover:bg-[#16181C] hover:border-[#5B8DEF]/30 transition-all duration-150 text-center"
+                className="p-3 rounded-2xl border border-[#1D1E22] bg-[#111214] hover:bg-[#18191E] flex flex-col items-center justify-center gap-1.5 transition-all group text-center"
               >
-                <Icon className="h-4 w-4 text-gray-400" />
-                <span className="text-[9px] font-semibold text-gray-400 leading-tight">{resource.label}</span>
+                <Icon className="h-4 w-4 text-[#9CA3AF] group-hover:text-[#5B8DEF] transition-colors" />
+                <span className="text-[10px] font-semibold text-[#9CA3AF] group-hover:text-white transition-colors truncate w-full">{resource.label}</span>
               </Link>
             );
           })}
         </div>
 
-        {/* Security note */}
-        <div className="text-center text-[10px] text-gray-500 flex items-center justify-center gap-1.5">
-          <KeyRound className="h-3 w-3" />
-          <span>Sistem Gateway dilindungi enkripsi JWT Session & Bcrypt.</span>
-        </div>
-
-        {/* Legal Footer */}
-        <div className="text-center text-[10px] text-gray-600 flex items-center justify-center gap-3">
+        {/* Footer info */}
+        <div className="flex items-center justify-center gap-4 text-xs text-[#6B7280]">
           <Link href="/terms" className="hover:text-gray-400 transition-colors">
-            Syarat Penggunaan
+            Syarat & Ketentuan
           </Link>
           <span>•</span>
           <Link href="/privacy" className="hover:text-gray-400 transition-colors">
             Kebijakan Privasi
           </Link>
           <span>•</span>
-          <span>© 2026 MyAI OS™ All Rights Reserved</span>
+          <span>© 2026 MongondowPedia™ (Ginza Project) All Rights Reserved</span>
         </div>
       </div>
     </div>
