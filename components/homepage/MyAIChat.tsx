@@ -27,6 +27,11 @@ import MyAILogo from "./MyAILogo";
 import LoginModal from "@/components/LoginModal";
 import { HomeChatMessage, HomeChatSession, Language } from "@/lib/types";
 
+// Identitas produk Ginza Project — pakai env var yang sama dengan lib/bogani-persona.ts
+// supaya konsisten di seluruh app (bukan generic "MyAI" seperti sebelumnya).
+const AI_NAME = process.env.NEXT_PUBLIC_AI_NAME || "Bogani AI";
+const WEBSITE_NAME = process.env.NEXT_PUBLIC_WEBSITE_NAME || "MongondowPedia";
+
 interface MyAIChatProps {
   currentSession: HomeChatSession | null;
   onSendMessage: (text: string, isVoiceInput?: boolean, fileData?: string) => Promise<void>;
@@ -340,10 +345,12 @@ export default function MyAIChat({
                 <MyAILogo size="lg" />
               </div>
               <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-white">
-                {lang === 'id' ? 'Apa yang bisa MyAI bantu hari ini?' : 'What’s on your mind today?'}
+                {lang === 'id'
+                  ? `Apa yang bisa ${AI_NAME} bantu hari ini?`
+                  : `What can ${AI_NAME} help you with today?`}
               </h1>
               <p className="text-xs text-gray-400 font-mono">
-                MyAI Operating System • myai.nexus
+                {WEBSITE_NAME} • Bogani AI powered by MyAI OS
               </p>
             </div>
 
