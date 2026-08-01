@@ -12,7 +12,7 @@ export default function KnowledgePage() {
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#171821] hover:bg-[#222433] text-gray-300 hover:text-white border border-[#2b2d3e] text-xs font-semibold transition-all"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Kembali ke Utamapage</span>
+            <span>Kembali ke Page Utama</span>
           </Link>
           <span className="text-xs font-mono text-blue-400 bg-blue-500/10 border border-blue-500/20 px-3 py-1 rounded-full font-semibold">
             Pusat Pengetahuan
