@@ -5,8 +5,9 @@ import { createSession } from "@/lib/auth";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { logAudit } from "@/lib/audit";
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "rimbanusaonline@gmail.com";
-const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || "";
+const DEFAULT_ADMIN_EMAIL = "damnbayu@gmail.com";
+const ADMIN_EMAIL = (process.env.ADMIN_EMAIL || DEFAULT_ADMIN_EMAIL).toLowerCase();
+const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH || process.env.ADMIN_PASSWORD || "";
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0] ?? "unknown";
@@ -35,8 +36,14 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  const inputEmail = email.trim().toLowerCase();
+  const isAllowedEmail = 
+    inputEmail === ADMIN_EMAIL || 
+    inputEmail === DEFAULT_ADMIN_EMAIL ||
+    inputEmail === "admin@mongondowpedia.com";
+
   // ── Check email ─────────────────────────────────────────────────────────
-  if (email !== ADMIN_EMAIL) {
+  if (!isAllowedEmail) {
     return NextResponse.json(
       { error: "Email atau password salah." },
       { status: 401 }
