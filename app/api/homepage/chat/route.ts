@@ -6,20 +6,11 @@ import { PROVIDER_REGISTRY } from "@/lib/provider-adapters";
 import { parseUploadedFile } from "@/lib/file-parser";
 import type { HomeChatMessage, Language } from "@/lib/types";
 import { searchKamusEntries } from "@/lib/kamus-parser";
+import { AI_NAME, WEBSITE_NAME, PROJECT_NAME, BOGANI_PERSONA_ID, BOGANI_PERSONA_EN } from "@/lib/bogani-persona";
+import { getKnowledgeContext } from "@/lib/knowledge-retrieval";
 
-const AI_NAME = process.env.NEXT_PUBLIC_AI_NAME || "Bogani AI";
-const WEBSITE_NAME = process.env.NEXT_PUBLIC_WEBSITE_NAME || "MongondowPedia";
-const PROJECT_NAME = process.env.NEXT_PUBLIC_PROJECT_NAME || "Ginza Project";
-
-const SYSTEM_PROMPT_ID = `Anda adalah ${AI_NAME}, asisten kecerdasan buatan cerdas untuk platform ${WEBSITE_NAME} (${PROJECT_NAME}).
-Asisten AI generasi terbaru yang sangat responsif, cerdas, bersahabat, profesional, dan serbaguna.
-Berikan jawaban yang rapi dengan format Markdown (gunakan bold, list, dan code block yang bersih).
-Selalu gunakan Bahasa Indonesia kecuali pengguna bertanya dalam bahasa lain.`;
-
-const SYSTEM_PROMPT_EN = `You are ${AI_NAME}, the intelligent AI assistant for ${WEBSITE_NAME} (${PROJECT_NAME}).
-A next-generation AI assistant that is highly responsive, intelligent, friendly, professional, and versatile.
-Reply with clean Markdown formatting (bold, lists, and clean code blocks).
-Default to English since the user is asking in English.`;
+const SYSTEM_PROMPT_ID = BOGANI_PERSONA_ID;
+const SYSTEM_PROMPT_EN = BOGANI_PERSONA_EN;
 
 const GATEWAY_FIELD = "chatbot_myai_home";
 
@@ -48,7 +39,13 @@ function getKamusContext(userPrompt: string): string {
 
 function buildPromptWithHistory(history: HomeChatMessage[], prompt: string): string {
   const kamusCtx = getKamusContext(prompt);
-  const fullPrompt = prompt + kamusCtx;
+  let knowledgeCtx = "";
+  try {
+    knowledgeCtx = getKnowledgeContext(prompt);
+  } catch (e) {
+    console.warn("[homepage-chat] Failed retrieving knowledge context:", e);
+  }
+  const fullPrompt = prompt + kamusCtx + knowledgeCtx;
 
   if (!Array.isArray(history) || history.length === 0) return fullPrompt;
 

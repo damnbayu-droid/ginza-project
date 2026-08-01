@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PROVIDER_REGISTRY } from "@/lib/provider-adapters";
-import { searchKamusEntries } from "@/lib/kamus-parser";
+import { searchKamusEntries, getFeaturedSiderCards } from "@/lib/kamus-parser";
+import { BOGANI_PERSONA_ID } from "@/lib/bogani-persona";
+import { getKnowledgeContext } from "@/lib/knowledge-retrieval";
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,10 +13,30 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Kata tidak boleh kosong" }, { status: 400 });
     }
 
+    // 0. Kartu kata unggulan (kurasi manual, definisi terverifikasi) — kalau
+    //    kata cocok persis, pakai ini langsung tanpa panggil AI sama sekali,
+    //    supaya tidak ada risiko tebakan salah untuk kata-kata inti ini.
+    const featuredMatch = getFeaturedSiderCards().find(
+      (c) => c.word.toLowerCase() === word.toLowerCase()
+    );
+    if (featuredMatch) {
+      return NextResponse.json({ success: true, data: featuredMatch, isIndexed: true, source: "featured_card" });
+    }
+
     // 1. Search local indexed kamus entries
     const searchRes = searchKamusEntries({ query: word, limit: 10 });
     const isIndexed = searchRes.total > 0;
     const matchedList = searchRes.items.map(i => i.word).join(", ");
+
+    // 1b. Tarik kutipan relevan dari Knowledge Base (Sejarah/Adat/Bahasa/Aksara
+    //     + arsip mentah) supaya definisi digroundkan ke sumber sungguhan,
+    //     bukan hanya tebakan model.
+    let knowledgeCtx = "";
+    try {
+      knowledgeCtx = getKnowledgeContext(word, 4000, 5);
+    } catch (e) {
+      console.warn("[kamus-ai-define] Failed retrieving knowledge context:", e);
+    }
 
     // 2. Call Gemini / Bogani AI provider to generate detailed Sider-style dictionary definition JSON
     const apiKey = (process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY1 || "").trim();
@@ -23,22 +45,26 @@ export async function POST(req: NextRequest) {
     let aiResultData: any = null;
 
     if (apiKey && !apiKey.includes("<") && apiKey !== "AIzaSy_your_gemini_api_key" && adapter) {
-      const systemPrompt = `Anda adalah Bogani AI — Pakar Bahasa, Fonetik, Aksara, dan Etimologi Bahasa Bolaang Mongondow.
-Tugas Anda: Berikan analisis kamus lengkap bergaya Sider AI Dictionary untuk kata yang diberikan pengguna.
+      const systemPrompt = `${BOGANI_PERSONA_ID}
 
-Format keluaran HARUS dalam JSON valid persis seperti skema berikut (tanpa markdown wrapper tambahan):
+## Tugas Khusus untuk Panggilan Ini
+Anda sedang menjawab lewat endpoint definisi kata terstruktur (bukan chat bebas). Berikan analisis kamus lengkap bergaya Sider AI Dictionary untuk kata yang diberikan pengguna.
+
+Format keluaran HARUS berupa JSON valid persis seperti skema berikut, TANPA markdown wrapper, TANPA teks lain di luar JSON:
 {
   "word": "${word}",
   "phonetic": "/fonetik-kata/",
-  "origin": "Asal-usul atau etimologi kata",
+  "origin": "Asal-usul atau etimologi kata — utamakan info dari KONTEKS KNOWLEDGE BASE di bawah kalau tersedia",
   "meaning": "Definisi dan arti dalam Bahasa Indonesia",
-  "example": "Contoh kalimat frasa bahasa Mongondow beserta terjemahannya",
-  "aksara": "Ejaan/transliterasi aksara Mongondow (misal: bo-ga-ni)",
+  "example": "Contoh kalimat/frasa bahasa Mongondow beserta terjemahannya",
+  "aksara": "Pemenggalan suku kata fonetik kata ini (misal: bo-ga-ni) — ini BUKAN aksara resmi, hanya bantu ejaan",
   "quote": "Kutipan filosofis atau kesan makna ringkas dari kata ini",
   "emoji": "emoji_terkait"
-}`;
+}
 
-      const prompt = `Berikan analisis kamus terperinci untuk kata Mongondow/Indonesia: "${word}". Referensi kata terindeks lokal: [${matchedList}]. Jawab hanya dalam JSON murni.`;
+Kalau kata ini tidak ada di KONTEKS KNOWLEDGE BASE maupun referensi kata terindeks, tetap isi JSON tapi buat field "meaning" jujur menyatakan bahwa arti pastinya belum terverifikasi di sumber MongondowPedia, dan field "origin" berisi dugaan etimologis yang jelas ditandai sebagai dugaan.`;
+
+      const prompt = `Berikan analisis kamus terperinci untuk kata Mongondow/Indonesia: "${word}". Referensi kata terindeks lokal: [${matchedList}].${knowledgeCtx} Jawab hanya dalam JSON murni.`;
 
       const res = await adapter.call(apiKey, prompt, systemPrompt, { temperature: 0.3 });
 
