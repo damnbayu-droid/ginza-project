@@ -306,23 +306,6 @@ export default function MyAIChat({
               </div>
             )}
           </div>
-
-          {/* Navigation Buttons: Kamus & Knowledge */}
-          <Link
-            href="/kamus"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#212121] hover:bg-[#2b2b2b] text-gray-300 hover:text-white border border-[#333] text-xs font-semibold transition-all shadow-sm"
-          >
-            <BookOpen className="w-4 h-4 text-emerald-400" />
-            <span>Kamus</span>
-          </Link>
-
-          <Link
-            href="/knowledge"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#212121] hover:bg-[#2b2b2b] text-gray-300 hover:text-white border border-[#333] text-xs font-semibold transition-all shadow-sm"
-          >
-            <Database className="w-4 h-4 text-blue-400" />
-            <span>Knowledge</span>
-          </Link>
         </div>
 
         {/* Right Action Items */}
@@ -333,14 +316,6 @@ export default function MyAIChat({
           >
             <Volume2 className="w-4 h-4 text-blue-400 animate-pulse group-hover:scale-110 transition-transform" />
             <span>{lang === 'id' ? 'Suara Langsung' : 'Voice Mode'}</span>
-          </button>
-
-          <button
-            onClick={() => setShowLoginModal(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-all shadow-md cursor-pointer"
-          >
-            <LogIn className="w-4 h-4" />
-            <span>Masuk / Login</span>
           </button>
         </div>
       </header>
