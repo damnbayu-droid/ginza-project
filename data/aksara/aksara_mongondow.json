@@ -1,0 +1,949 @@
+{
+  "schema_version": "1.0",
+  "generated": "2026-08-02",
+  "script": {
+    "name": "Aksara Bolaang Mongondow",
+    "alt_names": [
+      "Aksara Bicol Bolaang Mongondow",
+      "Basahan (istilah asal Filipina untuk aksara Bicolano)"
+    ],
+    "type": "abugida (setiap simbol dasar = konsonan + vokal inheren 'a'; diubah dengan diakritik untuk vokal lain, dan tanda silang '+' untuk mematikan vokal / bentuk akhir)",
+    "direction": "kiri ke kanan",
+    "letter_count": 15,
+    "credit": "Bagan disusun ulang oleh @atmabumiangkasa (Instagram) berjudul 'Aksara Bolaang Mongondow' / 'Loloda Mokoagow'.",
+    "related_research_community": "Historia Bolaang Mongondow Raya (HistoriaBMR) — mempublikasikan klaim penemuan aksara ini pada artefak 'Boyo-boyo' peninggalan Istana Komalig dan pada fragmen manuskrip berbahasa Spanyol.",
+    "academic_status": "BELUM menjadi konsensus akademik arus utama. Klaim penggunaan historis aksara Bicol/Basahan di Bolaang Mongondow berasal dari riset komunitas/sejarah lokal, dan menurut sumber yang sama, klaim ini 'sangat ditentang oleh peneliti lainnya'. Gunakan sebagai materi budaya/edukasi dengan atribusi yang jelas, bukan sebagai fakta akademik final.",
+    "structure_notes": [
+      "Baris 1: konsonan + vokal inheren 'a' (15 simbol dasar).",
+      "Baris 2: satu simbol yang sama dipakai untuk vokal 'e' dan 'i' (dibedakan lewat konteks/tanda kecil di atas simbol, mirip 'kudlit' pada aksara Baybayin/Basahan Filipina).",
+      "Baris 3: satu simbol yang sama dipakai untuk vokal 'o' dan 'u'.",
+      "Baris 4: bentuk 'mati' (konsonan akhir tanpa vokal), ditandai simbol silang '+' — mirip 'krus-kudlit/pamudpod' yang diperkenalkan misionaris Spanyol pada aksara Filipina untuk mematikan bunyi vokal. Huruf 'h' tidak memiliki bentuk mati pada bagan ini."
+    ],
+    "sources": [
+      "Bagan 'Aksara Bolaang Mongondow' / 'Loloda Mokoagow' oleh @atmabumiangkasa (koleksi pengguna).",
+      "Papan tulis latihan transliterasi (koleksi pengguna).",
+      "Fragmen naskah bertuliskan campuran Spanyol-aksara mengenai Sultan Baabullah (1557) dan pertemuan besar Loloda Mokoagow (1593) (koleksi pengguna).",
+      "https://historybmr.blogspot.com/2017/10/bahasa-mongondow-kuno-induk-bahasa.html (acuan sejarah Bahasa Mongondow, lihat juga knowledge/Bahasa_Mongondow_Kuno_Acuan_Utama.md)"
+    ]
+  },
+  "syllables": [
+    {
+      "id": "1ab7682e-8248-4df8-8606-cbda9ef03d70",
+      "romanization": "a",
+      "consonant": null,
+      "vowel": "a",
+      "syllable_type": "vowel_a",
+      "glyph_image": "row1_a.png",
+      "display_order": 10
+    },
+    {
+      "id": "d0f2a565-d49a-47c0-961e-d9ec7f177b81",
+      "romanization": "ba",
+      "consonant": "b",
+      "vowel": "a",
+      "syllable_type": "vowel_a",
+      "glyph_image": "row1_ba.png",
+      "display_order": 20
+    },
+    {
+      "id": "edfb8f9f-4d8b-42d8-8566-5a7e7a686c81",
+      "romanization": "ka",
+      "consonant": "k",
+      "vowel": "a",
+      "syllable_type": "vowel_a",
+      "glyph_image": "row1_ka.png",
+      "display_order": 30
+    },
+    {
+      "id": "cbe9031b-c7f3-483b-9e1e-ca0625789e71",
+      "romanization": "da",
+      "consonant": "d",
+      "vowel": "a",
+      "syllable_type": "vowel_a",
+      "glyph_image": "row1_da.png",
+      "display_order": 40
+    },
+    {
+      "id": "e3e7edfc-a35b-45ba-8674-f09e51a61ad9",
+      "romanization": "ga",
+      "consonant": "g",
+      "vowel": "a",
+      "syllable_type": "vowel_a",
+      "glyph_image": "row1_ga.png",
+      "display_order": 50
+    },
+    {
+      "id": "4c9c3bd2-735b-4213-8fe8-9dc025841a23",
+      "romanization": "ha",
+      "consonant": "h",
+      "vowel": "a",
+      "syllable_type": "vowel_a",
+      "glyph_image": "row1_ha.png",
+      "display_order": 60
+    },
+    {
+      "id": "6a108731-4571-43e3-82d7-7685d7d08472",
+      "romanization": "la",
+      "consonant": "l",
+      "vowel": "a",
+      "syllable_type": "vowel_a",
+      "glyph_image": "row1_la.png",
+      "display_order": 70
+    },
+    {
+      "id": "cf96321a-8d78-4732-a7d1-b37cb77a4b89",
+      "romanization": "ma",
+      "consonant": "m",
+      "vowel": "a",
+      "syllable_type": "vowel_a",
+      "glyph_image": "row1_ma.png",
+      "display_order": 80
+    },
+    {
+      "id": "da9f4560-1311-4a07-9839-4cede2e94be3",
+      "romanization": "na",
+      "consonant": "n",
+      "vowel": "a",
+      "syllable_type": "vowel_a",
+      "glyph_image": "row1_na.png",
+      "display_order": 90
+    },
+    {
+      "id": "31dd549a-b064-42f4-85b0-0ef70e78cd38",
+      "romanization": "nga",
+      "consonant": "ng",
+      "vowel": "a",
+      "syllable_type": "vowel_a",
+      "glyph_image": "row1_nga.png",
+      "display_order": 100
+    },
+    {
+      "id": "2dcf37ef-7eb1-4fe4-937d-a9fbefc04031",
+      "romanization": "pa",
+      "consonant": "p",
+      "vowel": "a",
+      "syllable_type": "vowel_a",
+      "glyph_image": "row1_pa.png",
+      "display_order": 110
+    },
+    {
+      "id": "7c52168c-1a65-41be-a4b3-6283ba934cf8",
+      "romanization": "sa",
+      "consonant": "s",
+      "vowel": "a",
+      "syllable_type": "vowel_a",
+      "glyph_image": "row1_sa.png",
+      "display_order": 120
+    },
+    {
+      "id": "f70e1505-3224-4647-a288-f406a704de32",
+      "romanization": "ta",
+      "consonant": "t",
+      "vowel": "a",
+      "syllable_type": "vowel_a",
+      "glyph_image": "row1_ta.png",
+      "display_order": 130
+    },
+    {
+      "id": "76885a81-7f5f-410f-8e53-9e2506c00300",
+      "romanization": "wa",
+      "consonant": "w",
+      "vowel": "a",
+      "syllable_type": "vowel_a",
+      "glyph_image": "row1_wa.png",
+      "display_order": 140
+    },
+    {
+      "id": "04b55ebd-e9d6-4629-a30e-4343c56dce93",
+      "romanization": "ya",
+      "consonant": "y",
+      "vowel": "a",
+      "syllable_type": "vowel_a",
+      "glyph_image": "row1_ya.png",
+      "display_order": 150
+    },
+    {
+      "id": "8ca7ceeb-793b-4546-85d4-9ab676dd84d3",
+      "romanization": "e",
+      "consonant": null,
+      "vowel": "e",
+      "syllable_type": "vowel_e_i",
+      "glyph_image": "row2_e_i.png",
+      "display_order": 160
+    },
+    {
+      "id": "b6de497f-80af-4c4a-82ee-3242c62e2df1",
+      "romanization": "i",
+      "consonant": null,
+      "vowel": "i",
+      "syllable_type": "vowel_e_i",
+      "glyph_image": "row2_e_i.png",
+      "display_order": 161
+    },
+    {
+      "id": "b5ac0445-e550-4d1e-badc-f6531f98b138",
+      "romanization": "be",
+      "consonant": "b",
+      "vowel": "e",
+      "syllable_type": "vowel_e_i",
+      "glyph_image": "row2_be_bi.png",
+      "display_order": 171
+    },
+    {
+      "id": "929a2b20-0f35-4480-91ae-caec8942e493",
+      "romanization": "bi",
+      "consonant": "b",
+      "vowel": "i",
+      "syllable_type": "vowel_e_i",
+      "glyph_image": "row2_be_bi.png",
+      "display_order": 172
+    },
+    {
+      "id": "648793f2-887e-4696-bf1b-18b7fc476e75",
+      "romanization": "ke",
+      "consonant": "k",
+      "vowel": "e",
+      "syllable_type": "vowel_e_i",
+      "glyph_image": "row2_ke_ki.png",
+      "display_order": 182
+    },
+    {
+      "id": "2af04d8a-5c1a-48f0-b0a0-1c9ddb30d9e4",
+      "romanization": "ki",
+      "consonant": "k",
+      "vowel": "i",
+      "syllable_type": "vowel_e_i",
+      "glyph_image": "row2_ke_ki.png",
+      "display_order": 183
+    },
+    {
+      "id": "4020f4a4-0b3d-48af-8991-776bbcc594c6",
+      "romanization": "de",
+      "consonant": "d",
+      "vowel": "e",
+      "syllable_type": "vowel_e_i",
+      "glyph_image": "row2_de_di.png",
+      "display_order": 193
+    },
+    {
+      "id": "fe3bc316-e19b-446a-b0f1-75a7c55c896d",
+      "romanization": "di",
+      "consonant": "d",
+      "vowel": "i",
+      "syllable_type": "vowel_e_i",
+      "glyph_image": "row2_de_di.png",
+      "display_order": 194
+    },
+    {
+      "id": "0ae66686-07fe-4675-bffa-39cf0f5645b3",
+      "romanization": "ge",
+      "consonant": "g",
+      "vowel": "e",
+      "syllable_type": "vowel_e_i",
+      "glyph_image": "row2_ge_gi.png",
+      "display_order": 204
+    },
+    {
+      "id": "756c62c7-9dae-46c8-a176-d1c75ef56fb4",
+      "romanization": "gi",
+      "consonant": "g",
+      "vowel": "i",
+      "syllable_type": "vowel_e_i",
+      "glyph_image": "row2_ge_gi.png",
+      "display_order": 205
+    },
+    {
+      "id": "a6ae512f-5fdb-4921-b9b6-5b6ec3da5641",
+      "romanization": "he",
+      "consonant": "h",
+      "vowel": "e",
+      "syllable_type": "vowel_e_i",
+      "glyph_image": "row2_he_hi.png",
+      "display_order": 215
+    },
+    {
+      "id": "6c59cf0d-d414-4ce6-8c72-613e5b02a692",
+      "romanization": "hi",
+      "consonant": "h",
+      "vowel": "i",
+      "syllable_type": "vowel_e_i",
+      "glyph_image": "row2_he_hi.png",
+      "display_order": 216
+    },
+    {
+      "id": "502c5988-ff2c-4421-a07b-e4f3f252910d",
+      "romanization": "le",
+      "consonant": "l",
+      "vowel": "e",
+      "syllable_type": "vowel_e_i",
+      "glyph_image": "row2_le_li.png",
+      "display_order": 226
+    },
+    {
+      "id": "74c27598-58bf-42dc-8083-03a29cdd4ccb",
+      "romanization": "li",
+      "consonant": "l",
+      "vowel": "i",
+      "syllable_type": "vowel_e_i",
+      "glyph_image": "row2_le_li.png",
+      "display_order": 227
+    },
+    {
+      "id": "32a59f2f-b609-42fd-85f8-a352e3367270",
+      "romanization": "me",
+      "consonant": "m",
+      "vowel": "e",
+      "syllable_type": "vowel_e_i",
+      "glyph_image": "row2_me_mi.png",
+      "display_order": 237
+    },
+    {
+      "id": "dc5e872b-1564-4140-937b-144498c38cf8",
+      "romanization": "mi",
+      "consonant": "m",
+      "vowel": "i",
+      "syllable_type": "vowel_e_i",
+      "glyph_image": "row2_me_mi.png",
+      "display_order": 238
+    },
+    {
+      "id": "951ecd37-678e-4a83-bc3e-0928165a6f97",
+      "romanization": "ne",
+      "consonant": "n",
+      "vowel": "e",
+      "syllable_type": "vowel_e_i",
+      "glyph_image": "row2_ne_ni.png",
+      "display_order": 248
+    },
+    {
+      "id": "45e7c772-7e91-40f0-a543-cf74eb589176",
+      "romanization": "ni",
+      "consonant": "n",
+      "vowel": "i",
+      "syllable_type": "vowel_e_i",
+      "glyph_image": "row2_ne_ni.png",
+      "display_order": 249
+    },
+    {
+      "id": "377f32f6-608f-4d70-8b4e-f7aa6e0a932e",
+      "romanization": "nge",
+      "consonant": "ng",
+      "vowel": "e",
+      "syllable_type": "vowel_e_i",
+      "glyph_image": "row2_nge_ngi.png",
+      "display_order": 259
+    },
+    {
+      "id": "e7be0084-a024-45ee-b9a7-8813a0b212f9",
+      "romanization": "ngi",
+      "consonant": "ng",
+      "vowel": "i",
+      "syllable_type": "vowel_e_i",
+      "glyph_image": "row2_nge_ngi.png",
+      "display_order": 260
+    },
+    {
+      "id": "6abb0463-faa6-4a1f-805d-ecc5eae300c1",
+      "romanization": "pe",
+      "consonant": "p",
+      "vowel": "e",
+      "syllable_type": "vowel_e_i",
+      "glyph_image": "row2_pe_pi.png",
+      "display_order": 270
+    },
+    {
+      "id": "7ffb2eeb-88f9-4f19-bf88-75b64032125f",
+      "romanization": "pi",
+      "consonant": "p",
+      "vowel": "i",
+      "syllable_type": "vowel_e_i",
+      "glyph_image": "row2_pe_pi.png",
+      "display_order": 271
+    },
+    {
+      "id": "80a7445b-e9d5-4ea5-926c-88e1b298d87e",
+      "romanization": "se",
+      "consonant": "s",
+      "vowel": "e",
+      "syllable_type": "vowel_e_i",
+      "glyph_image": "row2_se_si.png",
+      "display_order": 281
+    },
+    {
+      "id": "d67d5182-505d-44b6-9657-16d4f1fd2f79",
+      "romanization": "si",
+      "consonant": "s",
+      "vowel": "i",
+      "syllable_type": "vowel_e_i",
+      "glyph_image": "row2_se_si.png",
+      "display_order": 282
+    },
+    {
+      "id": "29369dd9-5b55-44f8-bca8-0ca830a96279",
+      "romanization": "te",
+      "consonant": "t",
+      "vowel": "e",
+      "syllable_type": "vowel_e_i",
+      "glyph_image": "row2_te_ti.png",
+      "display_order": 292
+    },
+    {
+      "id": "ef3a225e-72b8-4e06-ae84-ddaf04125610",
+      "romanization": "ti",
+      "consonant": "t",
+      "vowel": "i",
+      "syllable_type": "vowel_e_i",
+      "glyph_image": "row2_te_ti.png",
+      "display_order": 293
+    },
+    {
+      "id": "d241925f-a44b-4659-b10e-44ad742eca65",
+      "romanization": "we",
+      "consonant": "w",
+      "vowel": "e",
+      "syllable_type": "vowel_e_i",
+      "glyph_image": "row2_we_wi.png",
+      "display_order": 303
+    },
+    {
+      "id": "f7df8275-7d86-4d94-85e3-be0309670290",
+      "romanization": "wi",
+      "consonant": "w",
+      "vowel": "i",
+      "syllable_type": "vowel_e_i",
+      "glyph_image": "row2_we_wi.png",
+      "display_order": 304
+    },
+    {
+      "id": "9721d8d1-319c-4c04-a196-743742089250",
+      "romanization": "ye",
+      "consonant": "y",
+      "vowel": "e",
+      "syllable_type": "vowel_e_i",
+      "glyph_image": "row2_ye_yi.png",
+      "display_order": 314
+    },
+    {
+      "id": "8c485049-c210-40d2-96cd-5fa288f93a39",
+      "romanization": "yi",
+      "consonant": "y",
+      "vowel": "i",
+      "syllable_type": "vowel_e_i",
+      "glyph_image": "row2_ye_yi.png",
+      "display_order": 315
+    },
+    {
+      "id": "77856fe7-22fd-43c1-aa4f-508fc0382ad1",
+      "romanization": "o",
+      "consonant": null,
+      "vowel": "o",
+      "syllable_type": "vowel_o_u",
+      "glyph_image": "row3_o_u.png",
+      "display_order": 325
+    },
+    {
+      "id": "e076edd4-5e31-4571-a99a-1baa2057c8fa",
+      "romanization": "u",
+      "consonant": null,
+      "vowel": "u",
+      "syllable_type": "vowel_o_u",
+      "glyph_image": "row3_o_u.png",
+      "display_order": 326
+    },
+    {
+      "id": "4a5d9367-4850-4159-9291-d5e19b32b945",
+      "romanization": "bo",
+      "consonant": "b",
+      "vowel": "o",
+      "syllable_type": "vowel_o_u",
+      "glyph_image": "row3_bo_bu.png",
+      "display_order": 336
+    },
+    {
+      "id": "5d108b09-3281-482c-b107-3b0b1a85ce88",
+      "romanization": "bu",
+      "consonant": "b",
+      "vowel": "u",
+      "syllable_type": "vowel_o_u",
+      "glyph_image": "row3_bo_bu.png",
+      "display_order": 337
+    },
+    {
+      "id": "8d17afac-76a0-46f2-8ce8-62545862ddb2",
+      "romanization": "ko",
+      "consonant": "k",
+      "vowel": "o",
+      "syllable_type": "vowel_o_u",
+      "glyph_image": "row3_ko_ku.png",
+      "display_order": 347
+    },
+    {
+      "id": "0a392391-3403-4b66-8231-6c0655f2566e",
+      "romanization": "ku",
+      "consonant": "k",
+      "vowel": "u",
+      "syllable_type": "vowel_o_u",
+      "glyph_image": "row3_ko_ku.png",
+      "display_order": 348
+    },
+    {
+      "id": "9b478f96-eb59-4161-bccb-97e46a3654fb",
+      "romanization": "do",
+      "consonant": "d",
+      "vowel": "o",
+      "syllable_type": "vowel_o_u",
+      "glyph_image": "row3_do_du.png",
+      "display_order": 358
+    },
+    {
+      "id": "5a8e7354-e233-4c9e-857f-21a0aa1d53dc",
+      "romanization": "du",
+      "consonant": "d",
+      "vowel": "u",
+      "syllable_type": "vowel_o_u",
+      "glyph_image": "row3_do_du.png",
+      "display_order": 359
+    },
+    {
+      "id": "4fc2989b-b689-44ab-b2c1-7ebcccb6c13c",
+      "romanization": "go",
+      "consonant": "g",
+      "vowel": "o",
+      "syllable_type": "vowel_o_u",
+      "glyph_image": "row3_go_gu.png",
+      "display_order": 369
+    },
+    {
+      "id": "0414df14-ccf2-43e1-81b9-7c9ed5bd5489",
+      "romanization": "gu",
+      "consonant": "g",
+      "vowel": "u",
+      "syllable_type": "vowel_o_u",
+      "glyph_image": "row3_go_gu.png",
+      "display_order": 370
+    },
+    {
+      "id": "fea64187-4189-42c8-b024-461c221413c7",
+      "romanization": "ho",
+      "consonant": "h",
+      "vowel": "o",
+      "syllable_type": "vowel_o_u",
+      "glyph_image": "row3_ho_hu.png",
+      "display_order": 380
+    },
+    {
+      "id": "99913880-5cb6-43f0-b216-ddc03e9b0c35",
+      "romanization": "hu",
+      "consonant": "h",
+      "vowel": "u",
+      "syllable_type": "vowel_o_u",
+      "glyph_image": "row3_ho_hu.png",
+      "display_order": 381
+    },
+    {
+      "id": "8ba1b694-c294-4234-b5a5-be274b1efb18",
+      "romanization": "lo",
+      "consonant": "l",
+      "vowel": "o",
+      "syllable_type": "vowel_o_u",
+      "glyph_image": "row3_lo_lu.png",
+      "display_order": 391
+    },
+    {
+      "id": "e5e6e10f-1990-4857-b05d-2a247f31e335",
+      "romanization": "lu",
+      "consonant": "l",
+      "vowel": "u",
+      "syllable_type": "vowel_o_u",
+      "glyph_image": "row3_lo_lu.png",
+      "display_order": 392
+    },
+    {
+      "id": "931ea5e2-c86b-4b8a-b2c3-2bfaeff83e62",
+      "romanization": "mo",
+      "consonant": "m",
+      "vowel": "o",
+      "syllable_type": "vowel_o_u",
+      "glyph_image": "row3_mo_mu.png",
+      "display_order": 402
+    },
+    {
+      "id": "76f8f097-5c03-411b-af94-ddbb826d3688",
+      "romanization": "mu",
+      "consonant": "m",
+      "vowel": "u",
+      "syllable_type": "vowel_o_u",
+      "glyph_image": "row3_mo_mu.png",
+      "display_order": 403
+    },
+    {
+      "id": "349502f8-4d7e-4371-b0f4-c7bd63d8dd11",
+      "romanization": "no",
+      "consonant": "n",
+      "vowel": "o",
+      "syllable_type": "vowel_o_u",
+      "glyph_image": "row3_no_nu.png",
+      "display_order": 413
+    },
+    {
+      "id": "82f17ff7-3bea-481a-80ee-5fffddeb2d95",
+      "romanization": "nu",
+      "consonant": "n",
+      "vowel": "u",
+      "syllable_type": "vowel_o_u",
+      "glyph_image": "row3_no_nu.png",
+      "display_order": 414
+    },
+    {
+      "id": "e2a9560c-6525-4f46-9d6c-1d007970e2c7",
+      "romanization": "ngo",
+      "consonant": "ng",
+      "vowel": "o",
+      "syllable_type": "vowel_o_u",
+      "glyph_image": "row3_ngo_ngu.png",
+      "display_order": 424
+    },
+    {
+      "id": "95f0128a-d66c-474e-8022-3d967adf0b0a",
+      "romanization": "ngu",
+      "consonant": "ng",
+      "vowel": "u",
+      "syllable_type": "vowel_o_u",
+      "glyph_image": "row3_ngo_ngu.png",
+      "display_order": 425
+    },
+    {
+      "id": "c78ed310-0242-46cb-b089-5d656f797d63",
+      "romanization": "po",
+      "consonant": "p",
+      "vowel": "o",
+      "syllable_type": "vowel_o_u",
+      "glyph_image": "row3_po_pu.png",
+      "display_order": 435
+    },
+    {
+      "id": "afff7bcb-17fd-4745-8842-79e54092cd60",
+      "romanization": "pu",
+      "consonant": "p",
+      "vowel": "u",
+      "syllable_type": "vowel_o_u",
+      "glyph_image": "row3_po_pu.png",
+      "display_order": 436
+    },
+    {
+      "id": "1eefcedb-170e-465b-b477-2d0640f759fc",
+      "romanization": "so",
+      "consonant": "s",
+      "vowel": "o",
+      "syllable_type": "vowel_o_u",
+      "glyph_image": "row3_so_su.png",
+      "display_order": 446
+    },
+    {
+      "id": "6d0d1d84-5533-4574-8da8-75b45faa5501",
+      "romanization": "su",
+      "consonant": "s",
+      "vowel": "u",
+      "syllable_type": "vowel_o_u",
+      "glyph_image": "row3_so_su.png",
+      "display_order": 447
+    },
+    {
+      "id": "efec1462-54a6-4e2d-aa5c-b2dd89a10c19",
+      "romanization": "to",
+      "consonant": "t",
+      "vowel": "o",
+      "syllable_type": "vowel_o_u",
+      "glyph_image": "row3_to_tu.png",
+      "display_order": 457
+    },
+    {
+      "id": "065435b4-3809-4286-9128-271495554217",
+      "romanization": "tu",
+      "consonant": "t",
+      "vowel": "u",
+      "syllable_type": "vowel_o_u",
+      "glyph_image": "row3_to_tu.png",
+      "display_order": 458
+    },
+    {
+      "id": "21019cdd-7388-4736-b123-427591d01fd5",
+      "romanization": "wo",
+      "consonant": "w",
+      "vowel": "o",
+      "syllable_type": "vowel_o_u",
+      "glyph_image": "row3_wo_wu.png",
+      "display_order": 468
+    },
+    {
+      "id": "10f186ff-31ac-4ce9-ac86-77c7ec901013",
+      "romanization": "wu",
+      "consonant": "w",
+      "vowel": "u",
+      "syllable_type": "vowel_o_u",
+      "glyph_image": "row3_wo_wu.png",
+      "display_order": 469
+    },
+    {
+      "id": "c869d8d6-14a7-4e2f-981c-0937eeb000e7",
+      "romanization": "yo",
+      "consonant": "y",
+      "vowel": "o",
+      "syllable_type": "vowel_o_u",
+      "glyph_image": "row3_yo_yu.png",
+      "display_order": 479
+    },
+    {
+      "id": "61b4e221-b2d8-44bb-8f91-2fde8468b38a",
+      "romanization": "yu",
+      "consonant": "y",
+      "vowel": "u",
+      "syllable_type": "vowel_o_u",
+      "glyph_image": "row3_yo_yu.png",
+      "display_order": 480
+    },
+    {
+      "id": "e36455cf-c613-440e-9e4d-09cf72b0ca27",
+      "romanization": "b",
+      "consonant": "b",
+      "vowel": null,
+      "syllable_type": "final_consonant",
+      "glyph_image": "row4_final_b.png",
+      "display_order": 490
+    },
+    {
+      "id": "2dc300fb-bf23-4048-8f44-0b56919a17ce",
+      "romanization": "k",
+      "consonant": "k",
+      "vowel": null,
+      "syllable_type": "final_consonant",
+      "glyph_image": "row4_final_k.png",
+      "display_order": 500
+    },
+    {
+      "id": "b5e72af8-ff3b-40d1-996f-f68ad30c7134",
+      "romanization": "d",
+      "consonant": "d",
+      "vowel": null,
+      "syllable_type": "final_consonant",
+      "glyph_image": "row4_final_d.png",
+      "display_order": 510
+    },
+    {
+      "id": "3f8e0834-2a99-4206-a2d7-6d8425336a0a",
+      "romanization": "g",
+      "consonant": "g",
+      "vowel": null,
+      "syllable_type": "final_consonant",
+      "glyph_image": "row4_final_g.png",
+      "display_order": 520
+    },
+    {
+      "id": "024099db-a20a-4217-bc2b-f6ed58a0935f",
+      "romanization": "l",
+      "consonant": "l",
+      "vowel": null,
+      "syllable_type": "final_consonant",
+      "glyph_image": "row4_final_l.png",
+      "display_order": 530
+    },
+    {
+      "id": "764df71a-6234-472a-a002-e74d1a636e32",
+      "romanization": "m",
+      "consonant": "m",
+      "vowel": null,
+      "syllable_type": "final_consonant",
+      "glyph_image": "row4_final_m.png",
+      "display_order": 540
+    },
+    {
+      "id": "aba0505c-a94d-4efb-9547-0181439aae98",
+      "romanization": "n",
+      "consonant": "n",
+      "vowel": null,
+      "syllable_type": "final_consonant",
+      "glyph_image": "row4_final_n.png",
+      "display_order": 550
+    },
+    {
+      "id": "66593e94-e066-4221-8115-1a668a98b4f7",
+      "romanization": "ng",
+      "consonant": "ng",
+      "vowel": null,
+      "syllable_type": "final_consonant",
+      "glyph_image": "row4_final_ng.png",
+      "display_order": 560
+    },
+    {
+      "id": "10e8ed5b-8712-4eba-82bf-3df16b8c58c0",
+      "romanization": "p",
+      "consonant": "p",
+      "vowel": null,
+      "syllable_type": "final_consonant",
+      "glyph_image": "row4_final_p.png",
+      "display_order": 570
+    },
+    {
+      "id": "13bfb13b-cc69-495b-89ab-4677161f1d40",
+      "romanization": "s",
+      "consonant": "s",
+      "vowel": null,
+      "syllable_type": "final_consonant",
+      "glyph_image": "row4_final_s.png",
+      "display_order": 580
+    },
+    {
+      "id": "bc0b75c3-668f-4dcd-91de-a087994341f5",
+      "romanization": "t",
+      "consonant": "t",
+      "vowel": null,
+      "syllable_type": "final_consonant",
+      "glyph_image": "row4_final_t.png",
+      "display_order": 590
+    },
+    {
+      "id": "c3effb4b-141a-4b75-8200-ea1c0147486d",
+      "romanization": "w",
+      "consonant": "w",
+      "vowel": null,
+      "syllable_type": "final_consonant",
+      "glyph_image": "row4_final_w.png",
+      "display_order": 600
+    },
+    {
+      "id": "8e46d127-9197-4c6b-82fe-7e17823478f4",
+      "romanization": "y",
+      "consonant": "y",
+      "vowel": null,
+      "syllable_type": "final_consonant",
+      "glyph_image": "row4_final_y.png",
+      "display_order": 610
+    }
+  ],
+  "examples": [
+    {
+      "mongondow_text": "Totabuan",
+      "breakdown": [
+        "to",
+        "ta",
+        "bu",
+        "a",
+        "n"
+      ],
+      "meaning_id": "Julukan/nama tradisional untuk seluruh wilayah Bolaang Mongondow (\"Tanah Totabuan\").",
+      "confidence": "probable",
+      "category": "nama_wilayah",
+      "source": "Latihan transliterasi tulisan tangan (papan tulis), dicocokkan dengan referensi julukan 'Tanah Totabuan' yang dipakai luas untuk Bolaang Mongondow.",
+      "image_ref": "whiteboard_practice_baris_1",
+      "id": "c07e3f40-ad2e-4abb-90b5-5030b392527b"
+    },
+    {
+      "mongondow_text": "(Bo)laang Mongondow",
+      "breakdown": [
+        "bo",
+        "la",
+        "a",
+        "ng",
+        "mo",
+        "ngo",
+        "n",
+        "do",
+        "w"
+      ],
+      "meaning_id": "Diduga kuat merupakan penulisan nama 'Bolaang Mongondow'. Suku kata 'bo' di awal kemungkinan terpotong pada foto papan tulis.",
+      "confidence": "uncertain",
+      "category": "nama_wilayah",
+      "source": "Latihan transliterasi tulisan tangan (papan tulis), baris 2. Pembacaan 'bo' di awal adalah rekonstruksi, bukan yang tampak langsung di foto.",
+      "image_ref": "whiteboard_practice_baris_2",
+      "id": "cd22bb3b-5688-470f-b506-39c39a5fe7de"
+    },
+    {
+      "mongondow_text": "Loloda Mokoagow",
+      "breakdown": [
+        "lo",
+        "lo",
+        "da",
+        "mo",
+        "ko",
+        "a",
+        "go",
+        "w"
+      ],
+      "meaning_id": "Nama Datu (raja) Bolaang Mongondow abad ke-17, penguasa pertama yang memakai gelar raja; dikenal Belanda sebagai 'Datu Binangkang'.",
+      "confidence": "verified",
+      "category": "nama_tokoh_sejarah",
+      "source": "Close-up tulisan aksara pada naskah bertuliskan 'LOLODA MOKOAGOW', dicocokkan dengan sumber sejarah eksternal mengenai Datu Loloda Mokoagow.",
+      "image_ref": "naskah_close_up_loloda_mokoagow",
+      "id": "3a1ae8c1-ff9a-4ad0-88b0-d9af5fd09e1d"
+    },
+    {
+      "mongondow_text": "Mototompiyaan (?)",
+      "breakdown": [
+        "mo",
+        "to",
+        "to",
+        "m",
+        "pi",
+        "ya",
+        "a",
+        "n"
+      ],
+      "meaning_id": null,
+      "confidence": "uncertain",
+      "category": "latihan_transliterasi",
+      "source": "Latihan transliterasi tulisan tangan (papan tulis), baris 4. Arti belum terverifikasi oleh penutur asli / kamus rujukan.",
+      "image_ref": "whiteboard_practice_baris_4",
+      "id": "5ee66eae-b75c-4702-b296-bce08d1769f6"
+    },
+    {
+      "mongondow_text": "Mototabian (?)",
+      "breakdown": [
+        "mo",
+        "to",
+        "ta",
+        "bi",
+        "a",
+        "n"
+      ],
+      "meaning_id": null,
+      "confidence": "uncertain",
+      "category": "latihan_transliterasi",
+      "source": "Latihan transliterasi tulisan tangan (papan tulis), baris 5. Arti belum terverifikasi oleh penutur asli / kamus rujukan.",
+      "image_ref": "whiteboard_practice_baris_5",
+      "id": "9b5e695d-9fd0-4585-a32f-7fcca3386fab"
+    },
+    {
+      "mongondow_text": "Bomototanoban (?)",
+      "breakdown": [
+        "bo",
+        "mo",
+        "to",
+        "ta",
+        "no",
+        "ba",
+        "n"
+      ],
+      "meaning_id": null,
+      "confidence": "uncertain",
+      "category": "latihan_transliterasi",
+      "source": "Latihan transliterasi tulisan tangan (papan tulis), baris 6. Arti belum terverifikasi oleh penutur asli / kamus rujukan.",
+      "image_ref": "whiteboard_practice_baris_6",
+      "id": "6db85a24-6d26-49c3-9d4c-7b5be3dbb921"
+    }
+  ],
+  "historical_figures": [
+    {
+      "name": "Loloda Mokoagow",
+      "also_known_as": [
+        "Datu Binangkang",
+        "Koning van Manado",
+        "Koning van Bulan",
+        "Koning van Amuera"
+      ],
+      "period": "Memerintah sekitar 1650-an hingga setelah 1694",
+      "notes": "Datu (raja) Bolaang Mongondow pertama yang memakai gelar raja. Pada 1694 menandatangani perjanjian batas dengan Federasi Minahasa dan VOC; sejak itu kerajaan dikenal Belanda sebagai 'Kerajaan Bola'ang-Mongondow'.",
+      "confidence": "verified_external_source"
+    }
+  ],
+  "disclaimer": "Data ini disusun dari materi budaya/komunitas yang diberikan pengguna (bagan aksara, papan tulis latihan, dan naskah). Sebagian klaim historis (asal-usul aksara Bicol di Bolaang Mongondow) bersifat kontroversial/belum diverifikasi akademik. Arti kata pada bagian 'latihan_transliterasi' belum dikonfirmasi penutur asli. Selalu tampilkan level 'confidence' saat menyajikan data ini ke pengguna akhir."
+}
