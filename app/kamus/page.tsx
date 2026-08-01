@@ -1,24 +1,28 @@
 'use client';
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
-import { 
-  ArrowLeft, 
-  BookOpen, 
-  Search, 
-  Sparkles, 
-  Volume2, 
-  RefreshCw, 
-  X, 
-  CheckCircle2, 
-  ChevronLeft, 
+import {
+  ArrowLeft,
+  BookOpen,
+  Search,
+  Sparkles,
+  Volume2,
+  RefreshCw,
+  X,
+  CheckCircle2,
+  ChevronLeft,
   ChevronRight,
   Share2,
   Bookmark,
   Languages,
   Cpu,
-  Feather
+  Feather,
+  ScrollText
 } from "lucide-react";
+import { transliterateToAksara } from "@/lib/aksara-transliterate";
+
+const AKSARA_GLYPH_BASE = "/aksara/";
 
 interface KamusEntry {
   word: string;
@@ -66,6 +70,13 @@ export default function KamusPage() {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  // Aksara Mongondow asli (glyph) — segmentasi lokal dari data/aksara,
+  // independen dari field "aksara" (tebakan teks AI) di activeWordData.
+  const realAksara = useMemo(() => {
+    if (!activeWordData?.word) return { success: false, words: [] as ReturnType<typeof transliterateToAksara>["words"] };
+    return transliterateToAksara(activeWordData.word);
+  }, [activeWordData?.word]);
 
   const alphabet = ["ALL", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
 
@@ -516,13 +527,61 @@ export default function KamusPage() {
                   </div>
                 </div>
 
-                {/* Transliterasi Aksara Mongondow */}
+                {/* Transliterasi Aksara Mongondow (fonetik, dari Bogani AI) */}
                 <div className="p-4 rounded-2xl bg-[#171926] border border-[#272b3d] space-y-1">
                   <span className="text-[10px] font-mono uppercase font-bold text-emerald-400 tracking-wider">
                     Ejaan / Aksara Mongondow Breakdown
                   </span>
                   <p className="text-lg font-mono font-bold text-white tracking-wider">
                     {activeWordData.aksara}
+                  </p>
+                </div>
+
+                {/* Aksara Mongondow asli (glyph resmi dari data/aksara) */}
+                <div className="p-4 rounded-2xl bg-[#171926] border border-[#272b3d] space-y-2">
+                  <span className="text-[10px] font-mono uppercase font-bold text-blue-400 tracking-wider flex items-center gap-1.5">
+                    <ScrollText className="w-3.5 h-3.5" />
+                    Aksara Mongondow (Naskah Asli)
+                  </span>
+                  {realAksara.success ? (
+                    <div className="flex flex-wrap gap-3">
+                      {realAksara.words.map((wordSyllables, wIdx) => (
+                        <div key={wIdx} className="flex gap-1.5">
+                          {wordSyllables.map((syl, sIdx) => (
+                            <div
+                              key={`${syl.id}-${sIdx}`}
+                              className="flex flex-col items-center bg-[#f5f0e6] rounded-lg p-1.5"
+                              title={syl.romanization}
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={AKSARA_GLYPH_BASE + syl.glyph_image}
+                                alt={syl.romanization}
+                                className="w-8 h-11 object-contain"
+                                draggable={false}
+                              />
+                              <span className="text-[9px] text-[#3a2f22] font-medium">{syl.romanization}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-500 italic">
+                      Kata ini belum bisa dipetakan otomatis ke tabel Aksara Mongondow (mis. memuat huruf di luar
+                      inventori fonem aksara, atau ejaan belum standar). Lihat tabel lengkap di{" "}
+                      <Link href="/aksara" className="text-blue-400 underline hover:text-blue-300">
+                        halaman /aksara
+                      </Link>
+                      .
+                    </p>
+                  )}
+                  <p className="text-[10px] text-gray-500">
+                    Sumber: tabel 88 suku kata di{" "}
+                    <Link href="/aksara" className="text-blue-400 underline hover:text-blue-300">
+                      /aksara
+                    </Link>{" "}
+                    — bukan hasil tebakan AI.
                   </p>
                 </div>
 
