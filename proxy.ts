@@ -4,6 +4,10 @@ import { getSession } from "@/lib/auth";
 // Routes that do NOT require authentication
 const PUBLIC_PATHS = [
   "/login",
+  "/kamus",
+  "/knowledge",
+  "/aksara",
+  "/ecosystem",
   "/terms",
   "/privacy",
   "/docs",
@@ -15,6 +19,8 @@ const PUBLIC_PATHS = [
   "/api/auth/forgot-password",
   "/api/v1/chat/completions",
   "/api/homepage/chat",
+  "/api/kamus",
+  "/api/health",
   "/_next",
   "/favicon.ico"
 ];
