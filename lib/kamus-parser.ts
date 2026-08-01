@@ -7,6 +7,18 @@ export interface KamusEntry {
   sourceFile: string;
 }
 
+export interface SiderWordCard {
+  word: string;
+  phonetic: string;
+  origin: string;
+  meaning: string;
+  example: string;
+  aksara: string;
+  quote: string;
+  emoji: string;
+  tag?: string;
+}
+
 export interface KamusStats {
   totalWords: number;
   totalFiles: number;
@@ -81,6 +93,80 @@ export function getIndexedKamusEntries(forceRefresh = false): KamusEntry[] {
 
   cachedEntries = result;
   return result;
+}
+
+/**
+ * Curated Sider-style Featured Word Cards for Kamus Mongondow
+ */
+export function getFeaturedSiderCards(): SiderWordCard[] {
+  return [
+    {
+      word: "Bogani",
+      phonetic: "/bo-ga-ni/",
+      origin: "Dari kata Mongondow kuno: Pahlawan, pelindung, & pemimpin rakyat.",
+      meaning: "Sosok ksatria atau patriot pemberani yang menjadi pelindung masyarakat Bolaang Mongondow.",
+      example: "Bogani Mokoagow — Pemimpin bijak nan pemberani.",
+      aksara: "bo-ga-ni",
+      quote: "Bogani adalah keberanian untuk melindungi, kejujuran untuk memimpin, dan kearifan bagi sesama.",
+      emoji: "🛡️",
+      tag: "Sejarah & Nilai"
+    },
+    {
+      word: "Totabuan",
+      phonetic: "/to-ta-bu-an/",
+      origin: "Dari kata dasar 'tabu' (tempat berhimpun / tanah leluhur).",
+      meaning: "Tanah kelahiran, tumpah darah, dan wilayah tempat tinggal adat Mongondow.",
+      example: "Lipu' nami Totabuan — Negeri tempat kami bertumpah darah.",
+      aksara: "to-ta-bu-a-n",
+      quote: "Totabuan adalah hangatnya rumah leluhur, kebanggaan identitas, dan ruang berbakti.",
+      emoji: "⛰️",
+      tag: "Geografi & Budaya"
+    },
+    {
+      word: "Arai",
+      phonetic: "/a-ra-i/",
+      origin: "Kosa kata Mongondow untuk perasaan dan suasana hati.",
+      meaning: "Hati, perasaan, rasa gembira, atau kondisi kedamaian batin.",
+      example: "Mona'ang in arai — Membuka isi hati dengan ketulusan.",
+      aksara: "a-ra-i",
+      quote: "Arai yang tulus adalah cermin dari kedamaian tutur kata dan tindakan.",
+      emoji: "💖",
+      tag: "Rasa & Filosofi"
+    },
+    {
+      word: "Biontu",
+      phonetic: "/bi-on-tu/",
+      origin: "Istilah pertemanan dan kekerabatan erat Mongondow.",
+      meaning: "Sahabat sejati, kawan dekat, atau kawan seperjuangan.",
+      example: "Kompag in biontu — Berjalan berdampingan bersama sahabat.",
+      aksara: "bi-o-n-tu",
+      quote: "Biontu sejati adalah yang berdiri kokoh di sampingmu dalam suka dan duka.",
+      emoji: "🤝",
+      tag: "Hubungan & Komunitas"
+    },
+    {
+      word: "Inaton",
+      phonetic: "/i-na-to-n/",
+      origin: "Kata pengingat nilai kebersamaan dan warisan leluhur.",
+      meaning: "Warisan, pusaka, atau kebiasaan luhur yang diturunkan antar generasi.",
+      example: "Po'osain inaton — Memelihara warisan kearifan leluhur.",
+      aksara: "i-na-to-n",
+      quote: "Inaton mewariskan cahaya kearifan masa lalu untuk menuntun masa depan.",
+      emoji: "📜",
+      tag: "Pusaka & Edukasi"
+    },
+    {
+      word: "Modayag",
+      phonetic: "/mo-da-ya-g/",
+      origin: "Kosa kata sifat untuk kondisi terang dan penuh harapan.",
+      meaning: "Bercahaya, terang benderang, berkembang pesat, atau sukses.",
+      example: "Laju modayag — Masa depan yang terang dan cerah.",
+      aksara: "mo-da-ya-g",
+      quote: "Modayag melambangkan harapan yang senantiasa memancar melintasi tantangan.",
+      emoji: "✨",
+      tag: "Doa & Harapan"
+    }
+  ];
 }
 
 /**

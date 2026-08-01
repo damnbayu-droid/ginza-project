@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getKamusStats, searchKamusEntries } from "@/lib/kamus-parser";
+import { getKamusStats, searchKamusEntries, getFeaturedSiderCards } from "@/lib/kamus-parser";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -10,9 +10,11 @@ export async function GET(req: NextRequest) {
 
   const stats = getKamusStats();
   const searchResult = searchKamusEntries({ query, letter, page, limit });
+  const featuredCards = getFeaturedSiderCards();
 
   return NextResponse.json({
     stats,
+    featuredCards,
     data: searchResult.items,
     total: searchResult.total,
     page: searchResult.page,
