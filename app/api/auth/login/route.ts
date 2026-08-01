@@ -50,38 +50,42 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // ── Verify password via Supabase users table (if configured) ───────────
-  let passwordHash = ADMIN_PASSWORD_HASH;
-
+  // ── Password verification logic ─────────────────────────────────────────
+  let dbHash = "";
   if (supabaseAdmin) {
-    const { data: user } = await supabaseAdmin
-      .from("gw_users")
-      .select("password_hash")
-      .eq("email", email)
-      .single();
-
-    if (user?.password_hash) {
-      passwordHash = user.password_hash;
+    try {
+      const { data: user } = await supabaseAdmin
+        .from("gw_users")
+        .select("password_hash")
+        .eq("email", inputEmail)
+        .maybeSingle();
+      if (user?.password_hash) {
+        dbHash = user.password_hash;
+      }
+    } catch (e) {
+      console.warn("[auth/login] Supabase query warning:", e);
     }
   }
 
-  // ── If no hash configured, block login ─────────────────────────────────
-  if (!passwordHash) {
-    console.error("[auth/login] ADMIN_PASSWORD_HASH is not configured!");
-    return NextResponse.json(
-      { error: "Server authentication not configured. Set ADMIN_PASSWORD_HASH in .env.local" },
-      { status: 500 }
-    );
+  const envPassword = process.env.ADMIN_PASSWORD || "";
+  const envHash = process.env.ADMIN_PASSWORD_HASH || "";
+
+  async function checkPasswordMatch(pwd: string, target: string): Promise<boolean> {
+    if (!target) return false;
+    if (target.startsWith("$2a$") || target.startsWith("$2b$")) {
+      return await bcrypt.compare(pwd, target);
+    }
+    return pwd === target;
   }
 
-  // ── bcrypt compare or plaintext fallback ──────────────────────────────────
-  const isBcrypt = passwordHash.startsWith("$2a$") || passwordHash.startsWith("$2b$");
-  const isValid = isBcrypt
-    ? await bcrypt.compare(password, passwordHash)
-    : password === passwordHash;
+  const matchesEnvHash = await checkPasswordMatch(password, envHash);
+  const matchesEnvPlain = await checkPasswordMatch(password, envPassword);
+  const matchesDb = await checkPasswordMatch(password, dbHash);
+
+  const isValid = matchesEnvHash || matchesEnvPlain || matchesDb;
 
   if (!isValid) {
-    await logAudit({ action: 'login_failed', actorEmail: email, targetType: 'auth', detail: { reason: 'wrong_password' }, ipAddress: ip });
+    await logAudit({ action: 'login_failed', actorEmail: inputEmail, targetType: 'auth', detail: { reason: 'wrong_password' }, ipAddress: ip });
     return NextResponse.json(
       { error: "Email atau password salah." },
       { status: 401 }
@@ -94,17 +98,17 @@ export async function POST(req: NextRequest) {
       const { data: userRecord } = await supabaseAdmin
         .from("gw_users")
         .select("id")
-        .eq("email", email)
+        .eq("email", inputEmail)
         .maybeSingle();
 
       if (!userRecord) {
-        const hashToInsert = isBcrypt ? passwordHash : bcrypt.hashSync(password, 10);
+        const hashToInsert = envHash.startsWith("$2a$") ? envHash : bcrypt.hashSync(password, 10);
         await supabaseAdmin.from("gw_users").insert({
-          email,
+          email: inputEmail,
           password_hash: hashToInsert,
           role: "owner"
         });
-        console.log(`[auth/login] Auto-created user record for ${email}`);
+        console.log(`[auth/login] Auto-created user record for ${inputEmail}`);
       }
     } catch (err) {
       console.error("[auth/login] Failed to auto-provision user:", err);
@@ -114,10 +118,10 @@ export async function POST(req: NextRequest) {
   // ── Create httpOnly session cookie ─────────────────────────────────────
   const res = NextResponse.json({
     success: true,
-    user: { email, role: "owner", name: "Boss Bayu" },
+    user: { email: inputEmail, role: "owner", name: "Boss Bayu" },
   });
 
-  await createSession(res, { email, role: "owner" });
-  await logAudit({ action: 'login_success', actorEmail: email, targetType: 'auth', detail: {}, ipAddress: ip });
+  await createSession(res, { email: inputEmail, role: "owner" });
+  await logAudit({ action: 'login_success', actorEmail: inputEmail, targetType: 'auth', detail: {}, ipAddress: ip });
   return res;
 }
