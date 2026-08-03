@@ -58,7 +58,8 @@ export default function VoiceModeOverlay({
       return;
     }
 
-    startListening();
+    setErrorMessage("");
+    setStatus('idle');
 
     return () => {
       stopVoiceSession();
@@ -346,17 +347,26 @@ export default function VoiceModeOverlay({
             </>
           )}
 
-          {/* Core Pulsing Orb */}
-          <div
-            className={`relative w-36 h-36 rounded-full flex items-center justify-center shadow-2xl transition-all duration-500 ${
+          {/* Core Interactive Pulsing Orb Button */}
+          <button
+            onClick={() => {
+              if (status === 'listening') {
+                if (recognitionRef.current) recognitionRef.current.stop();
+                setStatus('idle');
+              } else {
+                startListening();
+              }
+            }}
+            className={`relative w-36 h-36 rounded-full flex items-center justify-center shadow-2xl transition-all duration-500 cursor-pointer hover:scale-105 active:scale-95 focus:outline-none ${
               status === 'listening'
                 ? 'bg-gradient-to-br from-cyan-400 via-blue-500 to-indigo-600 shadow-cyan-500/50 scale-105'
                 : status === 'processing'
                 ? 'bg-gradient-to-br from-amber-400 via-purple-500 to-indigo-600 animate-spin shadow-purple-500/50'
                 : status === 'speaking'
                 ? 'bg-gradient-to-br from-teal-300 via-cyan-500 to-blue-600 shadow-teal-400/60 scale-110'
-                : 'bg-white/10 shadow-black/50'
+                : 'bg-white/10 hover:bg-white/20 shadow-black/50 border border-white/20'
             }`}
+            title={status === 'listening' ? "Klik untuk menghentikan" : "Klik mikrofon untuk bicara"}
           >
             {status === 'processing' ? (
               <Loader2 className="w-12 h-12 text-white animate-spin" />
@@ -365,7 +375,7 @@ export default function VoiceModeOverlay({
             ) : (
               <Mic className={`w-12 h-12 text-white ${status === 'listening' ? 'animate-pulse' : ''}`} />
             )}
-          </div>
+          </button>
         </div>
 
         {/* Status Text & Subtitle Transcripts */}

@@ -7,6 +7,9 @@
 import * as fs from "fs";
 import * as path from "path";
 import { Client } from "pg";
+import { loadEnvLocal } from "./_load-env";
+
+loadEnvLocal();
 
 // Build Supabase direct connection string dari .env.local
 // Format: postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:5432/postgres

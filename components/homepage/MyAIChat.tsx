@@ -105,9 +105,9 @@ export default function MyAIChat({
   const lastAssistantMsg = currentSession?.messages.filter(m => m.role === 'assistant' && m.content).slice(-1)[0];
   const detectedProviderKey = selectedModelOverride !== null
     ? selectedModelOverride
-    : (lastAssistantMsg?.providerUsed?.toLowerCase() || 'gemini');
+    : (lastAssistantMsg?.providerUsed?.toLowerCase() || 'auto');
 
-  const currentModelDisplay = modelConfigs[detectedProviderKey] || modelConfigs.gemini;
+  const currentModelDisplay = modelConfigs[detectedProviderKey] || modelConfigs.auto;
 
   // File Upload Handler
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {

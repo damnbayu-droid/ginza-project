@@ -84,42 +84,54 @@ function simulateReply(prompt: string, lang: Language): string {
 }
 
 /**
- * Preferred path: call Gateway AI (/api/v1/chat/completions)
+ * Preferred path: call Gateway AI (MYAI_OS_GATEWAY_URL or local /api/v1/chat/completions)
  */
-async function callGateway(req: NextRequest, fullPrompt: string, fileData?: string | null): Promise<string | null> {
-  const gatewayKey = process.env.HOMEPAGE_GATEWAY_API_KEY;
+async function callGateway(req: NextRequest, fullPrompt: string, fileData?: string | null, isVoiceMode?: boolean): Promise<{ text: string; provider: string } | null> {
+  const gatewayKey = process.env.MYAI_OS_GATEWAY_API_KEY || process.env.HOMEPAGE_GATEWAY_API_KEY;
   if (!gatewayKey) return null;
 
-  try {
-    const res = await fetch(`${req.nextUrl.origin}/api/v1/chat/completions`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${gatewayKey}`,
-      },
-      body: JSON.stringify({
-        field: GATEWAY_FIELD,
-        messages: [{ role: "user", content: fullPrompt }],
-        file: fileData || undefined,
-      }),
-    });
+  const primaryUrl = process.env.MYAI_OS_GATEWAY_URL || "https://console.myai.nexus/api/v1/chat/completions";
+  const localUrl = `${req.nextUrl.origin}/api/v1/chat/completions`;
 
-    if (!res.ok) {
-      const errBody = await res.json().catch(() => ({}));
-      console.warn(`[homepage-chat] Gateway call failed (${res.status}): ${errBody.error}. Falling back to direct provider pool.`);
-      return null;
+  const urlsToTry = [primaryUrl, localUrl];
+
+  for (const gatewayUrl of urlsToTry) {
+    try {
+      const res = await fetch(gatewayUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${gatewayKey}`,
+        },
+        body: JSON.stringify({
+          field: isVoiceMode ? "chatbot_general" : GATEWAY_FIELD,
+          messages: [{ role: "user", content: fullPrompt }],
+          file: fileData || undefined,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const providerUsed = data.provider_used || res.headers.get("x-provider-used") || "gpt";
+        const replyText = typeof data.result === "string"
+          ? data.result
+          : typeof data.result === "object"
+          ? JSON.stringify(data.result, null, 2)
+          : null;
+
+        if (replyText) {
+          return { text: replyText, provider: providerUsed };
+        }
+      } else {
+        const errBody = await res.json().catch(() => ({}));
+        console.warn(`[homepage-chat] Gateway (${gatewayUrl}) failed (${res.status}): ${errBody.error || "Unknown"}`);
+      }
+    } catch (err) {
+      console.warn(`[homepage-chat] Gateway (${gatewayUrl}) unreachable:`, err);
     }
-
-    const data = await res.json();
-    return typeof data.result === "string"
-      ? data.result
-      : typeof data.result === "object"
-      ? JSON.stringify(data.result, null, 2)
-      : null;
-  } catch (err) {
-    console.warn("[homepage-chat] Gateway unreachable, falling back to direct provider call:", err);
-    return null;
   }
+
+  return null;
 }
 
 /**
@@ -353,17 +365,18 @@ export async function POST(req: NextRequest) {
   const fullPrompt = buildPromptWithHistory(history, prompt);
   const profile = await getCurrentUserProfile().catch(() => null);
 
-  // 1. Preferred: route through the AI Gateway as a registered client app.
-  const gatewayText = await callGateway(req, fullPrompt, fileInput);
-  if (gatewayText) {
-    void logChatTurn({ profile, prompt, responseText: gatewayText, provider: "gemini", history });
+  const isVoiceMode = body.isVoiceMode || body.isVoiceInput || prompt.includes("[voice]");
+
+  // 1. Preferred: route through the AI Gateway (myai.nexus or local) as a registered client app.
+  const gatewayResult = await callGateway(req, fullPrompt, fileInput, isVoiceMode);
+  if (gatewayResult && gatewayResult.text) {
+    void logChatTurn({ profile, prompt, responseText: gatewayResult.text, provider: gatewayResult.provider, history });
     if (wantStream) {
-      return createTextStreamResponse(gatewayText, "gemini");
+      return createTextStreamResponse(gatewayResult.text, gatewayResult.provider);
     }
-    return NextResponse.json({ text: gatewayText, provider_used: "gemini" }, { headers: { "X-Provider-Used": "gemini" } });
+    return NextResponse.json({ text: gatewayResult.text, provider_used: gatewayResult.provider }, { headers: { "X-Provider-Used": gatewayResult.provider } });
   }
 
-  const isVoiceMode = body.isVoiceMode || body.isVoiceInput || prompt.includes("[voice]");
   let systemPrompt = lang === 'en' ? SYSTEM_PROMPT_EN : SYSTEM_PROMPT_ID;
 
   if (isVoiceMode) {
@@ -402,7 +415,7 @@ Jawab secara lisan dengan hangat, natural, dan ringkas (maksimal 2–3 kalimat).
       if (supabaseAdmin) {
         const isVoice = body.isVoiceMode || prompt.includes("[voice]");
         const recordId = crypto.randomUUID();
-        const responseText = gatewayText || direct.text || simulatedText || "";
+        const responseText = gatewayResult?.text || direct.text || simulatedText || "";
 
         await supabaseAdmin.from("gw_data_center").insert({
           id: recordId,
