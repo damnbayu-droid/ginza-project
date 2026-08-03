@@ -1,11 +1,10 @@
 'use client';
 
 import { useState } from "react";
-import { LayoutDashboard, AppWindow, Database, BarChart3, Settings, LogOut, Code, ChevronLeft, ChevronRight, Route, Sparkles, Server, Bot, DollarSign, ShieldCheck, Activity, Layers } from "lucide-react";
+import { LayoutDashboard, Database, Settings, LogOut, Code, ChevronLeft, ChevronRight, Bot } from "lucide-react";
 import { ViewType, Language } from "@/lib/types";
 import { translations } from "@/lib/i18n";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 interface SidebarProps {
   activeTab: ViewType;
@@ -22,16 +21,8 @@ export default function Sidebar({ activeTab, setActiveTab, lang, theme, adminEma
 
   const menuItems = [
     { id: 'overview' as ViewType, label: t.navOverview, icon: LayoutDashboard },
-    { id: 'apps' as ViewType, label: t.navApps, icon: AppWindow },
     { id: 'knowledge' as ViewType, label: t.navKnowledge, icon: Database },
-    { id: 'datacenter' as ViewType, label: t.navDataCenter || "Data Center", icon: Server },
-    { id: 'routing' as ViewType, label: t.navRouting || "Job Routing", icon: Route },
-    { id: 'specs' as ViewType,     label: t.navSpecs     || "Job Specs",  icon: Sparkles },
     { id: 'personas' as ViewType,  label: "Personas",                     icon: Bot },
-    { id: 'usage' as ViewType,     label: t.navUsage,                     icon: BarChart3 },
-    { id: 'costs' as ViewType,     label: t.navCosts     || "Estimasi Biaya", icon: DollarSign },
-    { id: 'auditlog' as ViewType,  label: t.navAuditLog  || "Audit Log",    icon: ShieldCheck },
-    { id: 'health' as ViewType,    label: t.navHealth    || "Kesehatan",    icon: Activity },
     { id: 'settings' as ViewType, label: t.navSettings, icon: Settings },
   ];
 
@@ -60,15 +51,6 @@ export default function Sidebar({ activeTab, setActiveTab, lang, theme, adminEma
           )}
         </div>
 
-        {!collapsed && (
-          <Link
-            href="/ecosystem"
-            title="Buka Ecosystem Consoles"
-            className="p-1.5 rounded-lg bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-500/30 transition-colors"
-          >
-            <Layers className="h-4 w-4" />
-          </Link>
-        )}
       </div>
 
       {/* Navigation Links */}

@@ -57,7 +57,7 @@ export interface ChatPersona {
   updated_at: string;
 }
 
-export type ViewType = 'overview' | 'apps' | 'knowledge' | 'routing' | 'specs' | 'usage' | 'settings' | 'datacenter' | 'personas' | 'costs' | 'auditlog' | 'health';
+export type ViewType = 'overview' | 'knowledge' | 'personas' | 'settings';
 export type Language = 'id' | 'en';
 export type Theme = 'dark' | 'light';
 

@@ -109,6 +109,7 @@ export async function checkRateLimit(
 // Pre-configured rate limit presets
 export const RATE_LIMITS = {
   LOGIN: { endpoint: "auth/login", maxRequests: 5, windowMinutes: 15 },
+  FORGOT_PASSWORD: { endpoint: "auth/forgot-password", maxRequests: 1, windowMinutes: 60 },
   GEMINI: { endpoint: "gemini/query", maxRequests: 20, windowMinutes: 60 },
   HOMEPAGE_CHAT: { endpoint: "homepage/chat", maxRequests: 30, windowMinutes: 1 },
 } as const;

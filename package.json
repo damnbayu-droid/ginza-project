@@ -3,11 +3,12 @@
   "version": "1.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3005",
+    "dev": "NEXT_EXPERIMENTAL_NO_TURBOPACK=1 next dev -p 3005",
     "build": "next build",
     "start": "next start -p 3005",
     "lint": "next lint",
-    "generate-hash": "npx tsx scripts/generate-password-hash.ts"
+    "generate-hash": "npx tsx scripts/generate-password-hash.ts",
+    "migrate": "npx tsx scripts/run-migrations.ts"
   },
   "dependencies": {
     "@google/genai": "^2.4.0",

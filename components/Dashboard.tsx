@@ -5,17 +5,9 @@ import { ViewType, Language, ClientApp, ApiKey, UsageLog, BusinessProfile, Knowl
 import Sidebar from "@/components/Sidebar";
 import Navbar from "@/components/Navbar";
 import OverviewTab from "@/components/OverviewTab";
-import AppsTab from "@/components/AppsTab";
 import KnowledgeTab from "@/components/KnowledgeTab";
-import UsageTab from "@/components/UsageTab";
 import SettingsTab from "@/components/SettingsTab";
-import RoutingTab from "@/components/RoutingTab";
-import SpecsTab from "@/components/SpecsTab";
-import DataCenterTab from "@/components/DataCenterTab";
 import PersonasTab from "@/components/PersonasTab";
-import CostsTab from "@/components/CostsTab";
-import AuditLogTab from "@/components/AuditLogTab";
-import HealthTab from "@/components/HealthTab";
 
 interface DashboardProps {
   adminEmail: string;
@@ -80,34 +72,6 @@ export default function Dashboard({ adminEmail }: DashboardProps) {
   useEffect(() => { fetchAllData(); }, [fetchAllData]);
 
   // --- Mutators ---
-
-  const handleCreateApp = async (name: string, slug: string, tier: 'internal' | 'community') => {
-    const res = await fetch("/api/apps", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, slug, tier }),
-    });
-    if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
-    await fetchAllData();
-  };
-
-  const handleGenerateKey = async (clientAppId: string, scope: string[], rateLimit: number | null) => {
-    const res = await fetch("/api/keys", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ client_app_id: clientAppId, provider_scope: scope, rate_limit_per_day: rateLimit }),
-    });
-    if (!res.ok) { const e = await res.json(); throw new Error(e.error); }
-    const result = await res.json();
-    await fetchAllData();
-    return result;
-  };
-
-  const handleRevokeKey = async (keyId: string) => {
-    const res = await fetch(`/api/keys/${keyId}/revoke`, { method: "POST" });
-    if (!res.ok) throw new Error("Failed to revoke key");
-    await fetchAllData();
-  };
 
   const handleSaveProfile = async (content: string) => {
     const res = await fetch("/api/business-profile", {
@@ -188,17 +152,6 @@ export default function Dashboard({ adminEmail }: DashboardProps) {
             {activeTab === 'overview' && (
               <OverviewTab apps={apps} apiKeys={apiKeys} logs={logs} lang={lang} theme={theme} />
             )}
-            {activeTab === 'apps' && (
-              <AppsTab
-                apps={apps}
-                apiKeys={apiKeys}
-                lang={lang}
-                theme={theme}
-                onCreateApp={handleCreateApp}
-                onGenerateKey={handleGenerateKey}
-                onRevokeKey={handleRevokeKey}
-              />
-            )}
             {activeTab === 'knowledge' && (
               <KnowledgeTab
                 apps={apps}
@@ -212,29 +165,8 @@ export default function Dashboard({ adminEmail }: DashboardProps) {
                 onDeleteDocument={handleDeleteDocument}
               />
             )}
-            {activeTab === 'usage' && (
-              <UsageTab apps={apps} logs={logs} lang={lang} theme={theme} />
-            )}
-            {activeTab === 'costs' && (
-              <CostsTab logs={logs} lang={lang} theme={theme} />
-            )}
-            {activeTab === 'datacenter' && (
-              <DataCenterTab lang={lang} theme={theme} />
-            )}
-            {activeTab === 'routing' && (
-              <RoutingTab lang={lang} theme={theme} />
-            )}
-            {activeTab === 'specs' && (
-              <SpecsTab lang={lang} theme={theme} />
-            )}
             {activeTab === 'personas' && (
               <PersonasTab lang={lang} theme={theme} apps={apps} />
-            )}
-            {activeTab === 'auditlog' && (
-              <AuditLogTab lang={lang} theme={theme} />
-            )}
-            {activeTab === 'health' && (
-              <HealthTab lang={lang} theme={theme} />
             )}
             {activeTab === 'settings' && (
               <SettingsTab

@@ -5,6 +5,18 @@ import { NextRequest, NextResponse } from "next/server";
 const COOKIE_NAME = "myai_session";
 const SESSION_DURATION_HOURS = 24;
 
+// Temporary bypass: when true, every request is treated as the owner
+// without checking the session cookie. Set DISABLE_ADMIN_AUTH=true in env.
+// Revert by removing/unsetting that var — no other code changes needed.
+// Hard-disabled outside dev so this can never leak into a real deployment
+// via a stray/misconfigured env var.
+const AUTH_DISABLED =
+  process.env.DISABLE_ADMIN_AUTH === "true" && process.env.NODE_ENV !== "production";
+const BYPASS_SESSION: SessionPayload = {
+  email: process.env.ADMIN_EMAIL || "damnbayu@gmail.com",
+  role: "owner",
+};
+
 function getSecret() {
   const secret = process.env.SESSION_SECRET;
   if (!secret || secret.length < 32) {
@@ -50,6 +62,8 @@ export async function createSession(
 export async function getSession(
   req: NextRequest
 ): Promise<SessionPayload | null> {
+  if (AUTH_DISABLED) return BYPASS_SESSION;
+
   const token = req.cookies.get(COOKIE_NAME)?.value;
   if (!token) return null;
 
@@ -69,6 +83,8 @@ export async function getSession(
  * Get session from server component context (uses next/headers).
  */
 export async function getServerSession(): Promise<SessionPayload | null> {
+  if (AUTH_DISABLED) return BYPASS_SESSION;
+
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   if (!token) return null;

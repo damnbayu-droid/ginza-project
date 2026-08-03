@@ -18,9 +18,8 @@ export default function Navbar({ activeTab, lang, setLang, theme, setTheme }: Na
   const getTabTitle = () => {
     switch (activeTab) {
       case 'overview': return t.navOverview;
-      case 'apps': return t.navApps;
       case 'knowledge': return t.navKnowledge;
-      case 'usage': return t.navUsage;
+      case 'personas': return "Personas";
       case 'settings': return t.navSettings;
       default: return "";
     }
