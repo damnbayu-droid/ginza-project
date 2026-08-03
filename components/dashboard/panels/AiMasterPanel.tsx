@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { PanelHeader, Card, LoadingState, Badge, Button } from "@/components/dashboard/ui";
-import { Bot, Send, Sparkles, Plus, Trash2, CheckCircle2, XCircle, Sliders, MessageSquare, RefreshCw, Zap, ShieldAlert } from "lucide-react";
+import { Bot, Send, Sparkles, Plus, Trash2, CheckCircle2, XCircle, Sliders, MessageSquare, RefreshCw, Zap, ShieldAlert, Edit2, Check, X } from "lucide-react";
 
 interface AdminRule {
   id: string;
@@ -75,6 +75,11 @@ export default function AiMasterPanel() {
   // Rule Form State
   const [newInstruction, setNewInstruction] = useState("");
   const [newCategory, setNewCategory] = useState<AdminRule["category"]>("Gaya Bahasa");
+
+  // Inline Rule Edit State
+  const [editingRuleId, setEditingRuleId] = useState<string | null>(null);
+  const [editInstructionText, setEditInstructionText] = useState("");
+  const [editCategory, setEditCategory] = useState<AdminRule["category"]>("Gaya Bahasa");
 
   useEffect(() => {
     fetch("/api/health")
@@ -181,6 +186,28 @@ export default function AiMasterPanel() {
 
     setRules([newRuleObj, ...rules]);
     setNewInstruction("");
+  };
+
+  const handleStartEditRule = (rule: AdminRule) => {
+    setEditingRuleId(rule.id);
+    setEditInstructionText(rule.instruction);
+    setEditCategory(rule.category);
+  };
+
+  const handleSaveEditRule = (id: string) => {
+    if (!editInstructionText.trim()) return;
+    setRules(
+      rules.map((r) =>
+        r.id === id
+          ? { ...r, instruction: editInstructionText.trim(), category: editCategory }
+          : r
+      )
+    );
+    setEditingRuleId(null);
+  };
+
+  const handleCancelEditRule = () => {
+    setEditingRuleId(null);
   };
 
   const handleToggleRule = (id: string) => {
@@ -343,7 +370,7 @@ export default function AiMasterPanel() {
               </div>
               <div className="flex justify-between items-center py-1">
                 <span className="text-bento-text-secondary">Model Primary Aktif</span>
-                <span className="font-semibold text-bento-accent">
+                <span className="font-semibold text-bento-accent uppercase">
                   {health.myai_os_gateway?.provider || "Multi-AI Fallback (GPT/Claude/DeepSeek)"}
                 </span>
               </div>
@@ -450,54 +477,115 @@ export default function AiMasterPanel() {
                     : "border-bento-border/50 bg-bento-surface-lighter/40 opacity-60"
                 }`}
               >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="space-y-1 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold uppercase tracking-wider bg-bento-surface-lighter px-2.5 py-0.5 rounded border border-bento-border text-bento-accent">
-                        {rule.category}
+                {editingRuleId === rule.id ? (
+                  /* INLINE RULE EDITOR FORM */
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-bento-accent flex items-center gap-1">
+                        <Edit2 className="w-3.5 h-3.5" /> Edit Instruksi Rule
                       </span>
-                      <Badge tone={rule.isActive ? "success" : "default"}>
-                        {rule.isActive ? "Aktif Diinjeksikan" : "Nonaktif"}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          onClick={() => handleSaveEditRule(rule.id)}
+                          variant="primary"
+                          className="!py-1 !px-2.5 text-xs flex items-center gap-1"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                          <span>Simpan</span>
+                        </Button>
+                        <Button
+                          onClick={handleCancelEditRule}
+                          variant="default"
+                          className="!py-1 !px-2.5 text-xs flex items-center gap-1"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                          <span>Batal</span>
+                        </Button>
+                      </div>
                     </div>
 
-                    <p className="text-sm font-medium text-bento-text-primary leading-relaxed pt-1">
-                      &quot;{rule.instruction}&quot;
-                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                      <div className="md:col-span-3">
+                        <input
+                          required
+                          value={editInstructionText}
+                          onChange={(e) => setEditInstructionText(e.target.value)}
+                          className="w-full px-3.5 py-2 rounded-xl border border-bento-accent bg-bento-bg text-sm font-medium outline-none"
+                        />
+                      </div>
+                      <div>
+                        <select
+                          value={editCategory}
+                          onChange={(e) => setEditCategory(e.target.value as any)}
+                          className="w-full px-3.5 py-2 rounded-xl border border-bento-border bg-bento-bg text-sm outline-none font-medium"
+                        >
+                          <option value="Gaya Bahasa">Gaya Bahasa</option>
+                          <option value="Pengetahuan Adat">Pengetahuan Adat</option>
+                          <option value="Format Output">Format Output</option>
+                          <option value="Batasan & Keamanan">Batasan &amp; Keamanan</option>
+                        </select>
+                      </div>
+                    </div>
                   </div>
+                ) : (
+                  /* NORMAL RULE CARD DISPLAY */
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-1 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold uppercase tracking-wider bg-bento-surface-lighter px-2.5 py-0.5 rounded border border-bento-border text-bento-accent">
+                          {rule.category}
+                        </span>
+                        <Badge tone={rule.isActive ? "success" : "default"}>
+                          {rule.isActive ? "Aktif Diinjeksikan" : "Nonaktif"}
+                        </Badge>
+                      </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
-                    <button
-                      onClick={() => handleToggleRule(rule.id)}
-                      className={`px-3 py-1 rounded-lg text-xs font-semibold border transition-all flex items-center gap-1 ${
-                        rule.isActive
-                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20"
-                          : "bg-bento-surface-lighter text-bento-text-secondary border-bento-border hover:text-bento-text-primary"
-                      }`}
-                      title={rule.isActive ? "Klik untuk menonaktifkan" : "Klik untuk mengaktifkan"}
-                    >
-                      {rule.isActive ? (
-                        <>
-                          <CheckCircle2 className="w-3.5 h-3.5" />
-                          <span>Aktif</span>
-                        </>
-                      ) : (
-                        <>
-                          <XCircle className="w-3.5 h-3.5" />
-                          <span>Nonaktif</span>
-                        </>
-                      )}
-                    </button>
+                      <p className="text-sm font-medium text-bento-text-primary leading-relaxed pt-1">
+                        &quot;{rule.instruction}&quot;
+                      </p>
+                    </div>
 
-                    <button
-                      onClick={() => handleDeleteRule(rule.id)}
-                      className="p-1.5 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors"
-                      title="Hapus instruksi ini"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={() => handleStartEditRule(rule)}
+                        className="p-1.5 rounded-lg border border-bento-border text-bento-text-secondary hover:text-bento-accent hover:bg-bento-surface-lighter transition-colors"
+                        title="Edit instruksi rule ini"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        onClick={() => handleToggleRule(rule.id)}
+                        className={`px-3 py-1 rounded-lg text-xs font-semibold border transition-all flex items-center gap-1 ${
+                          rule.isActive
+                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20"
+                            : "bg-bento-surface-lighter text-bento-text-secondary border-bento-border hover:text-bento-text-primary"
+                        }`}
+                        title={rule.isActive ? "Klik untuk menonaktifkan" : "Klik untuk mengaktifkan"}
+                      >
+                        {rule.isActive ? (
+                          <>
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Aktif</span>
+                          </>
+                        ) : (
+                          <>
+                            <XCircle className="w-3.5 h-3.5" />
+                            <span>Nonaktif</span>
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        onClick={() => handleDeleteRule(rule.id)}
+                        className="p-1.5 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors"
+                        title="Hapus instruksi ini"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
               </Card>
             ))
           )}
