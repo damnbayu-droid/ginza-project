@@ -233,7 +233,7 @@ export default function ChatSidebar({
           )}
         </div>
 
-        {/* Ecosystem Consoles & Bottom Navigation */}
+        {/* Ecosystem & Bottom Navigation */}
         <div className="p-2 border-t border-[#262626] space-y-1 bg-[#171717]">
           <Link
             href="/ecosystem"
@@ -241,9 +241,9 @@ export default function ChatSidebar({
           >
             <div className="flex items-center gap-2.5">
               <Layers className="w-4 h-4 text-blue-400 group-hover:scale-105 transition-transform" />
-              <span>{lang === 'id' ? 'Ecosystem Consoles' : 'Ecosystem Consoles'}</span>
+              <span>Ecosystem</span>
             </div>
-            <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-blue-500 text-white font-bold">3 Consoles</span>
+            <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-blue-500 text-white font-bold">7 Modul</span>
           </Link>
 
           <Link
@@ -251,7 +251,7 @@ export default function ChatSidebar({
             className="w-full p-2.5 rounded-xl text-xs font-medium text-gray-300 hover:bg-[#212121] flex items-center gap-2.5 transition-colors"
           >
             <LayoutDashboard className="w-4 h-4 text-gray-400" />
-            <span>{lang === 'id' ? 'Gateway Console' : 'Gateway Console'}</span>
+            <span>Dashboard</span>
           </Link>
 
           <button
