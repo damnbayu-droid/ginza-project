@@ -25,6 +25,7 @@ interface Syllable {
   vowel: string | null;
   syllable_type: SyllableType;
   glyph_image: string;
+  glyph_svg: string;
   display_order: number;
 }
 
@@ -46,7 +47,10 @@ const DATA = aksaraData as unknown as {
   disclaimer: string;
 };
 
-const GLYPH_BASE = "/aksara/";
+// Sumber utama sekarang vektor SVG (crisp di semua ukuran, bukan screenshot
+// raster) — hasil trace dari public/aksara/*.png (Fase 1 Database Huruf/Abjad
+// Mongondow). PNG lama tetap ada di /aksara/ sbg arsip/fallback historis.
+const GLYPH_BASE = "/aksara-svg/";
 
 const FILTERS: { key: SyllableType | "all"; label: string }[] = [
   { key: "all", label: "Semua" },
@@ -86,7 +90,7 @@ function SyllableTile({
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={GLYPH_BASE + syllable.glyph_image}
+        src={GLYPH_BASE + syllable.glyph_svg}
         alt={syllable.romanization}
         className="w-12 h-16 object-contain"
         draggable={false}
@@ -235,7 +239,7 @@ export default function AksaraMongondow() {
         <div className="rounded-2xl bg-[#212121] border border-[#2f2f2f] p-4 mb-6 flex items-center gap-4">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={GLYPH_BASE + selected.glyph_image}
+            src={GLYPH_BASE + selected.glyph_svg}
             alt={selected.romanization}
             className="w-16 h-24 object-contain bg-[#f5f0e6] rounded-xl p-2"
           />
@@ -263,7 +267,7 @@ export default function AksaraMongondow() {
           <div className="flex items-center justify-center mb-4">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={GLYPH_BASE + quizQuestion.glyph_image}
+              src={GLYPH_BASE + quizQuestion.glyph_svg}
               alt="Tebak aksara"
               className="w-20 h-28 object-contain bg-[#f5f0e6] rounded-xl p-2"
             />
@@ -336,7 +340,7 @@ export default function AksaraMongondow() {
                   return (
                     <div key={idx} className="flex flex-col items-center bg-[#f5f0e6] rounded-lg p-1.5">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={GLYPH_BASE + syl.glyph_image} alt={rom} className="w-8 h-11 object-contain" />
+                      <img src={GLYPH_BASE + syl.glyph_svg} alt={rom} className="w-8 h-11 object-contain" />
                       <span className="text-[9px] text-[#3a2f22] font-medium">{rom}</span>
                     </div>
                   );

@@ -3,6 +3,9 @@ import { PROVIDER_REGISTRY } from "@/lib/provider-adapters";
 import { searchKamusEntries, getFeaturedSiderCards } from "@/lib/kamus-parser";
 import { BOGANI_PERSONA_ID } from "@/lib/bogani-persona";
 import { getKnowledgeContext } from "@/lib/knowledge-retrieval";
+import { listKamusEntries, getVerificatorsForEntry, logMetricEvent } from "@/lib/ginza-db";
+import { isSupabaseReady, supabaseAdmin } from "@/lib/supabase";
+import { getCurrentUserProfile } from "@/lib/supabase-auth-server";
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,6 +16,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Kata tidak boleh kosong" }, { status: 400 });
     }
 
+    if (isSupabaseReady) {
+      logMetricEvent({ type: "kamus_click", targetText: word }).catch(() => {});
+    }
+
     // 0. Kartu kata unggulan (kurasi manual, definisi terverifikasi) — kalau
     //    kata cocok persis, pakai ini langsung tanpa panggil AI sama sekali,
     //    supaya tidak ada risiko tebakan salah untuk kata-kata inti ini.
@@ -21,6 +28,38 @@ export async function POST(req: NextRequest) {
     );
     if (featuredMatch) {
       return NextResponse.json({ success: true, data: featuredMatch, isIndexed: true, source: "featured_card" });
+    }
+
+    // 0b. Kata yang sudah diverifikasi & tersimpan di Database Kamus (hasil
+    //     kontribusi user yang di-approve, atau input admin) — pakai data ini
+    //     langsung, tanpa perlu panggil AI, dan tampilkan verifikatornya.
+    if (isSupabaseReady) {
+      try {
+        const dbMatches = await listKamusEntries({ search: word, status: "verified", limit: 5 });
+        const exact = dbMatches.find(e => e.word.toLowerCase() === word.toLowerCase());
+        if (exact) {
+          const verificators = await getVerificatorsForEntry(exact.id).catch(() => []);
+          return NextResponse.json({
+            success: true,
+            source: "database_verified",
+            isIndexed: true,
+            data: {
+              word: exact.word,
+              phonetic: exact.phonetic ?? "",
+              origin: exact.origin ?? "",
+              meaning: exact.meaning ?? "",
+              example: exact.example ?? "",
+              aksara: exact.aksara_breakdown ?? exact.word.toLowerCase(),
+              quote: "",
+              emoji: "📘",
+              tag: exact.category ?? undefined,
+            },
+            verificators: verificators.map((v: any) => v.profiles?.display_name ?? "Verifikator"),
+          });
+        }
+      } catch {
+        // tabel skema baru mungkin belum ada — lanjut ke alur lama (file + AI)
+      }
     }
 
     // 1. Search local indexed kamus entries
@@ -74,6 +113,20 @@ Kalau kata ini tidak ada di KONTEKS KNOWLEDGE BASE maupun referensi kata terinde
           aiResultData = JSON.parse(cleanedText);
         } catch {
           console.warn("[kamus-ai-define] Failed parsing JSON from AI, falling back to structured layout.");
+        }
+
+        if (isSupabaseReady && supabaseAdmin) {
+          getCurrentUserProfile()
+            .then((profile) => {
+              if (!profile) return;
+              return supabaseAdmin!.from("token_usage").insert({
+                user_id: profile.id,
+                provider: "gemini",
+                endpoint: "kamus_ai_define",
+                tokens_used: (res.promptTokens ?? 0) + (res.completionTokens ?? 0),
+              });
+            })
+            .catch((e) => console.warn("[kamus-ai-define] Failed logging token_usage:", e));
         }
       }
     }

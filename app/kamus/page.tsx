@@ -21,8 +21,9 @@ import {
   ScrollText
 } from "lucide-react";
 import { transliterateToAksara } from "@/lib/aksara-transliterate";
+import ContributeCTA from "@/components/knowledge/ContributeCTA";
 
-const AKSARA_GLYPH_BASE = "/aksara/";
+const AKSARA_GLYPH_BASE = "/aksara-svg/";
 
 interface KamusEntry {
   word: string;
@@ -471,6 +472,7 @@ export default function KamusPage() {
             </div>
           )}
         </div>
+        <ContributeCTA type="kamus" />
       </div>
 
       {/* AI Definition Detail Modal (Sider AI Breakdown Card) */}
@@ -555,7 +557,7 @@ export default function KamusPage() {
                             >
                               {/* eslint-disable-next-line @next/next/no-img-element */}
                               <img
-                                src={AKSARA_GLYPH_BASE + syl.glyph_image}
+                                src={AKSARA_GLYPH_BASE + syl.glyph_svg}
                                 alt={syl.romanization}
                                 className="w-8 h-11 object-contain"
                                 draggable={false}

@@ -1,18 +1,37 @@
 'use client';
 
 import { useState } from "react";
-import { LogOut, Code, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  LogOut, Code, ChevronLeft, ChevronRight, LayoutDashboard, Users, ShieldCheck,
+  BookMarked, Library, Type, FileCheck2, BarChart3, Bot, ScrollText,
+} from "lucide-react";
 import { Language } from "@/lib/types";
 import { translations } from "@/lib/i18n";
 import { useRouter } from "next/navigation";
+import type { AdminPanelKey } from "@/components/Dashboard";
 
 interface SidebarProps {
   lang: Language;
   theme: 'dark' | 'light';
   adminEmail: string;
+  activePanel: AdminPanelKey;
+  onSelectPanel: (panel: AdminPanelKey) => void;
 }
 
-export default function Sidebar({ lang, theme, adminEmail }: SidebarProps) {
+const NAV_ITEMS: { key: AdminPanelKey; label: string; icon: typeof LayoutDashboard }[] = [
+  { key: "overview", label: "Overview", icon: LayoutDashboard },
+  { key: "users", label: "User Management", icon: Users },
+  { key: "verificators", label: "Verifikator Management", icon: ShieldCheck },
+  { key: "kamus", label: "Database Kamus", icon: BookMarked },
+  { key: "knowledge", label: "Database Knowledge", icon: Library },
+  { key: "aksara", label: "Huruf / Abjad Mongondow", icon: Type },
+  { key: "contributions", label: "Kontribusi", icon: FileCheck2 },
+  { key: "metrics", label: "Metrics", icon: BarChart3 },
+  { key: "ai-master", label: "Ai Master (Bogani AI)", icon: Bot },
+  { key: "logs", label: "Logs", icon: ScrollText },
+];
+
+export default function Sidebar({ lang, theme, adminEmail, activePanel, onSelectPanel }: SidebarProps) {
   const t = translations[lang] as any;
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
@@ -43,8 +62,29 @@ export default function Sidebar({ lang, theme, adminEmail }: SidebarProps) {
         </div>
       </div>
 
-      {/* No modules yet — admin dashboard is intentionally empty */}
-      <div className="flex-1" />
+      {/* Nav panel admin */}
+      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-1">
+        {NAV_ITEMS.map(({ key, label, icon: Icon }) => {
+          const active = activePanel === key;
+          return (
+            <button
+              key={key}
+              onClick={() => onSelectPanel(key)}
+              title={collapsed ? label : undefined}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
+                collapsed ? "justify-center" : ""
+              } ${
+                active
+                  ? "bg-bento-accent-muted text-bento-accent"
+                  : "text-bento-text-secondary hover:bg-bento-surface-lighter hover:text-bento-text-primary"
+              }`}
+            >
+              <Icon className="h-4 w-4 shrink-0" />
+              {!collapsed && <span className="truncate">{label}</span>}
+            </button>
+          );
+        })}
+      </nav>
 
       {/* Footer: Admin info + Logout */}
       <div className={`p-3 border-t border-bento-border flex flex-col gap-2`}>

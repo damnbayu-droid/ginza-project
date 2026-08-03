@@ -2,9 +2,22 @@
 
 import { useState, useEffect } from "react";
 import { Language } from "@/lib/types";
-import { LayoutDashboard } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import Navbar from "@/components/Navbar";
+import OverviewPanel from "@/components/dashboard/panels/OverviewPanel";
+import UserManagementPanel from "@/components/dashboard/panels/UserManagementPanel";
+import VerificatorManagementPanel from "@/components/dashboard/panels/VerificatorManagementPanel";
+import DatabaseKamusPanel from "@/components/dashboard/panels/DatabaseKamusPanel";
+import DatabaseKnowledgePanel from "@/components/dashboard/panels/DatabaseKnowledgePanel";
+import AksaraPanel from "@/components/dashboard/panels/AksaraPanel";
+import KontribusiPanel from "@/components/dashboard/panels/KontribusiPanel";
+import MetricsPanel from "@/components/dashboard/panels/MetricsPanel";
+import AiMasterPanel from "@/components/dashboard/panels/AiMasterPanel";
+import LogsPanel from "@/components/dashboard/panels/LogsPanel";
+
+export type AdminPanelKey =
+  | "overview" | "users" | "verificators" | "kamus" | "knowledge"
+  | "aksara" | "contributions" | "metrics" | "ai-master" | "logs";
 
 interface DashboardProps {
   adminEmail: string;
@@ -13,8 +26,8 @@ interface DashboardProps {
 export default function Dashboard({ adminEmail }: DashboardProps) {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [lang, setLang] = useState<Language>('id');
+  const [activePanel, setActivePanel] = useState<AdminPanelKey>('overview');
 
-  // Restore theme/lang from localStorage
   useEffect(() => {
     const savedTheme = localStorage.getItem("myai_theme") as 'dark' | 'light';
     if (savedTheme) setTheme(savedTheme);
@@ -36,28 +49,32 @@ export default function Dashboard({ adminEmail }: DashboardProps) {
 
   useEffect(() => { localStorage.setItem("myai_lang", lang); }, [lang]);
 
+  function renderPanel() {
+    switch (activePanel) {
+      case "overview": return <OverviewPanel onNavigate={setActivePanel} />;
+      case "users": return <UserManagementPanel />;
+      case "verificators": return <VerificatorManagementPanel />;
+      case "kamus": return <DatabaseKamusPanel />;
+      case "knowledge": return <DatabaseKnowledgePanel />;
+      case "aksara": return <AksaraPanel />;
+      case "contributions": return <KontribusiPanel />;
+      case "metrics": return <MetricsPanel />;
+      case "ai-master": return <AiMasterPanel />;
+      case "logs": return <LogsPanel />;
+      default: return null;
+    }
+  }
+
   return (
     <div className="flex h-screen overflow-hidden bg-bento-bg text-bento-text-primary" id="console-layout">
-      <Sidebar lang={lang} theme={theme} adminEmail={adminEmail} />
+      <Sidebar lang={lang} theme={theme} adminEmail={adminEmail} activePanel={activePanel} onSelectPanel={setActivePanel} />
 
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         <Navbar lang={lang} setLang={setLang} theme={theme} setTheme={setTheme} />
 
-        <main className="flex-1 overflow-y-auto p-8 focus:outline-none">
-          <div className="max-w-6xl mx-auto pb-12 h-full flex items-center justify-center">
-            <div className="text-center space-y-3 max-w-sm">
-              <div className="w-12 h-12 rounded-2xl bg-bento-accent-muted text-bento-accent flex items-center justify-center mx-auto">
-                <LayoutDashboard className="w-6 h-6" />
-              </div>
-              <p className="font-semibold text-bento-text-primary">
-                {lang === 'id' ? "Belum ada modul admin" : "No admin modules yet"}
-              </p>
-              <p className="text-sm text-bento-text-secondary">
-                {lang === 'id'
-                  ? "Dashboard ini sengaja dikosongkan — modul khusus MongondowPedia akan dibangun di sini."
-                  : "This dashboard is intentionally empty — MongondowPedia-specific modules will be built here."}
-              </p>
-            </div>
+        <main className="flex-1 overflow-y-auto p-6 md:p-8 focus:outline-none">
+          <div className="max-w-6xl mx-auto pb-12">
+            {renderPanel()}
           </div>
         </main>
       </div>

@@ -34,7 +34,8 @@
       "vowel": "a",
       "syllable_type": "vowel_a",
       "glyph_image": "row1_a.png",
-      "display_order": 10
+      "display_order": 10,
+      "glyph_svg": "row1_a.svg"
     },
     {
       "id": "d0f2a565-d49a-47c0-961e-d9ec7f177b81",
@@ -43,7 +44,8 @@
       "vowel": "a",
       "syllable_type": "vowel_a",
       "glyph_image": "row1_ba.png",
-      "display_order": 20
+      "display_order": 20,
+      "glyph_svg": "row1_ba.svg"
     },
     {
       "id": "edfb8f9f-4d8b-42d8-8566-5a7e7a686c81",
@@ -52,7 +54,8 @@
       "vowel": "a",
       "syllable_type": "vowel_a",
       "glyph_image": "row1_ka.png",
-      "display_order": 30
+      "display_order": 30,
+      "glyph_svg": "row1_ka.svg"
     },
     {
       "id": "cbe9031b-c7f3-483b-9e1e-ca0625789e71",
@@ -61,7 +64,8 @@
       "vowel": "a",
       "syllable_type": "vowel_a",
       "glyph_image": "row1_da.png",
-      "display_order": 40
+      "display_order": 40,
+      "glyph_svg": "row1_da.svg"
     },
     {
       "id": "e3e7edfc-a35b-45ba-8674-f09e51a61ad9",
@@ -70,7 +74,8 @@
       "vowel": "a",
       "syllable_type": "vowel_a",
       "glyph_image": "row1_ga.png",
-      "display_order": 50
+      "display_order": 50,
+      "glyph_svg": "row1_ga.svg"
     },
     {
       "id": "4c9c3bd2-735b-4213-8fe8-9dc025841a23",
@@ -79,7 +84,8 @@
       "vowel": "a",
       "syllable_type": "vowel_a",
       "glyph_image": "row1_ha.png",
-      "display_order": 60
+      "display_order": 60,
+      "glyph_svg": "row1_ha.svg"
     },
     {
       "id": "6a108731-4571-43e3-82d7-7685d7d08472",
@@ -88,7 +94,8 @@
       "vowel": "a",
       "syllable_type": "vowel_a",
       "glyph_image": "row1_la.png",
-      "display_order": 70
+      "display_order": 70,
+      "glyph_svg": "row1_la.svg"
     },
     {
       "id": "cf96321a-8d78-4732-a7d1-b37cb77a4b89",
@@ -97,7 +104,8 @@
       "vowel": "a",
       "syllable_type": "vowel_a",
       "glyph_image": "row1_ma.png",
-      "display_order": 80
+      "display_order": 80,
+      "glyph_svg": "row1_ma.svg"
     },
     {
       "id": "da9f4560-1311-4a07-9839-4cede2e94be3",
@@ -106,7 +114,8 @@
       "vowel": "a",
       "syllable_type": "vowel_a",
       "glyph_image": "row1_na.png",
-      "display_order": 90
+      "display_order": 90,
+      "glyph_svg": "row1_na.svg"
     },
     {
       "id": "31dd549a-b064-42f4-85b0-0ef70e78cd38",
@@ -115,7 +124,8 @@
       "vowel": "a",
       "syllable_type": "vowel_a",
       "glyph_image": "row1_nga.png",
-      "display_order": 100
+      "display_order": 100,
+      "glyph_svg": "row1_nga.svg"
     },
     {
       "id": "2dcf37ef-7eb1-4fe4-937d-a9fbefc04031",
@@ -124,7 +134,8 @@
       "vowel": "a",
       "syllable_type": "vowel_a",
       "glyph_image": "row1_pa.png",
-      "display_order": 110
+      "display_order": 110,
+      "glyph_svg": "row1_pa.svg"
     },
     {
       "id": "7c52168c-1a65-41be-a4b3-6283ba934cf8",
@@ -133,7 +144,8 @@
       "vowel": "a",
       "syllable_type": "vowel_a",
       "glyph_image": "row1_sa.png",
-      "display_order": 120
+      "display_order": 120,
+      "glyph_svg": "row1_sa.svg"
     },
     {
       "id": "f70e1505-3224-4647-a288-f406a704de32",
@@ -142,7 +154,8 @@
       "vowel": "a",
       "syllable_type": "vowel_a",
       "glyph_image": "row1_ta.png",
-      "display_order": 130
+      "display_order": 130,
+      "glyph_svg": "row1_ta.svg"
     },
     {
       "id": "76885a81-7f5f-410f-8e53-9e2506c00300",
@@ -151,7 +164,8 @@
       "vowel": "a",
       "syllable_type": "vowel_a",
       "glyph_image": "row1_wa.png",
-      "display_order": 140
+      "display_order": 140,
+      "glyph_svg": "row1_wa.svg"
     },
     {
       "id": "04b55ebd-e9d6-4629-a30e-4343c56dce93",
@@ -160,7 +174,8 @@
       "vowel": "a",
       "syllable_type": "vowel_a",
       "glyph_image": "row1_ya.png",
-      "display_order": 150
+      "display_order": 150,
+      "glyph_svg": "row1_ya.svg"
     },
     {
       "id": "8ca7ceeb-793b-4546-85d4-9ab676dd84d3",
@@ -169,7 +184,8 @@
       "vowel": "e",
       "syllable_type": "vowel_e_i",
       "glyph_image": "row2_e_i.png",
-      "display_order": 160
+      "display_order": 160,
+      "glyph_svg": "row2_e_i.svg"
     },
     {
       "id": "b6de497f-80af-4c4a-82ee-3242c62e2df1",
@@ -178,7 +194,8 @@
       "vowel": "i",
       "syllable_type": "vowel_e_i",
       "glyph_image": "row2_e_i.png",
-      "display_order": 161
+      "display_order": 161,
+      "glyph_svg": "row2_e_i.svg"
     },
     {
       "id": "b5ac0445-e550-4d1e-badc-f6531f98b138",
@@ -187,7 +204,8 @@
       "vowel": "e",
       "syllable_type": "vowel_e_i",
       "glyph_image": "row2_be_bi.png",
-      "display_order": 171
+      "display_order": 171,
+      "glyph_svg": "row2_be_bi.svg"
     },
     {
       "id": "929a2b20-0f35-4480-91ae-caec8942e493",
@@ -196,7 +214,8 @@
       "vowel": "i",
       "syllable_type": "vowel_e_i",
       "glyph_image": "row2_be_bi.png",
-      "display_order": 172
+      "display_order": 172,
+      "glyph_svg": "row2_be_bi.svg"
     },
     {
       "id": "648793f2-887e-4696-bf1b-18b7fc476e75",
@@ -205,7 +224,8 @@
       "vowel": "e",
       "syllable_type": "vowel_e_i",
       "glyph_image": "row2_ke_ki.png",
-      "display_order": 182
+      "display_order": 182,
+      "glyph_svg": "row2_ke_ki.svg"
     },
     {
       "id": "2af04d8a-5c1a-48f0-b0a0-1c9ddb30d9e4",
@@ -214,7 +234,8 @@
       "vowel": "i",
       "syllable_type": "vowel_e_i",
       "glyph_image": "row2_ke_ki.png",
-      "display_order": 183
+      "display_order": 183,
+      "glyph_svg": "row2_ke_ki.svg"
     },
     {
       "id": "4020f4a4-0b3d-48af-8991-776bbcc594c6",
@@ -223,7 +244,8 @@
       "vowel": "e",
       "syllable_type": "vowel_e_i",
       "glyph_image": "row2_de_di.png",
-      "display_order": 193
+      "display_order": 193,
+      "glyph_svg": "row2_de_di.svg"
     },
     {
       "id": "fe3bc316-e19b-446a-b0f1-75a7c55c896d",
@@ -232,7 +254,8 @@
       "vowel": "i",
       "syllable_type": "vowel_e_i",
       "glyph_image": "row2_de_di.png",
-      "display_order": 194
+      "display_order": 194,
+      "glyph_svg": "row2_de_di.svg"
     },
     {
       "id": "0ae66686-07fe-4675-bffa-39cf0f5645b3",
@@ -241,7 +264,8 @@
       "vowel": "e",
       "syllable_type": "vowel_e_i",
       "glyph_image": "row2_ge_gi.png",
-      "display_order": 204
+      "display_order": 204,
+      "glyph_svg": "row2_ge_gi.svg"
     },
     {
       "id": "756c62c7-9dae-46c8-a176-d1c75ef56fb4",
@@ -250,7 +274,8 @@
       "vowel": "i",
       "syllable_type": "vowel_e_i",
       "glyph_image": "row2_ge_gi.png",
-      "display_order": 205
+      "display_order": 205,
+      "glyph_svg": "row2_ge_gi.svg"
     },
     {
       "id": "a6ae512f-5fdb-4921-b9b6-5b6ec3da5641",
@@ -259,7 +284,8 @@
       "vowel": "e",
       "syllable_type": "vowel_e_i",
       "glyph_image": "row2_he_hi.png",
-      "display_order": 215
+      "display_order": 215,
+      "glyph_svg": "row2_he_hi.svg"
     },
     {
       "id": "6c59cf0d-d414-4ce6-8c72-613e5b02a692",
@@ -268,7 +294,8 @@
       "vowel": "i",
       "syllable_type": "vowel_e_i",
       "glyph_image": "row2_he_hi.png",
-      "display_order": 216
+      "display_order": 216,
+      "glyph_svg": "row2_he_hi.svg"
     },
     {
       "id": "502c5988-ff2c-4421-a07b-e4f3f252910d",
@@ -277,7 +304,8 @@
       "vowel": "e",
       "syllable_type": "vowel_e_i",
       "glyph_image": "row2_le_li.png",
-      "display_order": 226
+      "display_order": 226,
+      "glyph_svg": "row2_le_li.svg"
     },
     {
       "id": "74c27598-58bf-42dc-8083-03a29cdd4ccb",
@@ -286,7 +314,8 @@
       "vowel": "i",
       "syllable_type": "vowel_e_i",
       "glyph_image": "row2_le_li.png",
-      "display_order": 227
+      "display_order": 227,
+      "glyph_svg": "row2_le_li.svg"
     },
     {
       "id": "32a59f2f-b609-42fd-85f8-a352e3367270",
@@ -295,7 +324,8 @@
       "vowel": "e",
       "syllable_type": "vowel_e_i",
       "glyph_image": "row2_me_mi.png",
-      "display_order": 237
+      "display_order": 237,
+      "glyph_svg": "row2_me_mi.svg"
     },
     {
       "id": "dc5e872b-1564-4140-937b-144498c38cf8",
@@ -304,7 +334,8 @@
       "vowel": "i",
       "syllable_type": "vowel_e_i",
       "glyph_image": "row2_me_mi.png",
-      "display_order": 238
+      "display_order": 238,
+      "glyph_svg": "row2_me_mi.svg"
     },
     {
       "id": "951ecd37-678e-4a83-bc3e-0928165a6f97",
@@ -313,7 +344,8 @@
       "vowel": "e",
       "syllable_type": "vowel_e_i",
       "glyph_image": "row2_ne_ni.png",
-      "display_order": 248
+      "display_order": 248,
+      "glyph_svg": "row2_ne_ni.svg"
     },
     {
       "id": "45e7c772-7e91-40f0-a543-cf74eb589176",
@@ -322,7 +354,8 @@
       "vowel": "i",
       "syllable_type": "vowel_e_i",
       "glyph_image": "row2_ne_ni.png",
-      "display_order": 249
+      "display_order": 249,
+      "glyph_svg": "row2_ne_ni.svg"
     },
     {
       "id": "377f32f6-608f-4d70-8b4e-f7aa6e0a932e",
@@ -331,7 +364,8 @@
       "vowel": "e",
       "syllable_type": "vowel_e_i",
       "glyph_image": "row2_nge_ngi.png",
-      "display_order": 259
+      "display_order": 259,
+      "glyph_svg": "row2_nge_ngi.svg"
     },
     {
       "id": "e7be0084-a024-45ee-b9a7-8813a0b212f9",
@@ -340,7 +374,8 @@
       "vowel": "i",
       "syllable_type": "vowel_e_i",
       "glyph_image": "row2_nge_ngi.png",
-      "display_order": 260
+      "display_order": 260,
+      "glyph_svg": "row2_nge_ngi.svg"
     },
     {
       "id": "6abb0463-faa6-4a1f-805d-ecc5eae300c1",
@@ -349,7 +384,8 @@
       "vowel": "e",
       "syllable_type": "vowel_e_i",
       "glyph_image": "row2_pe_pi.png",
-      "display_order": 270
+      "display_order": 270,
+      "glyph_svg": "row2_pe_pi.svg"
     },
     {
       "id": "7ffb2eeb-88f9-4f19-bf88-75b64032125f",
@@ -358,7 +394,8 @@
       "vowel": "i",
       "syllable_type": "vowel_e_i",
       "glyph_image": "row2_pe_pi.png",
-      "display_order": 271
+      "display_order": 271,
+      "glyph_svg": "row2_pe_pi.svg"
     },
     {
       "id": "80a7445b-e9d5-4ea5-926c-88e1b298d87e",
@@ -367,7 +404,8 @@
       "vowel": "e",
       "syllable_type": "vowel_e_i",
       "glyph_image": "row2_se_si.png",
-      "display_order": 281
+      "display_order": 281,
+      "glyph_svg": "row2_se_si.svg"
     },
     {
       "id": "d67d5182-505d-44b6-9657-16d4f1fd2f79",
@@ -376,7 +414,8 @@
       "vowel": "i",
       "syllable_type": "vowel_e_i",
       "glyph_image": "row2_se_si.png",
-      "display_order": 282
+      "display_order": 282,
+      "glyph_svg": "row2_se_si.svg"
     },
     {
       "id": "29369dd9-5b55-44f8-bca8-0ca830a96279",
@@ -385,7 +424,8 @@
       "vowel": "e",
       "syllable_type": "vowel_e_i",
       "glyph_image": "row2_te_ti.png",
-      "display_order": 292
+      "display_order": 292,
+      "glyph_svg": "row2_te_ti.svg"
     },
     {
       "id": "ef3a225e-72b8-4e06-ae84-ddaf04125610",
@@ -394,7 +434,8 @@
       "vowel": "i",
       "syllable_type": "vowel_e_i",
       "glyph_image": "row2_te_ti.png",
-      "display_order": 293
+      "display_order": 293,
+      "glyph_svg": "row2_te_ti.svg"
     },
     {
       "id": "d241925f-a44b-4659-b10e-44ad742eca65",
@@ -403,7 +444,8 @@
       "vowel": "e",
       "syllable_type": "vowel_e_i",
       "glyph_image": "row2_we_wi.png",
-      "display_order": 303
+      "display_order": 303,
+      "glyph_svg": "row2_we_wi.svg"
     },
     {
       "id": "f7df8275-7d86-4d94-85e3-be0309670290",
@@ -412,7 +454,8 @@
       "vowel": "i",
       "syllable_type": "vowel_e_i",
       "glyph_image": "row2_we_wi.png",
-      "display_order": 304
+      "display_order": 304,
+      "glyph_svg": "row2_we_wi.svg"
     },
     {
       "id": "9721d8d1-319c-4c04-a196-743742089250",
@@ -421,7 +464,8 @@
       "vowel": "e",
       "syllable_type": "vowel_e_i",
       "glyph_image": "row2_ye_yi.png",
-      "display_order": 314
+      "display_order": 314,
+      "glyph_svg": "row2_ye_yi.svg"
     },
     {
       "id": "8c485049-c210-40d2-96cd-5fa288f93a39",
@@ -430,7 +474,8 @@
       "vowel": "i",
       "syllable_type": "vowel_e_i",
       "glyph_image": "row2_ye_yi.png",
-      "display_order": 315
+      "display_order": 315,
+      "glyph_svg": "row2_ye_yi.svg"
     },
     {
       "id": "77856fe7-22fd-43c1-aa4f-508fc0382ad1",
@@ -439,7 +484,8 @@
       "vowel": "o",
       "syllable_type": "vowel_o_u",
       "glyph_image": "row3_o_u.png",
-      "display_order": 325
+      "display_order": 325,
+      "glyph_svg": "row3_o_u.svg"
     },
     {
       "id": "e076edd4-5e31-4571-a99a-1baa2057c8fa",
@@ -448,7 +494,8 @@
       "vowel": "u",
       "syllable_type": "vowel_o_u",
       "glyph_image": "row3_o_u.png",
-      "display_order": 326
+      "display_order": 326,
+      "glyph_svg": "row3_o_u.svg"
     },
     {
       "id": "4a5d9367-4850-4159-9291-d5e19b32b945",
@@ -457,7 +504,8 @@
       "vowel": "o",
       "syllable_type": "vowel_o_u",
       "glyph_image": "row3_bo_bu.png",
-      "display_order": 336
+      "display_order": 336,
+      "glyph_svg": "row3_bo_bu.svg"
     },
     {
       "id": "5d108b09-3281-482c-b107-3b0b1a85ce88",
@@ -466,7 +514,8 @@
       "vowel": "u",
       "syllable_type": "vowel_o_u",
       "glyph_image": "row3_bo_bu.png",
-      "display_order": 337
+      "display_order": 337,
+      "glyph_svg": "row3_bo_bu.svg"
     },
     {
       "id": "8d17afac-76a0-46f2-8ce8-62545862ddb2",
@@ -475,7 +524,8 @@
       "vowel": "o",
       "syllable_type": "vowel_o_u",
       "glyph_image": "row3_ko_ku.png",
-      "display_order": 347
+      "display_order": 347,
+      "glyph_svg": "row3_ko_ku.svg"
     },
     {
       "id": "0a392391-3403-4b66-8231-6c0655f2566e",
@@ -484,7 +534,8 @@
       "vowel": "u",
       "syllable_type": "vowel_o_u",
       "glyph_image": "row3_ko_ku.png",
-      "display_order": 348
+      "display_order": 348,
+      "glyph_svg": "row3_ko_ku.svg"
     },
     {
       "id": "9b478f96-eb59-4161-bccb-97e46a3654fb",
@@ -493,7 +544,8 @@
       "vowel": "o",
       "syllable_type": "vowel_o_u",
       "glyph_image": "row3_do_du.png",
-      "display_order": 358
+      "display_order": 358,
+      "glyph_svg": "row3_do_du.svg"
     },
     {
       "id": "5a8e7354-e233-4c9e-857f-21a0aa1d53dc",
@@ -502,7 +554,8 @@
       "vowel": "u",
       "syllable_type": "vowel_o_u",
       "glyph_image": "row3_do_du.png",
-      "display_order": 359
+      "display_order": 359,
+      "glyph_svg": "row3_do_du.svg"
     },
     {
       "id": "4fc2989b-b689-44ab-b2c1-7ebcccb6c13c",
@@ -511,7 +564,8 @@
       "vowel": "o",
       "syllable_type": "vowel_o_u",
       "glyph_image": "row3_go_gu.png",
-      "display_order": 369
+      "display_order": 369,
+      "glyph_svg": "row3_go_gu.svg"
     },
     {
       "id": "0414df14-ccf2-43e1-81b9-7c9ed5bd5489",
@@ -520,7 +574,8 @@
       "vowel": "u",
       "syllable_type": "vowel_o_u",
       "glyph_image": "row3_go_gu.png",
-      "display_order": 370
+      "display_order": 370,
+      "glyph_svg": "row3_go_gu.svg"
     },
     {
       "id": "fea64187-4189-42c8-b024-461c221413c7",
@@ -529,7 +584,8 @@
       "vowel": "o",
       "syllable_type": "vowel_o_u",
       "glyph_image": "row3_ho_hu.png",
-      "display_order": 380
+      "display_order": 380,
+      "glyph_svg": "row3_ho_hu.svg"
     },
     {
       "id": "99913880-5cb6-43f0-b216-ddc03e9b0c35",
@@ -538,7 +594,8 @@
       "vowel": "u",
       "syllable_type": "vowel_o_u",
       "glyph_image": "row3_ho_hu.png",
-      "display_order": 381
+      "display_order": 381,
+      "glyph_svg": "row3_ho_hu.svg"
     },
     {
       "id": "8ba1b694-c294-4234-b5a5-be274b1efb18",
@@ -547,7 +604,8 @@
       "vowel": "o",
       "syllable_type": "vowel_o_u",
       "glyph_image": "row3_lo_lu.png",
-      "display_order": 391
+      "display_order": 391,
+      "glyph_svg": "row3_lo_lu.svg"
     },
     {
       "id": "e5e6e10f-1990-4857-b05d-2a247f31e335",
@@ -556,7 +614,8 @@
       "vowel": "u",
       "syllable_type": "vowel_o_u",
       "glyph_image": "row3_lo_lu.png",
-      "display_order": 392
+      "display_order": 392,
+      "glyph_svg": "row3_lo_lu.svg"
     },
     {
       "id": "931ea5e2-c86b-4b8a-b2c3-2bfaeff83e62",
@@ -565,7 +624,8 @@
       "vowel": "o",
       "syllable_type": "vowel_o_u",
       "glyph_image": "row3_mo_mu.png",
-      "display_order": 402
+      "display_order": 402,
+      "glyph_svg": "row3_mo_mu.svg"
     },
     {
       "id": "76f8f097-5c03-411b-af94-ddbb826d3688",
@@ -574,7 +634,8 @@
       "vowel": "u",
       "syllable_type": "vowel_o_u",
       "glyph_image": "row3_mo_mu.png",
-      "display_order": 403
+      "display_order": 403,
+      "glyph_svg": "row3_mo_mu.svg"
     },
     {
       "id": "349502f8-4d7e-4371-b0f4-c7bd63d8dd11",
@@ -583,7 +644,8 @@
       "vowel": "o",
       "syllable_type": "vowel_o_u",
       "glyph_image": "row3_no_nu.png",
-      "display_order": 413
+      "display_order": 413,
+      "glyph_svg": "row3_no_nu.svg"
     },
     {
       "id": "82f17ff7-3bea-481a-80ee-5fffddeb2d95",
@@ -592,7 +654,8 @@
       "vowel": "u",
       "syllable_type": "vowel_o_u",
       "glyph_image": "row3_no_nu.png",
-      "display_order": 414
+      "display_order": 414,
+      "glyph_svg": "row3_no_nu.svg"
     },
     {
       "id": "e2a9560c-6525-4f46-9d6c-1d007970e2c7",
@@ -601,7 +664,8 @@
       "vowel": "o",
       "syllable_type": "vowel_o_u",
       "glyph_image": "row3_ngo_ngu.png",
-      "display_order": 424
+      "display_order": 424,
+      "glyph_svg": "row3_ngo_ngu.svg"
     },
     {
       "id": "95f0128a-d66c-474e-8022-3d967adf0b0a",
@@ -610,7 +674,8 @@
       "vowel": "u",
       "syllable_type": "vowel_o_u",
       "glyph_image": "row3_ngo_ngu.png",
-      "display_order": 425
+      "display_order": 425,
+      "glyph_svg": "row3_ngo_ngu.svg"
     },
     {
       "id": "c78ed310-0242-46cb-b089-5d656f797d63",
@@ -619,7 +684,8 @@
       "vowel": "o",
       "syllable_type": "vowel_o_u",
       "glyph_image": "row3_po_pu.png",
-      "display_order": 435
+      "display_order": 435,
+      "glyph_svg": "row3_po_pu.svg"
     },
     {
       "id": "afff7bcb-17fd-4745-8842-79e54092cd60",
@@ -628,7 +694,8 @@
       "vowel": "u",
       "syllable_type": "vowel_o_u",
       "glyph_image": "row3_po_pu.png",
-      "display_order": 436
+      "display_order": 436,
+      "glyph_svg": "row3_po_pu.svg"
     },
     {
       "id": "1eefcedb-170e-465b-b477-2d0640f759fc",
@@ -637,7 +704,8 @@
       "vowel": "o",
       "syllable_type": "vowel_o_u",
       "glyph_image": "row3_so_su.png",
-      "display_order": 446
+      "display_order": 446,
+      "glyph_svg": "row3_so_su.svg"
     },
     {
       "id": "6d0d1d84-5533-4574-8da8-75b45faa5501",
@@ -646,7 +714,8 @@
       "vowel": "u",
       "syllable_type": "vowel_o_u",
       "glyph_image": "row3_so_su.png",
-      "display_order": 447
+      "display_order": 447,
+      "glyph_svg": "row3_so_su.svg"
     },
     {
       "id": "efec1462-54a6-4e2d-aa5c-b2dd89a10c19",
@@ -655,7 +724,8 @@
       "vowel": "o",
       "syllable_type": "vowel_o_u",
       "glyph_image": "row3_to_tu.png",
-      "display_order": 457
+      "display_order": 457,
+      "glyph_svg": "row3_to_tu.svg"
     },
     {
       "id": "065435b4-3809-4286-9128-271495554217",
@@ -664,7 +734,8 @@
       "vowel": "u",
       "syllable_type": "vowel_o_u",
       "glyph_image": "row3_to_tu.png",
-      "display_order": 458
+      "display_order": 458,
+      "glyph_svg": "row3_to_tu.svg"
     },
     {
       "id": "21019cdd-7388-4736-b123-427591d01fd5",
@@ -673,7 +744,8 @@
       "vowel": "o",
       "syllable_type": "vowel_o_u",
       "glyph_image": "row3_wo_wu.png",
-      "display_order": 468
+      "display_order": 468,
+      "glyph_svg": "row3_wo_wu.svg"
     },
     {
       "id": "10f186ff-31ac-4ce9-ac86-77c7ec901013",
@@ -682,7 +754,8 @@
       "vowel": "u",
       "syllable_type": "vowel_o_u",
       "glyph_image": "row3_wo_wu.png",
-      "display_order": 469
+      "display_order": 469,
+      "glyph_svg": "row3_wo_wu.svg"
     },
     {
       "id": "c869d8d6-14a7-4e2f-981c-0937eeb000e7",
@@ -691,7 +764,8 @@
       "vowel": "o",
       "syllable_type": "vowel_o_u",
       "glyph_image": "row3_yo_yu.png",
-      "display_order": 479
+      "display_order": 479,
+      "glyph_svg": "row3_yo_yu.svg"
     },
     {
       "id": "61b4e221-b2d8-44bb-8f91-2fde8468b38a",
@@ -700,7 +774,8 @@
       "vowel": "u",
       "syllable_type": "vowel_o_u",
       "glyph_image": "row3_yo_yu.png",
-      "display_order": 480
+      "display_order": 480,
+      "glyph_svg": "row3_yo_yu.svg"
     },
     {
       "id": "e36455cf-c613-440e-9e4d-09cf72b0ca27",
@@ -709,7 +784,8 @@
       "vowel": null,
       "syllable_type": "final_consonant",
       "glyph_image": "row4_final_b.png",
-      "display_order": 490
+      "display_order": 490,
+      "glyph_svg": "row4_final_b.svg"
     },
     {
       "id": "2dc300fb-bf23-4048-8f44-0b56919a17ce",
@@ -718,7 +794,8 @@
       "vowel": null,
       "syllable_type": "final_consonant",
       "glyph_image": "row4_final_k.png",
-      "display_order": 500
+      "display_order": 500,
+      "glyph_svg": "row4_final_k.svg"
     },
     {
       "id": "b5e72af8-ff3b-40d1-996f-f68ad30c7134",
@@ -727,7 +804,8 @@
       "vowel": null,
       "syllable_type": "final_consonant",
       "glyph_image": "row4_final_d.png",
-      "display_order": 510
+      "display_order": 510,
+      "glyph_svg": "row4_final_d.svg"
     },
     {
       "id": "3f8e0834-2a99-4206-a2d7-6d8425336a0a",
@@ -736,7 +814,8 @@
       "vowel": null,
       "syllable_type": "final_consonant",
       "glyph_image": "row4_final_g.png",
-      "display_order": 520
+      "display_order": 520,
+      "glyph_svg": "row4_final_g.svg"
     },
     {
       "id": "024099db-a20a-4217-bc2b-f6ed58a0935f",
@@ -745,7 +824,8 @@
       "vowel": null,
       "syllable_type": "final_consonant",
       "glyph_image": "row4_final_l.png",
-      "display_order": 530
+      "display_order": 530,
+      "glyph_svg": "row4_final_l.svg"
     },
     {
       "id": "764df71a-6234-472a-a002-e74d1a636e32",
@@ -754,7 +834,8 @@
       "vowel": null,
       "syllable_type": "final_consonant",
       "glyph_image": "row4_final_m.png",
-      "display_order": 540
+      "display_order": 540,
+      "glyph_svg": "row4_final_m.svg"
     },
     {
       "id": "aba0505c-a94d-4efb-9547-0181439aae98",
@@ -763,7 +844,8 @@
       "vowel": null,
       "syllable_type": "final_consonant",
       "glyph_image": "row4_final_n.png",
-      "display_order": 550
+      "display_order": 550,
+      "glyph_svg": "row4_final_n.svg"
     },
     {
       "id": "66593e94-e066-4221-8115-1a668a98b4f7",
@@ -772,7 +854,8 @@
       "vowel": null,
       "syllable_type": "final_consonant",
       "glyph_image": "row4_final_ng.png",
-      "display_order": 560
+      "display_order": 560,
+      "glyph_svg": "row4_final_ng.svg"
     },
     {
       "id": "10e8ed5b-8712-4eba-82bf-3df16b8c58c0",
@@ -781,7 +864,8 @@
       "vowel": null,
       "syllable_type": "final_consonant",
       "glyph_image": "row4_final_p.png",
-      "display_order": 570
+      "display_order": 570,
+      "glyph_svg": "row4_final_p.svg"
     },
     {
       "id": "13bfb13b-cc69-495b-89ab-4677161f1d40",
@@ -790,7 +874,8 @@
       "vowel": null,
       "syllable_type": "final_consonant",
       "glyph_image": "row4_final_s.png",
-      "display_order": 580
+      "display_order": 580,
+      "glyph_svg": "row4_final_s.svg"
     },
     {
       "id": "bc0b75c3-668f-4dcd-91de-a087994341f5",
@@ -799,7 +884,8 @@
       "vowel": null,
       "syllable_type": "final_consonant",
       "glyph_image": "row4_final_t.png",
-      "display_order": 590
+      "display_order": 590,
+      "glyph_svg": "row4_final_t.svg"
     },
     {
       "id": "c3effb4b-141a-4b75-8200-ea1c0147486d",
@@ -808,7 +894,8 @@
       "vowel": null,
       "syllable_type": "final_consonant",
       "glyph_image": "row4_final_w.png",
-      "display_order": 600
+      "display_order": 600,
+      "glyph_svg": "row4_final_w.svg"
     },
     {
       "id": "8e46d127-9197-4c6b-82fe-7e17823478f4",
@@ -817,7 +904,8 @@
       "vowel": null,
       "syllable_type": "final_consonant",
       "glyph_image": "row4_final_y.png",
-      "display_order": 610
+      "display_order": 610,
+      "glyph_svg": "row4_final_y.svg"
     }
   ],
   "examples": [

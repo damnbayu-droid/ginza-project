@@ -170,14 +170,33 @@ export function getFeaturedSiderCards(): SiderWordCard[] {
 }
 
 /**
+ * Gabungkan entri file-based (cache) dengan entri tambahan dari sumber lain
+ * (mis. kamus_entries terverifikasi di Supabase) — dedup berdasarkan kata,
+ * tanpa mengubah cache file asli.
+ */
+function mergeWithExtra(base: KamusEntry[], extra?: KamusEntry[]): KamusEntry[] {
+  if (!extra || extra.length === 0) return base;
+  const seen = new Set(base.map(e => e.word.toLowerCase()));
+  const merged = [...base];
+  for (const e of extra) {
+    const key = e.word.toLowerCase();
+    if (!seen.has(key)) {
+      merged.push(e);
+      seen.add(key);
+    }
+  }
+  return merged.sort((a, b) => a.word.localeCompare(b.word, "id", { sensitivity: "base" }));
+}
+
+/**
  * Get summary stats of indexed dictionary
  */
-export function getKamusStats(forceRefresh = false): KamusStats {
-  if (cachedStats && !forceRefresh) {
+export function getKamusStats(forceRefresh = false, extraEntries?: KamusEntry[]): KamusStats {
+  if (cachedStats && !forceRefresh && !extraEntries?.length) {
     return cachedStats;
   }
 
-  const entries = getIndexedKamusEntries(forceRefresh);
+  const entries = mergeWithExtra(getIndexedKamusEntries(forceRefresh), extraEntries);
   const dirs = getKamusDirectories();
   const fileNamesSet = new Set<string>();
   const alphabetCounts: Record<string, number> = {};
@@ -198,7 +217,7 @@ export function getKamusStats(forceRefresh = false): KamusStats {
     alphabetCounts,
   };
 
-  cachedStats = stats;
+  if (!extraEntries?.length) cachedStats = stats;
   return stats;
 }
 
@@ -210,13 +229,14 @@ export function searchKamusEntries(options: {
   letter?: string;
   page?: number;
   limit?: number;
+  extraEntries?: KamusEntry[];
 }): {
   items: KamusEntry[];
   total: number;
   page: number;
   totalPages: number;
 } {
-  const entries = getIndexedKamusEntries();
+  const entries = mergeWithExtra(getIndexedKamusEntries(), options.extraEntries);
   const { query = "", letter = "", page = 1, limit = 60 } = options;
 
   let filtered = entries;

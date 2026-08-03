@@ -8,6 +8,8 @@ import type { HomeChatMessage, Language } from "@/lib/types";
 import { searchKamusEntries } from "@/lib/kamus-parser";
 import { AI_NAME, WEBSITE_NAME, PROJECT_NAME, BOGANI_PERSONA_ID, BOGANI_PERSONA_EN } from "@/lib/bogani-persona";
 import { getKnowledgeContext } from "@/lib/knowledge-retrieval";
+import { getCurrentUserProfile } from "@/lib/supabase-auth-server";
+import { saveConversation, logMetricEvent, type Profile } from "@/lib/ginza-db";
 
 const SYSTEM_PROMPT_ID = BOGANI_PERSONA_ID;
 const SYSTEM_PROMPT_EN = BOGANI_PERSONA_EN;
@@ -127,7 +129,7 @@ async function callProviderDirect(
   fullPrompt: string,
   systemPrompt: string,
   parsedFileData?: { mimeType: string; base64Data: string } | null
-): Promise<{ text?: string; provider?: string; error?: string; status?: number }> {
+): Promise<{ text?: string; provider?: string; error?: string; status?: number; promptTokens?: number; completionTokens?: number }> {
   if (supabaseAdmin) {
     const { data: providerKeys } = await supabaseAdmin
       .from("gw_provider_keys")
@@ -165,7 +167,12 @@ async function callProviderDirect(
           );
 
           if (result.success && result.aiResponseText) {
-            return { text: result.aiResponseText, provider: selected.provider };
+            return {
+              text: result.aiResponseText,
+              provider: selected.provider,
+              promptTokens: result.promptTokens,
+              completionTokens: result.completionTokens,
+            };
           }
         } catch (err) {
           console.warn(`[homepage-chat] Provider call failed for ${selected.provider}:`, err);
@@ -200,11 +207,68 @@ async function callProviderDirect(
       `${item.provider} env key`
     );
     if (result.success && result.aiResponseText) {
-      return { text: result.aiResponseText, provider: item.provider };
+      return {
+        text: result.aiResponseText,
+        provider: item.provider,
+        promptTokens: result.promptTokens,
+        completionTokens: result.completionTokens,
+      };
     }
   }
 
   return {};
+}
+
+/**
+ * Catat riwayat percakapan + pemakaian token utk user yang sedang login, dan
+ * catat pertanyaan ke metrics_events (buat panel Metrics "Pertanyaan
+ * Terbanyak"). Selalu dipanggil non-blocking (fire-and-forget) supaya tidak
+ * menambah latensi balasan ke pengguna. Chat anonim (belum login) tetap
+ * boleh jalan seperti biasa — cuma dilewati bagian riwayat/token usage-nya.
+ */
+async function logChatTurn(opts: {
+  profile: Profile | null;
+  prompt: string;
+  responseText: string;
+  provider: string;
+  history: HomeChatMessage[];
+  promptTokens?: number;
+  completionTokens?: number;
+}) {
+  const { profile, prompt, responseText, provider, history, promptTokens, completionTokens } = opts;
+
+  try {
+    await logMetricEvent({ type: "ai_question", targetText: prompt, userId: profile?.id });
+  } catch (e) {
+    console.warn("[homepage-chat] Failed logging ai_question metric:", e);
+  }
+
+  if (!profile) return; // chat anonim: tidak ada riwayat/token usage utk disimpan
+
+  try {
+    const now = new Date().toISOString();
+    const messages = [
+      ...history.map((m) => ({ role: m.role, content: m.content, timestamp: m.timestamp })),
+      { role: "user", content: prompt, timestamp: now },
+      { role: "assistant", content: responseText, timestamp: now },
+    ];
+    const title = prompt.slice(0, 60) + (prompt.length > 60 ? "..." : "");
+    await saveConversation(profile.id, undefined, title, messages);
+  } catch (e) {
+    console.warn("[homepage-chat] Failed saving conversation history:", e);
+  }
+
+  if (!supabaseAdmin) return;
+  try {
+    await supabaseAdmin.from("token_usage").insert({
+      user_id: profile.id,
+      provider,
+      endpoint: "homepage_chat",
+      tokens_used: (promptTokens ?? 0) + (completionTokens ?? 0),
+    });
+  } catch (e) {
+    console.warn("[homepage-chat] Failed logging token_usage:", e);
+  }
 }
 
 /** Helper function to create real-time streaming response */
@@ -270,10 +334,12 @@ export async function POST(req: NextRequest) {
   }
 
   const fullPrompt = buildPromptWithHistory(history, prompt);
+  const profile = await getCurrentUserProfile().catch(() => null);
 
   // 1. Preferred: route through the AI Gateway as a registered client app.
   const gatewayText = await callGateway(req, fullPrompt, fileInput);
   if (gatewayText) {
+    void logChatTurn({ profile, prompt, responseText: gatewayText, provider: "gemini", history });
     if (wantStream) {
       return createTextStreamResponse(gatewayText, "gemini");
     }
@@ -289,6 +355,15 @@ export async function POST(req: NextRequest) {
   }
   if (direct.text) {
     const provider = direct.provider || "gemini";
+    void logChatTurn({
+      profile,
+      prompt,
+      responseText: direct.text,
+      provider,
+      history,
+      promptTokens: direct.promptTokens,
+      completionTokens: direct.completionTokens,
+    });
     if (wantStream) {
       return createTextStreamResponse(direct.text, provider);
     }
@@ -297,6 +372,7 @@ export async function POST(req: NextRequest) {
 
   // 3. Fallback simulation if no API key is set
   const simulatedText = simulateReply(prompt, lang);
+  void logChatTurn({ profile, prompt, responseText: simulatedText, provider: "simulated", history });
   // Non-blocking sync to MyAI OS Master Data Center
   (async () => {
     try {

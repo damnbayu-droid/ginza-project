@@ -17,6 +17,7 @@ export interface AksaraSyllable {
   vowel: string | null;
   syllable_type: "vowel_a" | "vowel_e_i" | "vowel_o_u" | "final_consonant";
   glyph_image: string;
+  glyph_svg: string;
   display_order: number;
 }
 
