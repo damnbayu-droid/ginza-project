@@ -56,8 +56,22 @@ export function Badge({ children, tone = "default" }: { children: ReactNode; ton
   );
 }
 
-export function Button({ children, onClick, variant = "default", disabled, className = "" }: {
-  children: ReactNode; onClick?: () => void; variant?: "default" | "primary" | "danger"; disabled?: boolean; className?: string;
+export function Button({
+  children,
+  onClick,
+  variant = "default",
+  disabled,
+  className = "",
+  type = "button",
+  title,
+}: {
+  children: ReactNode;
+  onClick?: (e?: any) => void;
+  variant?: "default" | "primary" | "danger";
+  disabled?: boolean;
+  className?: string;
+  type?: "button" | "submit" | "reset";
+  title?: string;
 }) {
   const variantClasses: Record<string, string> = {
     default: "border border-bento-border text-bento-text-primary hover:bg-bento-surface-lighter",
@@ -66,6 +80,8 @@ export function Button({ children, onClick, variant = "default", disabled, class
   };
   return (
     <button
+      type={type}
+      title={title}
       onClick={onClick}
       disabled={disabled}
       className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${variantClasses[variant]} ${className}`}
