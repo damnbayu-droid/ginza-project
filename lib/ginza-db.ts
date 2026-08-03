@@ -337,15 +337,47 @@ export async function getVerificatorsForEntry(entryId: string) {
   return data ?? [];
 }
 
+import aksaraFallbackData from "../data/aksara/aksara_mongondow.json";
+
+function getFallbackAksaraGlyphs(status?: string): AksaraGlyphRow[] {
+  const syllables = (aksaraFallbackData as any).syllables || [];
+  const rows: AksaraGlyphRow[] = syllables.map((s: any) => ({
+    id: s.id || s.romanization,
+    romanization: s.romanization,
+    consonant: s.consonant || null,
+    vowel: s.vowel || null,
+    syllable_type: s.syllable_type,
+    glyph_svg_path: `/aksara-svg/${s.glyph_svg}`,
+    glyph_image_legacy: `/aksara/${s.glyph_image}`,
+    unicode_pua_codepoint: null,
+    display_order: s.display_order || 10,
+    status: "verified",
+    notes: "Aksara Mongondow (Fase 1: Vektor SVG)",
+    created_by: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }));
+
+  if (status) {
+    return rows.filter((r) => r.status === status);
+  }
+  return rows;
+}
+
 // ── Aksara Mongondow (Database Huruf/Abjad) ─────────────────────────────
 
 export async function listAksaraGlyphs(opts: { status?: string } = {}) {
   const db = assertDb();
-  let q = db.from("aksara_glyphs").select("*").order("display_order", { ascending: true });
-  if (opts.status) q = q.eq("status", opts.status);
-  const { data, error } = await q;
-  if (error) throw error;
-  return (data ?? []) as AksaraGlyphRow[];
+  try {
+    let q = db.from("aksara_glyphs").select("*").order("display_order", { ascending: true });
+    if (opts.status) q = q.eq("status", opts.status);
+    const { data, error } = await q;
+    if (error) throw error;
+    return (data ?? []) as AksaraGlyphRow[];
+  } catch (err: any) {
+    console.warn("[listAksaraGlyphs] Database table missing or query error, returning fallback JSON data:", err?.message || err);
+    return getFallbackAksaraGlyphs(opts.status);
+  }
 }
 
 export async function upsertAksaraGlyph(glyph: Partial<AksaraGlyphRow> & { romanization: string; syllable_type: AksaraGlyphRow["syllable_type"]; glyph_svg_path: string }) {
@@ -378,12 +410,17 @@ export async function verifyAksaraGlyph(glyphId: string, verificatorId: string, 
 
 export async function getVerificatorsForGlyph(glyphId: string) {
   const db = assertDb();
-  const { data, error } = await db
-    .from("aksara_glyph_verifications")
-    .select("verificator_id, verified_at, note, profiles:verificator_id (display_name, avatar_url)")
-    .eq("glyph_id", glyphId);
-  if (error) throw error;
-  return data ?? [];
+  try {
+    const { data, error } = await db
+      .from("aksara_glyph_verifications")
+      .select("verificator_id, verified_at, note, profiles:verificator_id (display_name, avatar_url)")
+      .eq("glyph_id", glyphId);
+    if (error) throw error;
+    return data ?? [];
+  } catch (err: any) {
+    console.warn("[getVerificatorsForGlyph] Missing table or query error:", err?.message || err);
+    return [];
+  }
 }
 
 // ── Knowledge ────────────────────────────────────────────────────────────
