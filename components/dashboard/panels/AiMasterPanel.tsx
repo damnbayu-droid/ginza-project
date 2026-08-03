@@ -80,6 +80,15 @@ const DEFAULT_AI_MEMORIES: AiMemoryItem[] = [
     isActive: true,
     createdAt: new Date().toISOString(),
   },
+  {
+    id: "mem-4",
+    topic: "Asal-Usul Rumpun Bahasa Mongondow (Austronesia Kuno)",
+    category: "Fakta Adat & Sejarah",
+    content: "Bahasa Mongondow di Kotabunan, Boltim, Kotamobagu, Bolsel, Bolmut, dan Bolmong adalah bagian langsung dari Rumpun Bahasa Austronesia Kuno (berkerabat dengan Filipina Selatan dan Bugis), BUKAN bangsa Melayu atau turunan bahasa Melayu.",
+    source: "Sejarah Linguistik & Founder MongondowPedia",
+    isActive: true,
+    createdAt: new Date().toISOString(),
+  },
 ];
 
 export default function AiMasterPanel() {

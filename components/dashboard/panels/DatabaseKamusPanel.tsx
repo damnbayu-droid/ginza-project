@@ -517,7 +517,7 @@ export default function DatabaseKamusPanel() {
                 <thead className="bg-bento-surface-lighter text-bento-text-secondary border-b border-bento-border font-semibold uppercase tracking-wider text-[10px]">
                   <tr>
                     <th className="p-3.5">Bahasa Mongondow</th>
-                    <th className="p-3.5">Bahasa Melayu Mongondow / Manado</th>
+                    <th className="p-3.5">Bahasa Percakapan Lokal (Dialek Totabuan)</th>
                     <th className="p-3.5">Bahasa Indonesia</th>
                     <th className="p-3.5">Bahasa Inggris (English)</th>
                     <th className="p-3.5">Kategori</th>
@@ -738,7 +738,7 @@ export default function DatabaseKamusPanel() {
 
               <div>
                 <label className="block text-xs font-semibold text-bento-text-secondary mb-1">
-                  2. Bahasa Melayu Mongondow / Manado
+                  2. Bahasa Percakapan Lokal (Dialek Totabuan)
                 </label>
                 <input
                   value={editingSentence.melayu_mongondow}
