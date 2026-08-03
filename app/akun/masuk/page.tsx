@@ -3,12 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Eye, EyeOff } from "lucide-react";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser-auth";
 
 export default function MasukPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,8 +41,23 @@ export default function MasukPage() {
         </div>
         <div>
           <label className="text-xs font-medium text-bento-text-secondary">Kata Sandi</label>
-          <input type="password" value={password} onChange={e => setPassword(e.target.value)} required
-            className="w-full mt-1 rounded-lg border border-bento-border bg-bento-bg px-3 py-2 text-sm outline-none focus:border-bento-accent" />
+          <div className="relative mt-1">
+            <input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+              className="w-full rounded-lg border border-bento-border bg-bento-bg pl-3 pr-10 py-2 text-sm outline-none focus:border-bento-accent"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-bento-text-secondary hover:text-bento-text-primary transition-colors p-1"
+              title={showPassword ? "Sembunyikan password" : "Intip password"}
+            >
+              {showPassword ? <EyeOff className="w-4 h-4 text-bento-accent" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
         </div>
 
         {error && <p className="text-xs text-red-400">{error}</p>}
