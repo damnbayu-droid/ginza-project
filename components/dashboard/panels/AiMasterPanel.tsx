@@ -121,33 +121,38 @@ export default function AiMasterPanel() {
     try {
       const res = await fetch("/api/homepage/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
         body: JSON.stringify({
           prompt: promptWithRules,
+          stream: false,
           history: newMessages.slice(-6).map((m) => ({ role: m.role, content: m.content })),
         }),
       });
 
-      const data = await res.json();
-      if (!res.ok || data.error) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: "assistant",
-            content: `Maaf, terjadi kendala saat menghubungkan ke AI Gateway: ${data.error || "Panggilan gagal"}`,
-            provider: "System Error",
-          },
-        ]);
+      const contentType = res.headers.get("content-type") || "";
+      let replyText = "";
+      let providerUsed = res.headers.get("x-provider-used") || "Auto Gateway";
+
+      if (contentType.includes("application/json")) {
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        replyText = data.text;
+        if (data.provider_used) providerUsed = data.provider_used;
       } else {
-        setMessages((prev) => [
-          ...prev,
-          {
-            role: "assistant",
-            content: data.text || "Terima kasih atas pertanyaannya.",
-            provider: data.provider_used || res.headers.get("X-Provider-Used") || "Auto Gateway",
-          },
-        ]);
+        replyText = await res.text();
       }
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: replyText || "Terima kasih atas pertanyaannya.",
+          provider: providerUsed,
+        },
+      ]);
     } catch (err: any) {
       setMessages((prev) => [
         ...prev,

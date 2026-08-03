@@ -54,43 +54,79 @@ export async function GET() {
     };
   }
 
-  // 2. Test MyAI OS / AI Gateway Provider
+  // 2. Test MyAI OS / AI Gateway Provider (Live Central Gateway & Direct Fallback)
   try {
-    const geminiKey = (process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY1 || "").trim();
-    if (geminiKey && !geminiKey.includes("<") && geminiKey !== "AIzaSy_your_gemini_api_key") {
-      const adapter = PROVIDER_REGISTRY["gemini"];
-      if (adapter) {
-        const testRes = await adapter.call(
-          geminiKey,
-          "Halo, uji tes koneksi Bogani AI.",
-          "Anda adalah Bogani AI untuk MongondowPedia.",
-          { temperature: 0.1 }
-        );
-        if (testRes.success) {
-          statusReport.myai_os_gateway = {
-            ready: true,
-            provider: "gemini",
-            details: "Terhubung ke Gemini AI / MyAI OS Gateway!",
-            sample_response: testRes.aiResponseText?.substring(0, 150),
-          };
-        } else {
-          statusReport.myai_os_gateway = {
-            ready: false,
-            provider: "gemini",
-            details: `Gagal memanggil API Gemini: ${testRes.errorMsg || "Kesalahan tidak diketahui"}`,
-          };
-        }
+    const gatewayUrl = process.env.MYAI_OS_GATEWAY_URL || "https://console.myai.nexus/api/v1/chat/completions";
+    const gatewayKey = process.env.MYAI_OS_GATEWAY_API_KEY || process.env.HOMEPAGE_GATEWAY_API_KEY;
+
+    if (gatewayKey) {
+      const gwRes = await fetch(gatewayUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${gatewayKey}`,
+        },
+        body: JSON.stringify({
+          field: "chatbot_myai_home",
+          messages: [{ role: "user", content: "Ping status check" }],
+        }),
+      });
+
+      if (gwRes.ok) {
+        const gwData = await gwRes.json();
+        const providerUsed = gwData.provider_used || gwRes.headers.get("x-provider-used") || "gpt";
+        statusReport.myai_os_gateway = {
+          ready: true,
+          provider: providerUsed,
+          details: `Terhubung ke MyAI OS Gateway terpusat! (Provider: ${providerUsed})`,
+          sample_response: typeof gwData.result === "string" ? gwData.result.substring(0, 100) : "OK",
+        };
+      } else {
+        statusReport.myai_os_gateway = {
+          ready: false,
+          provider: "none",
+          details: `Gateway HTTP Error: ${gwRes.status}`,
+        };
       }
     } else {
-      statusReport.myai_os_gateway = {
-        ready: false,
-        provider: "none",
-        details: "GEMINI_API_KEY belum dikonfigurasi dengan kunci asli.",
-      };
+      // Fallback check direct Gemini key
+      const geminiKey = (process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY1 || "").trim();
+      if (geminiKey && !geminiKey.includes("<") && geminiKey !== "AIzaSy_your_gemini_api_key") {
+        const adapter = PROVIDER_REGISTRY["gemini"];
+        if (adapter) {
+          const testRes = await adapter.call(
+            geminiKey,
+            "Halo, uji tes koneksi Bogani AI.",
+            "Anda adalah Bogani AI untuk MongondowPedia.",
+            { temperature: 0.1 }
+          );
+          if (testRes.success) {
+            statusReport.myai_os_gateway = {
+              ready: true,
+              provider: "gemini",
+              details: "Terhubung ke Gemini Direct API!",
+              sample_response: testRes.aiResponseText?.substring(0, 150),
+            };
+          } else {
+            statusReport.myai_os_gateway = {
+              ready: false,
+              provider: "gemini",
+              details: `Gagal memanggil API Gemini: ${testRes.errorMsg || "Kesalahan tidak diketahui"}`,
+            };
+          }
+        }
+      } else {
+        statusReport.myai_os_gateway = {
+          ready: false,
+          provider: "none",
+          details: "MYAI_OS_GATEWAY_API_KEY / GEMINI_API_KEY belum dikonfigurasi.",
+        };
+      }
     }
   } catch (err: any) {
     statusReport.myai_os_gateway = {
       ready: false,
+      provider: "none",
       details: `Gagal tes MyAI OS Gateway: ${err.message}`,
     };
   }
