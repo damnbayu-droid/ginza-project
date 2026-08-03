@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { PanelHeader, Card, LoadingState, ErrorState, Badge, Button } from "@/components/dashboard/ui";
-import { UserCheck, ShieldCheck, X, Sparkles, CheckCircle2, Plus, PenTool, Eraser, Eye, RotateCcw, Save, Maximize2 } from "lucide-react";
+import { UserCheck, ShieldCheck, X, Sparkles, CheckCircle2, PenTool, Eraser, Eye, Save, Maximize2, Undo2, Palette, Sliders } from "lucide-react";
 
 interface GlyphRow {
   id: string;
@@ -13,6 +13,18 @@ interface GlyphRow {
   notes: string | null;
   consonant?: string | null;
   vowel?: string | null;
+}
+
+interface Point {
+  x: number;
+  y: number;
+  width: number;
+}
+
+interface Stroke {
+  points: Point[];
+  color: string;
+  brushStyle: "calligraphy" | "quill" | "vector";
 }
 
 const TYPE_LABEL: Record<string, string> = {
@@ -34,13 +46,20 @@ export default function AksaraPanel() {
   const [verificatorsFor, setVerificatorsFor] = useState<{ glyph: GlyphRow; list: any[] } | null>(null);
   const [isLoadingVerificators, setIsLoadingVerificators] = useState(false);
 
-  // Canvas Drawing Modal state
+  // Advance Canvas Drawing Studio State
   const [showDrawModal, setShowDrawModal] = useState(false);
   const [newRomanization, setNewRomanization] = useState("");
   const [newSyllableType, setNewSyllableType] = useState<string>("vowel_a");
   const [newNotes, setNewNotes] = useState("");
-  const [brushWidth, setBrushWidth] = useState(7);
+  const [brushWidth, setBrushWidth] = useState(9);
+  const [brushStyle, setBrushStyle] = useState<"calligraphy" | "quill" | "vector">("calligraphy");
+  const [inkColor, setInkColor] = useState("#0f172a");
   const [isSavingCanvas, setIsSavingCanvas] = useState(false);
+
+  // Undo / Stroke history state
+  const [strokes, setStrokes] = useState<Stroke[]>([]);
+  const currentStrokeRef = useRef<Stroke | null>(null);
+  const lastPointRef = useRef<{ x: number; y: number; time: number } | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -61,60 +80,153 @@ export default function AksaraPanel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
-  // Setup canvas background on open
-  useEffect(() => {
-    if (showDrawModal && canvasRef.current) {
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.lineCap = "round";
-        ctx.lineJoin = "round";
-        ctx.strokeStyle = "#0f172a";
-        ctx.lineWidth = brushWidth;
-      }
-    }
-  }, [showDrawModal, brushWidth]);
-
-  // Canvas drawing handlers
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+  // Redraw canvas whenever stroke history changes
+  const redrawCanvas = (strokesList: Stroke[]) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    for (const stroke of strokesList) {
+      if (stroke.points.length === 0) continue;
+
+      ctx.strokeStyle = stroke.color;
+      ctx.fillStyle = stroke.color;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
+      if (stroke.points.length === 1) {
+        const p = stroke.points[0];
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.width / 2, 0, Math.PI * 2);
+        ctx.fill();
+        continue;
+      }
+
+      for (let i = 0; i < stroke.points.length - 1; i++) {
+        const p1 = stroke.points[i];
+        const p2 = stroke.points[i + 1];
+
+        ctx.beginPath();
+        ctx.lineWidth = p1.width;
+        ctx.moveTo(p1.x, p1.y);
+
+        if (i < stroke.points.length - 2) {
+          const p3 = stroke.points[i + 2];
+          const xc = (p2.x + p3.x) / 2;
+          const yc = (p2.y + p3.y) / 2;
+          ctx.quadraticCurveTo(p2.x, p2.y, xc, yc);
+        } else {
+          ctx.lineTo(p2.x, p2.y);
+        }
+        ctx.stroke();
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (showDrawModal) {
+      redrawCanvas(strokes);
+    }
+  }, [showDrawModal, strokes]);
+
+  // Advance Chinese/Japanese Calligraphy Tapering Logic
+  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
     const rect = canvas.getBoundingClientRect();
     const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
     const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
+    const x = (clientX - rect.left) * (canvas.width / rect.width);
+    const y = (clientY - rect.top) * (canvas.height / rect.height);
 
-    ctx.beginPath();
-    ctx.moveTo(clientX - rect.left, clientY - rect.top);
-    ctx.lineWidth = brushWidth;
-    ctx.strokeStyle = "#0f172a";
+    const initialPoint: Point = { x, y, width: brushWidth };
+    const newStroke: Stroke = {
+      points: [initialPoint],
+      color: inkColor,
+      brushStyle,
+    };
+
+    currentStrokeRef.current = newStroke;
+    lastPointRef.current = { x, y, time: Date.now() };
     setIsDrawing(true);
   };
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    if (!isDrawing) return;
+    if (!isDrawing || !currentStrokeRef.current || !lastPointRef.current) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
 
     const rect = canvas.getBoundingClientRect();
     const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
     const clientY = "touches" in e ? e.touches[0].clientY : e.clientY;
+    const x = (clientX - rect.left) * (canvas.width / rect.width);
+    const y = (clientY - rect.top) * (canvas.height / rect.height);
 
-    ctx.lineTo(clientX - rect.left, clientY - rect.top);
-    ctx.stroke();
+    const now = Date.now();
+    const dist = Math.hypot(x - lastPointRef.current.x, y - lastPointRef.current.y);
+    const timeDelta = Math.max(now - lastPointRef.current.time, 1);
+    const speed = dist / timeDelta;
+
+    let dynamicWidth = brushWidth;
+    if (brushStyle === "calligraphy") {
+      // Calligraphy effect: Fast movement = thinner stroke, Slow movement = thicker ink blot
+      const targetWidth = Math.max(brushWidth * 0.35, brushWidth * (1.3 - Math.min(speed * 0.4, 0.95)));
+      dynamicWidth = targetWidth;
+    } else if (brushStyle === "quill") {
+      dynamicWidth = Math.max(3, brushWidth * (0.6 + Math.abs(x - lastPointRef.current.x) / (dist || 1)));
+    }
+
+    const newPoint: Point = { x, y, width: dynamicWidth };
+    currentStrokeRef.current.points.push(newPoint);
+    lastPointRef.current = { x, y, time: now };
+
+    const newStrokes = [...strokes, currentStrokeRef.current];
+    redrawCanvas(newStrokes);
   };
 
   const stopDrawing = () => {
+    if (!isDrawing || !currentStrokeRef.current) return;
+
+    // Apply Tapering Effect at stroke end (Calligraphy Taper Tip)
+    if (brushStyle === "calligraphy" && currentStrokeRef.current.points.length > 2) {
+      const lastPts = currentStrokeRef.current.points;
+      const tail = lastPts[lastPts.length - 1];
+      const prevTail = lastPts[lastPts.length - 2];
+      const angle = Math.atan2(tail.y - prevTail.y, tail.x - prevTail.x);
+
+      // Append 4 tapering points to create Chinese brush tapered tip
+      for (let i = 1; i <= 4; i++) {
+        const stepDist = i * 2.5;
+        const taperedWidth = Math.max(0.5, tail.width * (1 - i / 4));
+        lastPts.push({
+          x: tail.x + Math.cos(angle) * stepDist,
+          y: tail.y + Math.sin(angle) * stepDist,
+          width: taperedWidth,
+        });
+      }
+    }
+
+    const updatedStrokes = [...strokes, currentStrokeRef.current];
+    setStrokes(updatedStrokes);
+    currentStrokeRef.current = null;
+    lastPointRef.current = null;
     setIsDrawing(false);
   };
 
+  const handleUndo = () => {
+    if (strokes.length === 0) return;
+    const updated = strokes.slice(0, -1);
+    setStrokes(updated);
+    redrawCanvas(updated);
+  };
+
   const clearCanvas = () => {
+    setStrokes([]);
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -135,9 +247,9 @@ export default function AksaraPanel() {
         id: crypto.randomUUID(),
         romanization: newRomanization.trim().toLowerCase(),
         syllable_type: newSyllableType,
-        glyph_svg_path: dataUrl, // Canvas image data
+        glyph_svg_path: dataUrl,
         status: "verified",
-        notes: newNotes.trim() || "Karakter Aksara digambar manual oleh Admin Kurator",
+        notes: newNotes.trim() || "Karakter Aksara digambar dengan Kuas Kaligrafi Adat oleh Admin Kurator",
       };
 
       const res = await fetch("/api/admin/aksara", {
@@ -150,9 +262,9 @@ export default function AksaraPanel() {
         setShowDrawModal(false);
         setNewRomanization("");
         setNewNotes("");
+        setStrokes([]);
         loadData();
       } else {
-        // Fallback: insert locally if table missing
         const updated = [newGlyphObj, ...(glyphs || [])];
         setGlyphs(updated);
         setShowDrawModal(false);
@@ -341,12 +453,12 @@ export default function AksaraPanel() {
             {/* Modal Body / Large Vector Card */}
             <div className="p-6 flex flex-col items-center justify-center space-y-6">
               {/* Large Image Card */}
-              <div className="w-48 h-56 bg-white rounded-2xl border-2 border-bento-border p-4 shadow-xl flex items-center justify-center relative">
+              <div className="w-56 h-64 bg-white rounded-2xl border-2 border-bento-border p-4 shadow-xl flex items-center justify-center relative">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={previewGlyph.glyph_svg_path}
                   alt={previewGlyph.romanization}
-                  className="w-40 h-48 object-contain"
+                  className="w-48 h-56 object-contain"
                 />
               </div>
 
@@ -383,26 +495,26 @@ export default function AksaraPanel() {
       )}
 
       {/* ════════════════════════════════════════════════════════════════════ */}
-      {/* 2. MODAL INTERAKTIF GAMBAR AKSARA (Canvas Signature Box Creator) */}
+      {/* 2. STUDIO INTERAKTIF GAMBAR AKSARA (Advance Calligraphy Canvas) */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       {showDrawModal && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fade-in"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in"
           onClick={(e) => {
             if (e.target === e.currentTarget) setShowDrawModal(false);
           }}
         >
-          <div className="relative w-full max-w-2xl bg-bento-surface border border-bento-border rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+          <div className="relative w-full max-w-4xl bg-bento-surface border border-bento-border rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh]">
             {/* Header Modal */}
             <div className="px-6 py-4 border-b border-bento-border flex items-center justify-between bg-bento-surface-lighter">
               <div className="flex items-center gap-2.5">
                 <PenTool className="w-5 h-5 text-bento-accent" />
                 <div>
                   <h3 className="text-base font-bold text-bento-text-primary">
-                    Pencipta &amp; Canvas Gambar Aksara Mongondow
+                    Studio Kaligrafi &amp; Canvas Aksara Mongondow
                   </h3>
                   <p className="text-xs text-bento-text-secondary">
-                    Gambar karakter huruf/abjad Aksara Mongondow langsung di atas canvas.
+                    Goreskan karakter Aksara Mongondow dengan efek kuas kaligrafi oriental &amp; pengerucutan alami di ujung garis.
                   </p>
                 </div>
               </div>
@@ -448,40 +560,86 @@ export default function AksaraPanel() {
                 </div>
               </div>
 
-              {/* Drawing Canvas / Signature Box */}
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="block text-xs font-bold text-bento-text-primary">
-                    Canvas Goresan Aksara (Gunakan Mouse / Touch Screen)
-                  </label>
-
+              {/* ADVANCE DRAWING STUDIO CANVAS AREA (FULL WIDTH & HIGH RES) */}
+              <div className="space-y-3">
+                {/* Studio Control Toolbar */}
+                <div className="flex flex-wrap items-center justify-between gap-3 bg-bento-surface-lighter p-3 rounded-xl border border-bento-border">
+                  {/* Gaya Kuas */}
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-bento-text-secondary">Ketebalan:</span>
-                    {[4, 7, 11].map((w) => (
+                    <Sliders className="w-4 h-4 text-bento-accent" />
+                    <span className="text-xs font-semibold text-bento-text-primary">Gaya Kuas:</span>
+                    {[
+                      { id: "calligraphy", label: "🖌️ Kuas Kaligrafi Oriental" },
+                      { id: "quill", label: "✒️ Pena Tinta Adat" },
+                      { id: "vector", label: "🎨 Marker Vektor" },
+                    ].map((st) => (
                       <button
                         type="button"
-                        key={w}
-                        onClick={() => setBrushWidth(w)}
-                        className={`w-6 h-6 rounded-full border flex items-center justify-center text-[10px] ${
-                          brushWidth === w ? "border-bento-accent bg-bento-accent text-white" : "border-bento-border bg-bento-surface"
+                        key={st.id}
+                        onClick={() => setBrushStyle(st.id as any)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${
+                          brushStyle === st.id
+                            ? "bg-bento-accent text-white border-bento-accent shadow-xs"
+                            : "bg-bento-surface text-bento-text-secondary border-bento-border hover:border-bento-accent"
                         }`}
                       >
-                        {w}
+                        {st.label}
                       </button>
                     ))}
+                  </div>
 
-                    <Button type="button" variant="default" onClick={clearCanvas} className="!py-1 !px-2 text-xs flex items-center gap-1">
-                      <Eraser className="w-3.5 h-3.5" />
-                      <span>Bersihkan</span>
-                    </Button>
+                  {/* Ketebalan & Warna Tinta */}
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1">
+                      <Palette className="w-4 h-4 text-bento-text-secondary" />
+                      {["#0f172a", "#dc2626", "#1e3a8a", "#d97706"].map((c) => (
+                        <button
+                          type="button"
+                          key={c}
+                          onClick={() => setInkColor(c)}
+                          style={{ backgroundColor: c }}
+                          className={`w-5 h-5 rounded-full border-2 transition-transform ${
+                            inkColor === c ? "scale-125 border-white shadow-sm ring-2 ring-bento-accent" : "border-transparent"
+                          }`}
+                        />
+                      ))}
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-bento-text-secondary">Ukuran:</span>
+                      {[5, 9, 14, 20].map((w) => (
+                        <button
+                          type="button"
+                          key={w}
+                          onClick={() => setBrushWidth(w)}
+                          className={`w-6 h-6 rounded-lg border flex items-center justify-center text-[10px] font-medium ${
+                            brushWidth === w ? "border-bento-accent bg-bento-accent text-white" : "border-bento-border bg-bento-surface"
+                          }`}
+                        >
+                          {w}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="flex items-center gap-1 pl-2 border-l border-bento-border">
+                      <Button type="button" variant="default" onClick={handleUndo} disabled={strokes.length === 0} className="!py-1 !px-2 text-xs flex items-center gap-1">
+                        <Undo2 className="w-3.5 h-3.5" />
+                        <span>Urungkan</span>
+                      </Button>
+                      <Button type="button" variant="default" onClick={clearCanvas} className="!py-1 !px-2 text-xs flex items-center gap-1">
+                        <Eraser className="w-3.5 h-3.5 text-red-400" />
+                        <span>Bersihkan</span>
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
-                <div className="border-2 border-dashed border-bento-border rounded-2xl bg-white p-2 flex justify-center shadow-inner">
+                {/* Full-width High-Resolution Drawing Canvas */}
+                <div className="border-2 border-dashed border-bento-accent/40 rounded-2xl bg-white p-2 flex justify-center shadow-md relative overflow-hidden">
                   <canvas
                     ref={canvasRef}
-                    width={380}
-                    height={220}
+                    width={800}
+                    height={380}
                     onMouseDown={startDrawing}
                     onMouseMove={draw}
                     onMouseUp={stopDrawing}
@@ -489,12 +647,16 @@ export default function AksaraPanel() {
                     onTouchStart={startDrawing}
                     onTouchMove={draw}
                     onTouchEnd={stopDrawing}
-                    className="cursor-crosshair rounded-xl touch-none bg-white"
+                    className="w-full h-80 cursor-crosshair rounded-xl touch-none bg-white"
                   />
+                  {strokes.length === 0 && (
+                    <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center text-slate-300 space-y-1">
+                      <PenTool className="w-10 h-10 opacity-30 animate-pulse" />
+                      <p className="text-xs font-semibold text-slate-400">Goreskan Huruf Aksara Mongondow di sini...</p>
+                      <p className="text-[10px] text-slate-400">Goresan otomatis mengerucut di akhir garis seperti kuas kaligrafi oriental.</p>
+                    </div>
+                  )}
                 </div>
-                <p className="text-[11px] text-bento-text-secondary text-center">
-                  Goreskan bentuk huruf Aksara Mongondow baru di atas kotak putih.
-                </p>
               </div>
 
               {/* Catatan Sumber */}
@@ -507,7 +669,7 @@ export default function AksaraPanel() {
                   value={newNotes}
                   onChange={(e) => setNewNotes(e.target.value)}
                   placeholder="Keterangan mengenai bentuk dan cara pengucapan aksara ini..."
-                  className="w-full px-3 py-2 rounded-xl border border-bento-border bg-bento-bg text-sm outline-none focus:border-bento-accent"
+                  className="w-full px-3.5 py-2 rounded-xl border border-bento-border bg-bento-bg text-sm outline-none focus:border-bento-accent"
                 />
               </div>
 
