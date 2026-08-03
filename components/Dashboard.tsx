@@ -1,13 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from "react";
-import { ViewType, Language, ClientApp, ApiKey, UsageLog, BusinessProfile, KnowledgeDocument } from "@/lib/types";
+import { useState, useEffect } from "react";
+import { Language } from "@/lib/types";
+import { LayoutDashboard } from "lucide-react";
 import Sidebar from "@/components/Sidebar";
 import Navbar from "@/components/Navbar";
-import OverviewTab from "@/components/OverviewTab";
-import KnowledgeTab from "@/components/KnowledgeTab";
-import SettingsTab from "@/components/SettingsTab";
-import PersonasTab from "@/components/PersonasTab";
 
 interface DashboardProps {
   adminEmail: string;
@@ -16,14 +13,6 @@ interface DashboardProps {
 export default function Dashboard({ adminEmail }: DashboardProps) {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [lang, setLang] = useState<Language>('id');
-  const [activeTab, setActiveTab] = useState<ViewType>('overview');
-
-  const [apps, setApps] = useState<ClientApp[]>([]);
-  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
-  const [logs, setLogs] = useState<UsageLog[]>([]);
-  const [businessProfile, setBusinessProfile] = useState<BusinessProfile | null>(null);
-  const [documents, setDocuments] = useState<KnowledgeDocument[]>([]);
-  const [loading, setLoading] = useState(true);
 
   // Restore theme/lang from localStorage
   useEffect(() => {
@@ -47,136 +36,28 @@ export default function Dashboard({ adminEmail }: DashboardProps) {
 
   useEffect(() => { localStorage.setItem("myai_lang", lang); }, [lang]);
 
-  const fetchAllData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [appsRes, keysRes, logsRes, profileRes, docsRes] = await Promise.all([
-        fetch("/api/apps").then((r) => r.json()),
-        fetch("/api/keys").then((r) => r.json()),
-        fetch("/api/logs").then((r) => r.json()),
-        fetch("/api/business-profile").then((r) => r.json()),
-        fetch("/api/documents").then((r) => r.json()),
-      ]);
-      setApps(Array.isArray(appsRes) ? appsRes : []);
-      setApiKeys(Array.isArray(keysRes) ? keysRes : []);
-      setLogs(Array.isArray(logsRes) ? logsRes : []);
-      setBusinessProfile(profileRes);
-      setDocuments(Array.isArray(docsRes) ? docsRes : []);
-    } catch (e) {
-      console.error("Error loading data", e);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => { fetchAllData(); }, [fetchAllData]);
-
-  // --- Mutators ---
-
-  const handleSaveProfile = async (content: string) => {
-    const res = await fetch("/api/business-profile", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content }),
-    });
-    if (!res.ok) throw new Error("Failed to save profile");
-    const updated = await res.json();
-    setBusinessProfile(updated);
-  };
-
-  const handleAddDocument = async (title: string, content: string, clientAppId: string | null) => {
-    const res = await fetch("/api/documents", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, content, client_app_id: clientAppId }),
-    });
-    if (!res.ok) throw new Error("Failed to add document");
-    await fetchAllData();
-  };
-
-  const handleEditDocument = async (id: string, title: string, content: string, clientAppId: string | null) => {
-    const res = await fetch(`/api/documents/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, content, client_app_id: clientAppId }),
-    });
-    if (!res.ok) throw new Error("Failed to update document");
-    await fetchAllData();
-  };
-
-  const handleDeleteDocument = async (id: string) => {
-    const res = await fetch(`/api/documents/${id}`, { method: "DELETE" });
-    if (!res.ok) throw new Error("Failed to delete document");
-    await fetchAllData();
-  };
-
-  if (loading || !businessProfile) {
-    return (
-      <div className={`min-h-screen w-full flex flex-col items-center justify-center transition-colors duration-200 ${
-        theme === 'dark' ? 'bg-[#060709] text-white' : 'bg-[#FAFAFA] text-[#1F2937]'
-      }`}>
-        <div className="space-y-4 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-[#5B8DEF]/10 text-[#5B8DEF] flex items-center justify-center mx-auto animate-spin">
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-          </div>
-          <p className="text-xs font-semibold tracking-wider uppercase opacity-60">Memuat Dashboard MongondowPedia...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex h-screen overflow-hidden bg-bento-bg text-bento-text-primary" id="console-layout">
-      <Sidebar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        lang={lang}
-        theme={theme}
-        adminEmail={adminEmail}
-      />
+      <Sidebar lang={lang} theme={theme} adminEmail={adminEmail} />
 
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-        <Navbar
-          activeTab={activeTab}
-          lang={lang}
-          setLang={setLang}
-          theme={theme}
-          setTheme={setTheme}
-        />
+        <Navbar lang={lang} setLang={setLang} theme={theme} setTheme={setTheme} />
 
         <main className="flex-1 overflow-y-auto p-8 focus:outline-none">
-          <div className="max-w-6xl mx-auto pb-12">
-            {activeTab === 'overview' && (
-              <OverviewTab apps={apps} apiKeys={apiKeys} logs={logs} lang={lang} theme={theme} />
-            )}
-            {activeTab === 'knowledge' && (
-              <KnowledgeTab
-                apps={apps}
-                profile={businessProfile}
-                documents={documents}
-                lang={lang}
-                theme={theme}
-                onSaveProfile={handleSaveProfile}
-                onAddDocument={handleAddDocument}
-                onEditDocument={handleEditDocument}
-                onDeleteDocument={handleDeleteDocument}
-              />
-            )}
-            {activeTab === 'personas' && (
-              <PersonasTab lang={lang} theme={theme} apps={apps} />
-            )}
-            {activeTab === 'settings' && (
-              <SettingsTab
-                lang={lang}
-                setLang={setLang}
-                theme={theme}
-                setTheme={setTheme}
-                adminEmail={adminEmail}
-              />
-            )}
+          <div className="max-w-6xl mx-auto pb-12 h-full flex items-center justify-center">
+            <div className="text-center space-y-3 max-w-sm">
+              <div className="w-12 h-12 rounded-2xl bg-bento-accent-muted text-bento-accent flex items-center justify-center mx-auto">
+                <LayoutDashboard className="w-6 h-6" />
+              </div>
+              <p className="font-semibold text-bento-text-primary">
+                {lang === 'id' ? "Belum ada modul admin" : "No admin modules yet"}
+              </p>
+              <p className="text-sm text-bento-text-secondary">
+                {lang === 'id'
+                  ? "Dashboard ini sengaja dikosongkan — modul khusus MongondowPedia akan dibangun di sini."
+                  : "This dashboard is intentionally empty — MongondowPedia-specific modules will be built here."}
+              </p>
+            </div>
           </div>
         </main>
       </div>

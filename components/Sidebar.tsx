@@ -1,34 +1,25 @@
 'use client';
 
 import { useState } from "react";
-import { LayoutDashboard, Database, Settings, LogOut, Code, ChevronLeft, ChevronRight, Bot } from "lucide-react";
-import { ViewType, Language } from "@/lib/types";
+import { LogOut, Code, ChevronLeft, ChevronRight } from "lucide-react";
+import { Language } from "@/lib/types";
 import { translations } from "@/lib/i18n";
 import { useRouter } from "next/navigation";
 
 interface SidebarProps {
-  activeTab: ViewType;
-  setActiveTab: (tab: ViewType) => void;
   lang: Language;
   theme: 'dark' | 'light';
   adminEmail: string;
 }
 
-export default function Sidebar({ activeTab, setActiveTab, lang, theme, adminEmail }: SidebarProps) {
+export default function Sidebar({ lang, theme, adminEmail }: SidebarProps) {
   const t = translations[lang] as any;
   const router = useRouter();
   const [collapsed, setCollapsed] = useState(false);
 
-  const menuItems = [
-    { id: 'overview' as ViewType, label: t.navOverview, icon: LayoutDashboard },
-    { id: 'knowledge' as ViewType, label: t.navKnowledge, icon: Database },
-    { id: 'personas' as ViewType,  label: "Personas",                     icon: Bot },
-    { id: 'settings' as ViewType, label: t.navSettings, icon: Settings },
-  ];
-
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
+    router.push("/");
     router.refresh();
   };
 
@@ -36,7 +27,7 @@ export default function Sidebar({ activeTab, setActiveTab, lang, theme, adminEma
     <aside className={`flex flex-col h-screen border-r border-bento-border shrink-0 transition-all duration-300 ${
       collapsed ? 'w-16' : 'w-64'
     } ${theme === 'dark' ? 'bg-[#0F1012]' : 'bg-[#F9FAFB]'}`}>
-      
+
       {/* Brand Header */}
       <div className={`p-4 border-b border-bento-border flex items-center justify-between`}>
         <div className={`flex items-center ${collapsed ? 'justify-center w-full' : 'gap-3'}`}>
@@ -50,41 +41,10 @@ export default function Sidebar({ activeTab, setActiveTab, lang, theme, adminEma
             </div>
           )}
         </div>
-
       </div>
 
-      {/* Navigation Links */}
-      <nav className={`flex-1 py-4 space-y-1 overflow-y-auto ${collapsed ? 'px-2' : 'px-4'}`} id="sidebar-nav">
-        {menuItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = activeTab === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              id={`nav-btn-${item.id}`}
-              title={collapsed ? item.label : undefined}
-              className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all duration-150 group ${
-                collapsed ? 'justify-center' : ''
-              } ${
-                isActive
-                  ? 'bg-bento-accent-muted text-bento-accent font-semibold'
-                  : 'text-bento-text-secondary hover:text-bento-text-primary hover:bg-bento-surface-lighter'
-              }`}
-            >
-              <Icon className={`h-5 w-5 shrink-0 transition-transform duration-150 group-hover:scale-105 ${
-                isActive ? 'text-bento-accent' : 'opacity-70 group-hover:opacity-100'
-              }`} />
-              {!collapsed && (
-                <>
-                  <span>{item.label}</span>
-                  {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-bento-accent" />}
-                </>
-              )}
-            </button>
-          );
-        })}
-      </nav>
+      {/* No modules yet — admin dashboard is intentionally empty */}
+      <div className="flex-1" />
 
       {/* Footer: Admin info + Logout */}
       <div className={`p-3 border-t border-bento-border flex flex-col gap-2`}>

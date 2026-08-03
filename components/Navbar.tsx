@@ -1,55 +1,25 @@
 'use client';
 
-import { Sun, Moon, Globe, ShieldCheck, Search, Activity } from "lucide-react";
-import { ViewType, Language } from "@/lib/types";
-import { translations } from "@/lib/i18n";
+import { Sun, Moon } from "lucide-react";
+import { Language } from "@/lib/types";
 
 interface NavbarProps {
-  activeTab: ViewType;
   lang: Language;
   setLang: (lang: Language) => void;
   theme: 'dark' | 'light';
   setTheme: (theme: 'dark' | 'light') => void;
 }
 
-export default function Navbar({ activeTab, lang, setLang, theme, setTheme }: NavbarProps) {
-  const t = translations[lang];
-
-  const getTabTitle = () => {
-    switch (activeTab) {
-      case 'overview': return t.navOverview;
-      case 'knowledge': return t.navKnowledge;
-      case 'personas': return "Personas";
-      case 'settings': return t.navSettings;
-      default: return "";
-    }
-  };
-
+export default function Navbar({ lang, setLang, theme, setTheme }: NavbarProps) {
   return (
     <header className="h-16 border-b border-bento-border px-8 flex items-center justify-between shrink-0 transition-colors duration-300 bg-bento-bg text-bento-text-primary">
       {/* Current View Title */}
       <div className="flex items-center gap-3">
-        <h2 className="font-semibold text-lg tracking-tight" id="navbar-view-title">{getTabTitle()}</h2>
-        <span className="px-2.5 py-0.5 text-[10px] font-bold rounded-full flex items-center gap-1 bg-bento-success/10 text-bento-success border border-bento-success/10 animate-fade-in" id="gateway-status">
-          <span className="w-1.5 h-1.5 rounded-full bg-bento-success animate-pulse shrink-0" />
-          <span>Gateway Active</span>
-        </span>
+        <h2 className="font-semibold text-lg tracking-tight" id="navbar-view-title">Admin Dashboard</h2>
       </div>
 
       {/* Control Actions */}
       <div className="flex items-center gap-4">
-        {/* Search Bar Placeholder */}
-        <div className="relative hidden md:block">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-bento-text-secondary opacity-60" />
-          <input
-            type="text"
-            placeholder={t.search}
-            id="navbar-search"
-            disabled
-            className="pl-9 pr-4 py-1.5 text-xs rounded-xl w-60 border border-bento-border bg-bento-surface text-bento-text-primary focus:outline-none transition-all placeholder:text-bento-text-secondary/60"
-          />
-        </div>
-
         {/* Language Selector */}
         <div className="flex items-center gap-1 p-0.5 rounded-lg border border-bento-border bg-bento-surface-lighter">
           <button
