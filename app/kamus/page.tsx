@@ -18,7 +18,8 @@ import {
   Languages,
   Cpu,
   Feather,
-  ScrollText
+  ScrollText,
+  MessageSquareQuote
 } from "lucide-react";
 import { transliterateToAksara } from "@/lib/aksara-transliterate";
 import ContributeCTA from "@/components/knowledge/ContributeCTA";
@@ -61,6 +62,38 @@ export default function KamusPage() {
   const [totalFiltered, setTotalFiltered] = useState(0);
   const [loading, setLoading] = useState(true);
 
+  // Frasa & Kalimat Pendek Modal State
+  const [showFrasaModal, setShowFrasaModal] = useState(false);
+  const [frasaSearch, setFrasaSearch] = useState("");
+  const [shortSentences, setShortSentences] = useState<any[]>([]);
+
+  // Load Admin Dashboard Featured Cards & Short Sentences from Storage
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedFeatured = localStorage.getItem("bogani_featured_word_cards");
+      if (savedFeatured) {
+        try {
+          const parsed = JSON.parse(savedFeatured);
+          const activeOnly = parsed.filter((c: any) => c.status === "verified");
+          if (activeOnly.length > 0) {
+            setFeaturedCards(activeOnly);
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      const savedSentences = localStorage.getItem("bogani_kamus_short_sentences");
+      if (savedSentences) {
+        try {
+          setShortSentences(JSON.parse(savedSentences));
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  }, []);
+
   // Active AI Definition State
   const [activeWordData, setActiveWordData] = useState<SiderWordCard | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
@@ -72,8 +105,7 @@ export default function KamusPage() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
-  // Aksara Mongondow asli (glyph) — segmentasi lokal dari data/aksara,
-  // independen dari field "aksara" (tebakan teks AI) di activeWordData.
+  // Aksara Mongondow asli (glyph)
   const realAksara = useMemo(() => {
     if (!activeWordData?.word) return { success: false, words: [] as ReturnType<typeof transliterateToAksara>["words"] };
     return transliterateToAksara(activeWordData.word);
@@ -95,7 +127,9 @@ export default function KamusPage() {
       if (res.ok) {
         const data = await res.json();
         setStats(data.stats);
-        if (data.featuredCards && data.featuredCards.length > 0) {
+        // Only set default featuredCards if admin hasn't set custom cards in localStorage
+        const savedFeatured = typeof window !== "undefined" ? localStorage.getItem("bogani_featured_word_cards") : null;
+        if (!savedFeatured && data.featuredCards && data.featuredCards.length > 0) {
           setFeaturedCards(data.featuredCards);
         }
         setEntries(data.data || []);
@@ -198,10 +232,13 @@ export default function KamusPage() {
           </Link>
           
           <div className="flex items-center gap-3">
-            <span className="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3.5 py-1.5 rounded-full font-semibold flex items-center gap-2 shadow-sm">
-              <Cpu className="w-3.5 h-3.5 animate-pulse text-emerald-400" />
-              Integrated with Bogani AI
-            </span>
+            <button
+              onClick={() => setShowFrasaModal(true)}
+              className="px-4 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold flex items-center gap-2 shadow-sm transition-all active:scale-95 cursor-pointer"
+            >
+              <MessageSquareQuote className="w-4 h-4 text-emerald-400" />
+              <span>Frasa &amp; Kalimat Pendek</span>
+            </button>
           </div>
         </div>
 
@@ -627,6 +664,107 @@ export default function KamusPage() {
                 </div>
               </div>
             ) : null}
+          </div>
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      {/* FRASA & KALIMAT PENDEK MODAL DIALOG */}
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      {showFrasaModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => setShowFrasaModal(false)}
+        >
+          <div
+            className="bg-[#12141e] border border-[#26293b] rounded-3xl max-w-4xl w-full p-6 shadow-2xl space-y-5 max-h-[85vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-[#222536] pb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                  <MessageSquareQuote className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                    <span>Frasa &amp; Kalimat Pendek Bahasa Mongondow</span>
+                    <span className="text-xs font-mono bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+                      Dialek Totabuan
+                    </span>
+                  </h3>
+                  <p className="text-xs text-gray-400">Himpunan frasa percakapan harian multi-bahasa terverifikasi.</p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowFrasaModal(false)}
+                className="w-9 h-9 rounded-full bg-[#1b1e2c] hover:bg-[#25283b] text-gray-400 hover:text-white flex items-center justify-center transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Search Filter */}
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Cari frasa dalam Mongondow, Dialek Totabuan, Indonesia, atau Inggris..."
+                value={frasaSearch}
+                onChange={(e) => setFrasaSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#292c3f] bg-[#0c0d14] text-xs text-white placeholder-gray-500 outline-none focus:border-emerald-500"
+              />
+            </div>
+
+            {/* Content Table */}
+            <div className="flex-1 overflow-y-auto border border-[#222536] rounded-2xl bg-[#090a10]">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-[#161824] text-gray-400 border-b border-[#222536] font-semibold uppercase tracking-wider text-[10px] sticky top-0">
+                  <tr>
+                    <th className="p-3.5">Bahasa Mongondow</th>
+                    <th className="p-3.5">Dialek Totabuan (Percakapan)</th>
+                    <th className="p-3.5">Bahasa Indonesia</th>
+                    <th className="p-3.5">Bahasa Inggris</th>
+                    <th className="p-3.5">Kategori</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#1e2130] text-gray-200">
+                  {shortSentences
+                    .filter((s: any) =>
+                      !frasaSearch ||
+                      s.mongondow?.toLowerCase().includes(frasaSearch.toLowerCase()) ||
+                      s.indonesia?.toLowerCase().includes(frasaSearch.toLowerCase()) ||
+                      s.melayu_mongondow?.toLowerCase().includes(frasaSearch.toLowerCase()) ||
+                      s.english?.toLowerCase().includes(frasaSearch.toLowerCase())
+                    )
+                    .map((s: any, idx: number) => (
+                      <tr key={s.id || idx} className="hover:bg-[#161928] transition-colors">
+                        <td className="p-3.5 font-bold text-emerald-400">{s.mongondow}</td>
+                        <td className="p-3.5 font-medium text-gray-300">{s.melayu_mongondow || "-"}</td>
+                        <td className="p-3.5 font-semibold text-white">{s.indonesia}</td>
+                        <td className="p-3.5 text-gray-400 italic">{s.english || "-"}</td>
+                        <td className="p-3.5">
+                          <span className="px-2.5 py-0.5 rounded border border-[#272b3c] bg-[#161824] text-[10px] font-semibold text-emerald-400">
+                            {s.category}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-between pt-2 border-t border-[#222536] text-xs text-gray-400">
+              <span>Menampilkan {shortSentences.length} frasa percakapan terverifikasi</span>
+              <button
+                onClick={() => setShowFrasaModal(false)}
+                className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs transition-colors"
+              >
+                Tutup
+              </button>
+            </div>
           </div>
         </div>
       )}

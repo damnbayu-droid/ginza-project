@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { PanelHeader, Card, LoadingState, ErrorState, Badge, Button } from "@/components/dashboard/ui";
-import { Plus, Edit2, CheckCircle2, RotateCcw, X, UserCheck, ShieldCheck, Eye, Search, BookOpen, MessageSquareQuote, Trash2, Languages } from "lucide-react";
+import { Plus, Edit2, CheckCircle2, RotateCcw, X, UserCheck, ShieldCheck, Eye, Search, BookOpen, MessageSquareQuote, Trash2, Languages, Sparkles, Star } from "lucide-react";
 
 export interface KamusEntryRow {
   id?: string;
@@ -28,6 +28,21 @@ export interface ShortSentenceRow {
   indonesia: string;
   english: string;
   category: string;
+  status: "verified" | "draft";
+  created_at?: string;
+}
+
+export interface FeaturedCardRow {
+  id: string;
+  word: string;
+  phonetic: string;
+  origin: string;
+  meaning: string;
+  example: string;
+  aksara: string;
+  quote: string;
+  emoji: string;
+  tag: string;
   status: "verified" | "draft";
   created_at?: string;
 }
@@ -95,8 +110,67 @@ const DEFAULT_SHORT_SENTENCES: ShortSentenceRow[] = [
   },
 ];
 
+const DEFAULT_FEATURED_CARDS: FeaturedCardRow[] = [
+  {
+    id: "feat-1",
+    word: "Bogani",
+    phonetic: "/bo.ga.ni/",
+    origin: "Mongondow Native",
+    meaning: "Pemimpin adat, pahlawan, dan pelindung masyarakat Bolaang Mongondow zaman dahulu yang dipilih berdasarkan keberanian, kebijaksanaan, dan kejujuran.",
+    example: "Ki Bogani nokoi kon Totabuan monompagal kon masyarakat.",
+    aksara: "bo-ga-ni",
+    quote: "Gelar kehormatan tertinggi yang tidak diwariskan secara keturunan, melainkan atas pengakuan luhur masyarakat.",
+    emoji: "🛡️",
+    tag: "Populer • Tokoh Adat",
+    status: "verified",
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: "feat-2",
+    word: "Totabuan",
+    phonetic: "/to.ta.bu.an/",
+    origin: "Austronesia Kuno",
+    meaning: "Negeri permai tanah kelahiran masyarakat Bolaang Mongondow; tanah tumpah darah yang subur dan diberkahi.",
+    example: "Torang pe tanah Totabuan simukat kon rezeki.",
+    aksara: "to-ta-bu-an",
+    quote: "Simbol kebanggaan identitas wilayah dan ikatan persaudaraan seluruh keturunan Bolaang Mongondow.",
+    emoji: "🌋",
+    tag: "Terbaru • Wilayah",
+    status: "verified",
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: "feat-3",
+    word: "Arai",
+    phonetic: "/a.ra.i/",
+    origin: "Mongondow Native",
+    meaning: "Rasa gembira, sukacita mendalam, dan rasa syukur atas nikmat dan keselamatan yang diterima.",
+    example: "Arai totok pe ginisid monandoi keluarga.",
+    aksara: "a-ra-i",
+    quote: "Ungkapan rasa syukur yang sering digunakan dalam ritual dan pesta adat Bolaang Mongondow.",
+    emoji: "✨",
+    tag: "Populer • Ungkapan Rasa",
+    status: "verified",
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: "feat-4",
+    word: "Biontu",
+    phonetic: "/bi.on.tu/",
+    origin: "Mongondow Native",
+    meaning: "Bintang penunjuk arah; pedoman hidup dan cita-cita luhur penuntun generasi.",
+    example: "Patu-patuboi Biontu oi poyapoi kon totabuan.",
+    aksara: "bi-on-tu",
+    quote: "Nilai filosofis yang mengajarkan setiap manusia Mongondow untuk menjadi penerang bagi lingkungannya.",
+    emoji: "⭐",
+    tag: "Terbaru • Filosofi",
+    status: "verified",
+    created_at: new Date().toISOString(),
+  },
+];
+
 export default function DatabaseKamusPanel() {
-  const [activeTab, setActiveTab] = useState<"words" | "sentences">("words");
+  const [activeTab, setActiveTab] = useState<"words" | "sentences" | "featured">("words");
 
   // Single Words State
   const [entries, setEntries] = useState<KamusEntryRow[] | null>(null);
@@ -129,16 +203,37 @@ export default function DatabaseKamusPanel() {
   });
   const [sentenceSearch, setSentenceSearch] = useState("");
   const [sentenceCatFilter, setSentenceCatFilter] = useState("");
-
-  // Short Sentence Editor Modal state
   const [editingSentence, setEditingSentence] = useState<ShortSentenceRow | null>(null);
   const [isNewSentence, setIsNewSentence] = useState(false);
+
+  // Featured / Trending Cards State
+  const [featuredCards, setFeaturedCards] = useState<FeaturedCardRow[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("bogani_featured_word_cards");
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+    return DEFAULT_FEATURED_CARDS;
+  });
+  const [editingFeatured, setEditingFeatured] = useState<FeaturedCardRow | null>(null);
+  const [isNewFeatured, setIsNewFeatured] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.setItem("bogani_kamus_short_sentences", JSON.stringify(sentences));
     }
   }, [sentences]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("bogani_featured_word_cards", JSON.stringify(featuredCards));
+    }
+  }, [featuredCards]);
 
   function loadData() {
     setError(null);
@@ -283,6 +378,56 @@ export default function DatabaseKamusPanel() {
     }
   };
 
+  // Featured Card Handlers
+  const handleCreateNewFeatured = () => {
+    setIsNewFeatured(true);
+    setEditingFeatured({
+      id: `feat-${Date.now()}`,
+      word: "",
+      phonetic: "",
+      origin: "Mongondow Native",
+      meaning: "",
+      example: "",
+      aksara: "",
+      quote: "",
+      emoji: "✨",
+      tag: "Populer",
+      status: "verified",
+      created_at: new Date().toISOString(),
+    });
+  };
+
+  const handleEditFeatured = (card: FeaturedCardRow) => {
+    setIsNewFeatured(false);
+    setEditingFeatured({ ...card });
+  };
+
+  const handleSaveFeatured = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingFeatured || !editingFeatured.word.trim() || !editingFeatured.meaning.trim()) return;
+
+    if (isNewFeatured) {
+      setFeaturedCards([editingFeatured, ...featuredCards]);
+    } else {
+      setFeaturedCards(featuredCards.map((c) => (c.id === editingFeatured.id ? editingFeatured : c)));
+    }
+    setEditingFeatured(null);
+  };
+
+  const handleToggleFeaturedStatus = (id: string) => {
+    setFeaturedCards(
+      featuredCards.map((c) =>
+        c.id === id ? { ...c, status: c.status === "verified" ? "draft" : "verified" } : c
+      )
+    );
+  };
+
+  const handleDeleteFeatured = (id: string) => {
+    if (confirm("Apakah Anda yakin ingin menghapus kartu populer ini?")) {
+      setFeaturedCards(featuredCards.filter((c) => c.id !== id));
+    }
+  };
+
   // Filtered Short Sentences
   const filteredSentences = sentences.filter((s) => {
     const matchSearch =
@@ -298,12 +443,12 @@ export default function DatabaseKamusPanel() {
   return (
     <div className="space-y-6">
       <PanelHeader
-        title="Database Kamus &amp; Frasa Kalimat Pendek"
-        subtitle="Kelola kosa kata, fonetik, makna, serta himpunan frasa &amp; kalimat pendek Bahasa Mongondow multi-bahasa."
+        title="Database Kamus &amp; Definisi Terbaru / Populer"
+        subtitle="Kelola kosa kata, frasa Dialek Totabuan, serta kartu Definisi Terbaru &amp; Populer yang tampil di halaman /kamus."
       />
 
       {/* Sub-Tab Navigation Bar */}
-      <div className="flex items-center gap-2 border-b border-bento-border pb-2">
+      <div className="flex flex-wrap items-center gap-2 border-b border-bento-border pb-2">
         <button
           onClick={() => setActiveTab("words")}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
@@ -326,6 +471,18 @@ export default function DatabaseKamusPanel() {
         >
           <MessageSquareQuote className="w-4 h-4 text-emerald-300" />
           <span>Frasa &amp; Kalimat Pendek ({sentences.length} Kalimat)</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("featured")}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+            activeTab === "featured"
+              ? "bg-bento-accent text-white shadow-md"
+              : "bg-bento-surface text-bento-text-secondary hover:text-bento-text-primary border border-bento-border"
+          }`}
+        >
+          <Sparkles className="w-4 h-4 text-amber-400" />
+          <span>Definisi Terbaru &amp; Populer ({featuredCards.filter((c) => c.status === "verified").length} Kartu Tampil di /kamus)</span>
         </button>
       </div>
 
@@ -593,6 +750,109 @@ export default function DatabaseKamusPanel() {
       )}
 
       {/* ════════════════════════════════════════════════════════════════════ */}
+      {/* TAB 3: DEFINISI TERBARU & POPULER (FEATURED CARDS MANAGEMENT) */}
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      {activeTab === "featured" && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between border-b border-bento-border pb-3">
+            <div>
+              <h3 className="text-base font-bold text-bento-text-primary flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-amber-400" />
+                <span>Manajemen Definisi Terbaru &amp; Populer (Tampil di /kamus)</span>
+              </h3>
+              <p className="text-xs text-bento-text-secondary mt-0.5">
+                Kata dan definisi yang diatur di sini akan otomatis tampil secara publik pada kartu rekomendasi halaman /kamus.
+              </p>
+            </div>
+
+            <Button onClick={handleCreateNewFeatured} variant="primary" className="!py-2 text-xs flex items-center gap-1.5 shadow-sm bg-amber-600 hover:bg-amber-700">
+              <Plus className="w-4 h-4" />
+              <span>+ Tambah Definisi Populer Baru</span>
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {featuredCards.map((card) => (
+              <Card
+                key={card.id}
+                className={`!p-5 border transition-all ${
+                  card.status === "verified"
+                    ? "border-amber-500/30 bg-bento-surface shadow-sm"
+                    : "border-bento-border/50 bg-bento-surface-lighter/40 opacity-60"
+                }`}
+              >
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400 px-2.5 py-0.5 rounded border border-amber-500/20">
+                          {card.tag}
+                        </span>
+                        <Badge tone={card.status === "verified" ? "success" : "default"}>
+                          {card.status === "verified" ? "Tampil di /kamus" : "Draft"}
+                        </Badge>
+                      </div>
+
+                      <h4 className="text-lg font-bold text-bento-accent flex items-center gap-2">
+                        <span>{card.emoji}</span>
+                        <span>{card.word}</span>
+                        <span className="text-xs font-mono text-bento-text-secondary font-normal">{card.phonetic}</span>
+                      </h4>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        onClick={() => handleToggleFeaturedStatus(card.id)}
+                        className={`p-1.5 rounded-lg border text-[11px] transition-colors ${
+                          card.status === "verified"
+                            ? "border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10"
+                            : "border-bento-border text-bento-text-secondary hover:text-bento-text-primary"
+                        }`}
+                        title={card.status === "verified" ? "Sembunyikan dari /kamus" : "Tampilkan di /kamus"}
+                      >
+                        {card.status === "verified" ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <RotateCcw className="w-4 h-4" />}
+                      </button>
+
+                      <button
+                        onClick={() => handleEditFeatured(card)}
+                        className="p-1.5 rounded-lg border border-bento-border text-bento-text-secondary hover:text-bento-accent hover:bg-bento-surface-lighter transition-colors"
+                        title="Edit kartu definisi ini"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        onClick={() => handleDeleteFeatured(card.id)}
+                        className="p-1.5 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors"
+                        title="Hapus kartu definisi ini"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-bento-text-primary leading-relaxed bg-bento-surface-lighter/50 p-3 rounded-xl border border-bento-border/50 font-medium">
+                    {card.meaning}
+                  </p>
+
+                  {card.quote && (
+                    <p className="text-[11px] text-amber-400/90 italic bg-amber-500/5 p-2.5 rounded-lg border border-amber-500/10">
+                      &quot;{card.quote}&quot;
+                    </p>
+                  )}
+
+                  <div className="flex items-center justify-between text-[11px] text-bento-text-secondary font-mono pt-1">
+                    <span>Aksara: {card.aksara}</span>
+                    <span>Asal: {card.origin}</span>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════════════════════════════ */}
       {/* MODAL POPUP EDITOR FOR SINGLE WORD */}
       {/* ════════════════════════════════════════════════════════════════════ */}
       {editingEntry && (
@@ -793,6 +1053,139 @@ export default function DatabaseKamusPanel() {
                 </Button>
                 <Button type="submit" variant="primary" className="!py-2 text-xs shadow-sm bg-emerald-600 hover:bg-emerald-700">
                   Simpan Kalimat Pendek
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      {/* MODAL POPUP EDITOR FOR FEATURED CARD */}
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      {editingFeatured && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4"
+          onClick={() => setEditingFeatured(null)}
+        >
+          <div
+            className="bg-bento-surface border border-bento-border rounded-2xl max-w-xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-bento-border pb-3">
+              <h3 className="text-base font-bold text-bento-text-primary flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-amber-400" />
+                <span>{isNewFeatured ? "Tambah Definisi Terbaru / Populer Baru" : `Edit Kartu: ${editingFeatured.word}`}</span>
+              </h3>
+              <button
+                onClick={() => setEditingFeatured(null)}
+                className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-bento-border text-bento-text-secondary hover:text-bento-text-primary transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveFeatured} className="space-y-4">
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-bento-text-secondary mb-1">Kata Mongondow *</label>
+                  <input
+                    required
+                    value={editingFeatured.word}
+                    onChange={(e) => setEditingFeatured({ ...editingFeatured, word: e.target.value })}
+                    placeholder="Contoh: Bogani"
+                    className="w-full px-3 py-2 rounded-xl border border-bento-border bg-bento-bg text-sm font-bold text-bento-accent outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-bento-text-secondary mb-1">Fonetik IPA</label>
+                  <input
+                    value={editingFeatured.phonetic}
+                    onChange={(e) => setEditingFeatured({ ...editingFeatured, phonetic: e.target.value })}
+                    placeholder="Contoh: /bo.ga.ni/"
+                    className="w-full px-3 py-2 rounded-xl border border-bento-border bg-bento-bg text-sm font-mono outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-bento-text-secondary mb-1">Emoji / Ikon</label>
+                  <input
+                    value={editingFeatured.emoji}
+                    onChange={(e) => setEditingFeatured({ ...editingFeatured, emoji: e.target.value })}
+                    placeholder="🛡️"
+                    className="w-full px-3 py-2 rounded-xl border border-bento-border bg-bento-bg text-sm outline-none text-center"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-bento-text-secondary mb-1">Asal-Usul Rumpun</label>
+                  <input
+                    value={editingFeatured.origin}
+                    onChange={(e) => setEditingFeatured({ ...editingFeatured, origin: e.target.value })}
+                    placeholder="Contoh: Austronesia Kuno"
+                    className="w-full px-3 py-2 rounded-xl border border-bento-border bg-bento-bg text-sm outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-bento-text-secondary mb-1">Aksara Breakdown</label>
+                  <input
+                    value={editingFeatured.aksara}
+                    onChange={(e) => setEditingFeatured({ ...editingFeatured, aksara: e.target.value })}
+                    placeholder="Contoh: bo-ga-ni"
+                    className="w-full px-3 py-2 rounded-xl border border-bento-border bg-bento-bg text-sm font-mono outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-bento-text-secondary mb-1">Tag / Label Populer</label>
+                <input
+                  value={editingFeatured.tag}
+                  onChange={(e) => setEditingFeatured({ ...editingFeatured, tag: e.target.value })}
+                  placeholder="Contoh: Populer • Tokoh Adat"
+                  className="w-full px-3 py-2 rounded-xl border border-bento-border bg-bento-bg text-sm outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-bento-text-secondary mb-1">Makna &amp; Penjelasan Lengkap *</label>
+                <textarea
+                  required
+                  rows={3}
+                  value={editingFeatured.meaning}
+                  onChange={(e) => setEditingFeatured({ ...editingFeatured, meaning: e.target.value })}
+                  placeholder="Tuliskan makna dan definisi kata secara lengkap..."
+                  className="w-full px-3 py-2 rounded-xl border border-bento-border bg-bento-bg text-sm leading-relaxed outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-bento-text-secondary mb-1">Kutipan / Catatan Adat Penting</label>
+                <input
+                  value={editingFeatured.quote}
+                  onChange={(e) => setEditingFeatured({ ...editingFeatured, quote: e.target.value })}
+                  placeholder="Contoh: Gelar kehormatan tertinggi yang tidak diwariskan secara keturunan..."
+                  className="w-full px-3 py-2 rounded-xl border border-bento-border bg-bento-bg text-sm outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-bento-text-secondary mb-1">Contoh Kalimat Penggunaan</label>
+                <input
+                  value={editingFeatured.example}
+                  onChange={(e) => setEditingFeatured({ ...editingFeatured, example: e.target.value })}
+                  placeholder="Contoh: Ki Bogani nokoi kon Totabuan..."
+                  className="w-full px-3 py-2 rounded-xl border border-bento-border bg-bento-bg text-sm outline-none"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-bento-border">
+                <Button onClick={() => setEditingFeatured(null)} type="button" variant="default" className="!py-2 text-xs">
+                  Batal
+                </Button>
+                <Button type="submit" variant="primary" className="!py-2 text-xs shadow-sm bg-amber-600 hover:bg-amber-700">
+                  Simpan Kartu Definisi
                 </Button>
               </div>
             </form>
