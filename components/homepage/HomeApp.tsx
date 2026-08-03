@@ -95,10 +95,10 @@ export default function HomeApp() {
     });
   };
 
-  const handleSendMessage = async (text: string, isVoiceInput: boolean = false, fileData?: string): Promise<void> => {
+  const handleSendMessage = async (text: string, isVoiceInput: boolean = false, fileData?: string): Promise<string> => {
     // If not logged in and reached limit of 2 free questions, block
     if (!user && guestQuestionCount >= 2) {
-      return;
+      return "";
     }
 
     let currentId = activeSessionId;
@@ -158,6 +158,8 @@ export default function HomeApp() {
           history: existingMessages,
           lang,
           stream: true,
+          isVoiceMode: isVoiceInput,
+          isVoiceInput: isVoiceInput,
           file: fileData || undefined
         })
       });
@@ -212,6 +214,7 @@ export default function HomeApp() {
     } catch (err: any) {
       console.error("Error calling chat API:", err);
       const errorMsgText = `⚠️ Terjadi kesalahan: ${err.message || "Gagal menghubungi Bogani AI Gateway"}`;
+      accumulatedText = errorMsgText;
 
       setChatSessions(prev =>
         prev.map(s => {
@@ -227,6 +230,8 @@ export default function HomeApp() {
     } finally {
       setIsAiResponding(false);
     }
+
+    return accumulatedText;
   };
 
   const handleRegenerate = async (): Promise<void> => {
@@ -276,8 +281,8 @@ export default function HomeApp() {
         isOpen={isVoiceOverlayOpen}
         onClose={() => setIsVoiceOverlayOpen(false)}
         onSendVoiceMessage={async (text) => {
-          await handleSendMessage(text, true);
-          return "";
+          const aiReply = await handleSendMessage(text, true);
+          return aiReply;
         }}
         lang={lang}
       />

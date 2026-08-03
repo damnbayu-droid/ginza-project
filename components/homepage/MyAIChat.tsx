@@ -34,7 +34,7 @@ const WEBSITE_NAME = process.env.NEXT_PUBLIC_WEBSITE_NAME || "MongondowPedia";
 
 interface MyAIChatProps {
   currentSession: HomeChatSession | null;
-  onSendMessage: (text: string, isVoiceInput?: boolean, fileData?: string) => Promise<void>;
+  onSendMessage: (text: string, isVoiceInput?: boolean, fileData?: string) => Promise<any>;
   onRegenerate: () => Promise<void>;
   onOpenVoiceOverlay: () => void;
   onToggleSidebarMobile: () => void;

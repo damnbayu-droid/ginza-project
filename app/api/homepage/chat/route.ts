@@ -130,17 +130,34 @@ async function callProviderDirect(
   systemPrompt: string,
   parsedFileData?: { mimeType: string; base64Data: string } | null
 ): Promise<{ text?: string; provider?: string; error?: string; status?: number; promptTokens?: number; completionTokens?: number }> {
+  // Priority Fallback Order preferred by Ecosystem Owner (Boss Bayu):
+  // 1. Deepseek -> 2. GLM -> 3. Grok -> 4. Gemini -> 5. GPT -> 6. Claude
+  const PREFERRED_ORDER = ["deepseek", "glm", "grok", "gemini", "gpt", "claude"];
+
   if (supabaseAdmin) {
     const { data: providerKeys } = await supabaseAdmin
       .from("gw_provider_keys")
-      .select("id, provider, label, key_encrypted, usage_count, last_used_at, priority")
+      .select("id, provider, label, key_encrypted, usage_count, last_used_at, priority, cooldown_until")
       .eq("status", "active")
       .order("priority", { ascending: false })
       .order("last_used_at", { ascending: true, nullsFirst: true })
       .order("usage_count", { ascending: true });
 
     if (providerKeys && providerKeys.length > 0) {
-      for (const selected of providerKeys) {
+      // Sort DB keys using preferred provider sequence when priorities are equal
+      const sortedKeys = [...providerKeys].sort((a, b) => {
+        if ((b.priority ?? 0) !== (a.priority ?? 0)) {
+          return (b.priority ?? 0) - (a.priority ?? 0);
+        }
+        const indexA = PREFERRED_ORDER.indexOf(a.provider);
+        const indexB = PREFERRED_ORDER.indexOf(b.provider);
+        return (indexA !== -1 ? indexA : 99) - (indexB !== -1 ? indexB : 99);
+      });
+
+      for (const selected of sortedKeys) {
+        // Skip keys in active cooldown
+        if (selected.cooldown_until && new Date(selected.cooldown_until) > new Date()) continue;
+
         const adapter = PROVIDER_REGISTRY[selected.provider];
         if (!adapter) continue;
 
@@ -182,12 +199,12 @@ async function callProviderDirect(
   }
 
   const envFallbacks: { provider: string; envVar: string }[] = [
+    { provider: "deepseek", envVar: process.env.DEEPSEEK_API_KEY1 || process.env.DEEPSEEK_API_KEY || "" },
+    { provider: "glm", envVar: process.env.GLM_API_KEY1 || process.env.GLM_API_KEY || "" },
+    { provider: "grok", envVar: process.env.GROK_API_KEY1 || process.env.GROK_API_KEY || "" },
     { provider: "gemini", envVar: process.env.GEMINI_API_KEY1 || process.env.GEMINI_API_KEY || "" },
-    { provider: "gpt", envVar: process.env.OPENAI_API_KEY1 || "" },
-    { provider: "claude", envVar: process.env.CLAUDE_API_KEY1 || "" },
-    { provider: "grok", envVar: process.env.GROK_API_KEY1 || "" },
-    { provider: "deepseek", envVar: process.env.DEEPSEEK_API_KEY1 || "" },
-    { provider: "glm", envVar: process.env.GLM_API_KEY1 || "" },
+    { provider: "gpt", envVar: process.env.OPENAI_API_KEY1 || process.env.OPENAI_API_KEY || "" },
+    { provider: "claude", envVar: process.env.CLAUDE_API_KEY1 || process.env.CLAUDE_API_KEY || "" },
   ];
 
   for (const item of envFallbacks) {
@@ -346,8 +363,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ text: gatewayText, provider_used: "gemini" }, { headers: { "X-Provider-Used": "gemini" } });
   }
 
-  // 2. Fallback: call registered Tier 1 & Tier 2 Provider Pool directly.
-  const systemPrompt = lang === 'en' ? SYSTEM_PROMPT_EN : SYSTEM_PROMPT_ID;
+  const isVoiceMode = body.isVoiceMode || body.isVoiceInput || prompt.includes("[voice]");
+  let systemPrompt = lang === 'en' ? SYSTEM_PROMPT_EN : SYSTEM_PROMPT_ID;
+
+  if (isVoiceMode) {
+    systemPrompt += `\n\n--- INSTRUKSI KHUSUS MODE SUARA LANGSUNG (VOICE DIRECTIVE) ---
+Jawab secara lisan dengan hangat, natural, dan ringkas (maksimal 2–3 kalimat). JANGAN PERNAH gunakan pemformatan markdown seperti cetak tebal (**), bullet points (-), tabel (|), atau header (#). Ucapkan nama tempat dan kosa kata Mongondow dengan fonetik yang jernih dan santun.`;
+  }
+
   const direct = await callProviderDirect(fullPrompt, systemPrompt, parsedFileData);
 
   if (direct.error) {
