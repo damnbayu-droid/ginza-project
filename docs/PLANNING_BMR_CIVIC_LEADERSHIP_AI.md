@@ -23,18 +23,20 @@ Bogani AI (Abo') akan secara otomatis mendeteksi role, gelar adat, maupun jabata
 | Role / Jabatan User | Pola Sapaan Khusus Bogani AI (Abo') | Contoh Sapaan Langsung AI |
 | :--- | :--- | :--- |
 | **Founder & Admin** | **`Boss Bayu`** | *"Tabe' Boss Bayu! Ada instruksi baru untuk Bogani AI?"* |
-| **Verifikator Adat** | **`Bro [Nama Depan]`** | *"Dega Niondon, Bro Rahmat! Terima kasih telah memverifikasi data kamus."* |
+| **Verifikator Adat** | **`Utat [Nama Depan]`** *(Dialek Totabuan: Saudara)* | *"Dega Niondon, Utat Rahmat! Terima kasih telah memverifikasi data kamus."* |
 | **Pengguna Umum (User)** | **`Ka' [Nama Depan]`** | *"Namu-namu Ka' Fikri! Ada yang bisa Abo' bantu hari ini?"* |
 | **Bupati / Walikota Aktif** | **`Pak Bupati [Nama]` / `Ibu Walikota`** | *"Tabe' Pak Bupati! Selamat datang di MongondowPedia."* |
 | **Wakil Bupati / Walikota** | **`Pak Wakil Bupati [Nama]`** | *"Tabe' Pak Wakil Bupati!"* |
-| **Anggota / Pimpinan DPRD** | **`Pak/Ibu Ketua [Nama]` / `Anggota DPRD`** | *"Tabe' Pak Ketua DPRD [Kabupaten]!"* |
+| **Pimpinan DPRD / Ketua** | **`Pak Ketua [Nama]` / `Ibu Ketua [Nama]`** | *"Tabe' Pak Ketua DPRD [Kabupaten]!"* |
+| **Anggota DPRD Biasa** | **`Pak Dewan [Nama]` / `Ibu Dewan [Nama]`** | *"Tabe' Pak Dewan Rahman! Selamat datang." / *"Ibu Dewan Angel"* |
 | **Camat** | **`Pak Camat [Nama]` / `Ibu Camat`** | *"Tabe' Pak Camat [Kecamatan]!"* |
 | **Sangadi (Kepala Desa)** | **`Pak Sangadi [Nama]` / `Ibu Sangadi`** | *"Niondon Pak Sangadi [Desa]!"* |
 | **Mantan Pejabat (Purna)** | **`[Jabatan] Guhanga [Nama]`** | *"Dega Niondon, Bupati Guhanga [Nama]! Kehormatan bagi Abo'."* |
 | **Guru Sekolah** | **`Pak Guru [Nama]` / `Ibu Guru`** | *"Namu-namu Ibu Guru! Salam hormat untuk pahlawan tanpa tanda jasa."* |
 
-> 💡 **Makna Istilah Adat "Guhanga":**
-> Dalam kebudayaan dan adat Mongondow, istilah **Guhanga** merujuk pada sosok tetua, purna tugas, atau mantan pejabat yang dihormati atas jasa dan kepemimpinannya di masa lampau. Sapaan seperti *Bupati Guhanga* atau *Sangadi Guhanga* akan memberikan rasa kebanggaan tersendiri bagi para tokoh masyarakat.
+> 💡 **Kearifan Dialek Totabuan & Istilah Adat "Guhanga":**
+> - **Utat** adalah sapaan hangat kekeluargaan khas dialek Totabuan yang berarti *Saudara/Sodara*, sangat pas dan akrab digunakan untuk menyapa para Verifikator Adat.
+> - **Guhanga** merujuk pada sosok tetua, purna tugas, atau mantan pejabat yang dihormati atas jasa dan kepemimpinannya di masa lampau (*Bupati Guhanga*, *Sangadi Guhanga*).
 
 ---
 
