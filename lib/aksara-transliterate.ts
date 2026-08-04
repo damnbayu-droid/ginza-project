@@ -38,9 +38,9 @@ const MAX_TOKEN_LEN = Math.max(...DATA.syllables.map((s) => s.romanization.lengt
  * di luar inventori fonem Mongondow: c, f, j, q, v, x, z).
  */
 function segmentWord(word: string): AksaraSyllable[] | null {
-  // Buang tanda kutip/glottal stop & simbol non-huruf — tidak direpresentasikan
+  // Buang tanda baca, angka, & simbol non-huruf Latin — tidak direpresentasikan
   // sebagai glyph terpisah di bagan aksara ini.
-  const clean = word.toLowerCase().replace(/['’ʼ`-]/g, "");
+  const clean = word.toLowerCase().replace(/[^a-z]/g, "");
   if (!clean) return [];
 
   const result: AksaraSyllable[] = [];

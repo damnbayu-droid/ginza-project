@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, Database, BookOpenText } from "lucide-react";
+import { ArrowLeft, Database, BookOpenText, ScrollText } from "lucide-react";
 import { listKnowledgeCategories, listKnowledgeArticles } from "@/lib/ginza-db";
 import { isSupabaseReady } from "@/lib/supabase";
 import ContributeCTA from "@/components/knowledge/ContributeCTA";
@@ -38,9 +38,18 @@ export default async function KnowledgePage() {
             <ArrowLeft className="w-4 h-4" />
             <span>Kembali ke Page Utama</span>
           </Link>
-          <span className="text-xs font-mono text-blue-400 bg-blue-500/10 border border-blue-500/20 px-3 py-1 rounded-full font-semibold">
-            Pusat Pengetahuan
-          </span>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/aksara-mongondow"
+              className="px-4 py-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 text-xs font-bold flex items-center gap-2 shadow-sm transition-all active:scale-95"
+            >
+              <ScrollText className="w-4 h-4 text-blue-400" />
+              <span>Aksara Mongondow</span>
+            </Link>
+            <span className="text-xs font-mono text-blue-400 bg-blue-500/10 border border-blue-500/20 px-3 py-1 rounded-full font-semibold">
+              Pusat Pengetahuan
+            </span>
+          </div>
         </div>
 
         <div className="space-y-3">

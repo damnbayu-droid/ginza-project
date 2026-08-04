@@ -232,6 +232,13 @@ export default function KamusPage() {
           </Link>
           
           <div className="flex items-center gap-3">
+            <Link
+              href="/aksara-mongondow"
+              className="px-4 py-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 text-xs font-bold flex items-center gap-2 shadow-sm transition-all active:scale-95 cursor-pointer"
+            >
+              <ScrollText className="w-4 h-4 text-blue-400" />
+              <span>Aksara Mongondow</span>
+            </Link>
             <button
               onClick={() => setShowFrasaModal(true)}
               className="px-4 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold flex items-center gap-2 shadow-sm transition-all active:scale-95 cursor-pointer"
@@ -609,16 +616,16 @@ export default function KamusPage() {
                     <p className="text-xs text-gray-500 italic">
                       Kata ini belum bisa dipetakan otomatis ke tabel Aksara Mongondow (mis. memuat huruf di luar
                       inventori fonem aksara, atau ejaan belum standar). Lihat tabel lengkap di{" "}
-                      <Link href="/aksara" className="text-blue-400 underline hover:text-blue-300">
-                        halaman /aksara
+                      <Link href="/aksara-mongondow" className="text-blue-400 underline hover:text-blue-300">
+                        halaman /aksara-mongondow
                       </Link>
                       .
                     </p>
                   )}
                   <p className="text-[10px] text-gray-500">
                     Sumber: tabel 88 suku kata di{" "}
-                    <Link href="/aksara" className="text-blue-400 underline hover:text-blue-300">
-                      /aksara
+                    <Link href="/aksara-mongondow" className="text-blue-400 underline hover:text-blue-300">
+                      /aksara-mongondow
                     </Link>{" "}
                     — bukan hasil tebakan AI.
                   </p>
