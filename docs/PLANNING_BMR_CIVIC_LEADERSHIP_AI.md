@@ -24,7 +24,7 @@ Bogani AI (Abo') akan secara otomatis mendeteksi role, gelar adat, maupun jabata
 | :--- | :--- | :--- |
 | **Founder & Admin** | **`Boss Bayu`** | *"Tabe' Boss Bayu! Ada instruksi baru untuk Bogani AI?"* |
 | **Verifikator Adat** | **`Utat [Nama Depan]`** *(Dialek Totabuan: Saudara)* | *"Dega Niondon, Utat Rahmat! Terima kasih telah memverifikasi data kamus."* |
-| **Pengguna Umum (User)** | **`Ka' [Nama Depan]`** | *"Namu-namu Ka' Fikri! Ada yang bisa Abo' bantu hari ini?"* |
+| **Pengguna Umum (User)** | **`Ka' [Nama Depan]`** | *"Niondon Ka' Fikri! Ada yang bisa Abo' bantu hari ini?"* |
 | **Bupati / Walikota Aktif** | **`Pak Bupati [Nama]` / `Ibu Walikota`** | *"Tabe' Pak Bupati! Selamat datang di MongondowPedia."* |
 | **Wakil Bupati / Walikota** | **`Pak Wakil Bupati [Nama]`** | *"Tabe' Pak Wakil Bupati!"* |
 | **Pimpinan DPRD / Ketua** | **`Pak Ketua [Nama]` / `Ibu Ketua [Nama]`** | *"Tabe' Pak Ketua DPRD [Kabupaten]!"* |
@@ -32,7 +32,7 @@ Bogani AI (Abo') akan secara otomatis mendeteksi role, gelar adat, maupun jabata
 | **Camat** | **`Pak Camat [Nama]` / `Ibu Camat`** | *"Tabe' Pak Camat [Kecamatan]!"* |
 | **Sangadi (Kepala Desa)** | **`Pak Sangadi [Nama]` / `Ibu Sangadi`** | *"Niondon Pak Sangadi [Desa]!"* |
 | **Mantan Pejabat (Purna)** | **`[Jabatan] Guhanga [Nama]`** | *"Dega Niondon, Bupati Guhanga [Nama]! Kehormatan bagi Abo'."* |
-| **Guru Sekolah** | **`Pak Guru [Nama]` / `Ibu Guru`** | *"Namu-namu Ibu Guru! Salam hormat untuk pahlawan tanpa tanda jasa."* |
+| **Guru Sekolah** | **`Pak Guru [Nama]` / `Ibu Guru`** | *"Tabe' Ibu Guru! Salam hormat untuk pahlawan tanpa tanda jasa."* |
 
 > 💡 **Kearifan Dialek Totabuan & Istilah Adat "Guhanga":**
 > - **Utat** adalah sapaan hangat kekeluargaan khas dialek Totabuan yang berarti *Saudara/Sodara*, sangat pas dan akrab digunakan untuk menyapa para Verifikator Adat.

@@ -34,7 +34,7 @@ interface ChatMessage {
 const DEFAULT_ADMIN_RULES: AdminRule[] = [
   {
     id: "rule-1",
-    instruction: "Selalu gunakan sapaan hangat adat Mongondow (seperti 'Namu-namu' atau 'Ndok') saat menyapa pengguna.",
+    instruction: "Selalu gunakan sapaan penyambutan resmi adat Mongondow 'Dega Niondon!' dan sapaan akrab 'Utat' saat menyapa pengguna.",
     category: "Gaya Bahasa",
     isActive: true,
     createdAt: new Date().toISOString(),
@@ -139,7 +139,7 @@ export default function AiMasterPanel() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
-      content: "Namu-namu! Saya Bogani AI. Saya sekarang sudah dilengkapi dengan Memori Jangka Panjang & Aturan Reasoning terpusat. Ada yang bisa saya bantu hari ini?",
+      content: "Dega Niondon! Saya Bogani AI. Saya sekarang sudah dilengkapi dengan Memori Jangka Panjang & Aturan Reasoning terpusat. Ada yang bisa saya bantu hari ini?",
       provider: "Auto (Gateway)",
     },
   ]);
@@ -649,7 +649,7 @@ export default function AiMasterPanel() {
                       required
                       value={newInstruction}
                       onChange={(e) => setNewInstruction(e.target.value)}
-                      placeholder="Contoh: Selalu batasi jawaban maksimal 3 paragraf dan gunakan kata 'Namu-namu'..."
+                      placeholder="Contoh: Selalu batasi jawaban maksimal 3 paragraf dan gunakan kata 'Dega Niondon'..."
                       className="w-full px-3.5 py-2 rounded-xl border border-bento-border bg-bento-bg text-sm outline-none focus:border-bento-accent"
                     />
                   </div>
