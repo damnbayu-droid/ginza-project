@@ -47,16 +47,18 @@ function buildPromptWithHistory(history: HomeChatMessage[], prompt: string): str
   } catch (e) {
     console.warn("[homepage-chat] Failed retrieving knowledge context:", e);
   }
+  
+  const personaHeader = `[SYSTEM INSTRUCTION BOGANI AI]:\n${SYSTEM_PROMPT_ID}\n\n`;
   const fullPrompt = prompt + kamusCtx + knowledgeCtx;
 
-  if (!Array.isArray(history) || history.length === 0) return fullPrompt;
+  if (!Array.isArray(history) || history.length === 0) return personaHeader + fullPrompt;
 
   const historyText = history
     .filter((m) => m.role === 'user' || m.role === 'assistant')
     .map((m) => `${m.role === 'user' ? 'User' : AI_NAME}: ${m.content}`)
     .join("\n\n");
 
-  return `${historyText}\n\nUser: ${fullPrompt}`;
+  return `${personaHeader}${historyText}\n\nUser: ${fullPrompt}`;
 }
 
 function simulateReply(prompt: string, lang: Language): string {
