@@ -58,6 +58,14 @@ export default function AksaraPanel() {
   const [inkColor, setInkColor] = useState("#0f172a");
   const [isSavingCanvas, setIsSavingCanvas] = useState(false);
 
+  // Referensi ghost overlay — supaya huruf BARU yang digambar tangan tetap
+  // konsisten secara visual dgn huruf yang sudah ada (mis. merancang "ny"
+  // dgn menjadikan "ng" sbg acuan bentuk dasar, sesuai pendekatan hibrida:
+  // sebagian adopsi Baybayin standar, sebagian rancangan sendiri dgn bentuk
+  // yg dimodifikasi dari huruf berbunyi mirip).
+  const [referenceRomanization, setReferenceRomanization] = useState<string>("");
+  const [showReferenceOverlay, setShowReferenceOverlay] = useState(true);
+
   // Undo / Stroke history state
   const [strokes, setStrokes] = useState<Stroke[]>([]);
   const currentStrokeRef = useRef<Stroke | null>(null);
@@ -89,8 +97,10 @@ export default function AksaraPanel() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Transparan (bukan fillRect putih) -- konsisten dgn format aset huruf
+    // yang sudah ada (traced calligraphy, ink di atas latar transparan), dan
+    // supaya overlay referensi ghost di bawahnya kelihatan lewat canvas.
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     for (const stroke of strokesList) {
       if (stroke.points.length === 0) continue;
@@ -233,8 +243,7 @@ export default function AksaraPanel() {
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
   };
 
   const handleSaveDrawnAksara = async (e: React.FormEvent) => {
@@ -567,6 +576,74 @@ export default function AksaraPanel() {
                 </div>
               </div>
 
+              {/* Kuis pintas: gap paling mendesak saat ini -- digraf "ny" (mis.
+                  Kinalang) belum punya glif meski "ng" sudah ada di tabel.
+                  Tombol ini cuma mengisi form + memilih acuan visual; bentuk
+                  akhirnya tetap digambar tangan di canvas di bawah. */}
+              <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 space-y-2">
+                <p className="text-[11px] font-semibold text-amber-500">
+                  Prioritas saat ini: digraf &quot;ny&quot; belum terwakili (mis. Kinalang). Isi cepat:
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { rom: "nya", type: "vowel_a", ref: "nga" },
+                    { rom: "nye", type: "vowel_e_i", ref: "nge" },
+                    { rom: "nyi", type: "vowel_e_i", ref: "ngi" },
+                    { rom: "nyo", type: "vowel_o_u", ref: "ngo" },
+                    { rom: "nyu", type: "vowel_o_u", ref: "ngu" },
+                  ].map((sug) => (
+                    <button
+                      key={sug.rom}
+                      type="button"
+                      onClick={() => {
+                        setNewRomanization(sug.rom);
+                        setNewSyllableType(sug.type);
+                        setReferenceRomanization(sug.ref);
+                        setShowReferenceOverlay(true);
+                        setNewSourceReference((prev) =>
+                          prev.trim()
+                            ? prev
+                            : `Dirancang dari bentuk dasar "${sug.ref}" (konsonan nasal serumpun) dengan modifikasi visual -- pendekatan hibrida: sebagian adopsi Baybayin standar, sebagian rancangan sendiri.`
+                        );
+                      }}
+                      className="px-2.5 py-1 rounded-full text-[11px] font-mono font-semibold bg-amber-500/10 border border-amber-500/40 text-amber-400 hover:bg-amber-500/20"
+                    >
+                      {sug.rom}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Referensi ghost overlay -- pilih huruf yang sudah ada sbg acuan
+                  visual sementara menggambar huruf baru, supaya bentuknya tetap
+                  konsisten dgn gaya set huruf yang sudah ada. */}
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <Eye className="w-3.5 h-3.5 text-bento-text-secondary" />
+                <span className="font-semibold text-bento-text-secondary">Acuan visual (opsional):</span>
+                <select
+                  value={referenceRomanization}
+                  onChange={(e) => setReferenceRomanization(e.target.value)}
+                  className="px-2 py-1 rounded-lg border border-bento-border bg-bento-bg text-xs font-mono outline-none focus:border-bento-accent"
+                >
+                  <option value="">— tidak ada —</option>
+                  {(glyphs ?? []).map((g) => (
+                    <option key={g.id} value={g.romanization}>
+                      {g.romanization}
+                    </option>
+                  ))}
+                </select>
+                {referenceRomanization && (
+                  <label className="flex items-center gap-1.5 text-bento-text-secondary">
+                    <input
+                      type="checkbox"
+                      checked={showReferenceOverlay}
+                      onChange={(e) => setShowReferenceOverlay(e.target.checked)}
+                    />
+                    Tampilkan sbg bayangan tipis di canvas
+                  </label>
+                )}
+              </div>
+
               {/* ADVANCE DRAWING STUDIO CANVAS AREA (FULL WIDTH & HIGH RES) */}
               <div className="space-y-3">
                 {/* Studio Control Toolbar */}
@@ -643,6 +720,16 @@ export default function AksaraPanel() {
 
                 {/* Full-width High-Resolution Drawing Canvas */}
                 <div className="border-2 border-dashed border-bento-accent/40 rounded-2xl bg-white p-2 flex justify-center shadow-md relative overflow-hidden">
+                  {showReferenceOverlay && referenceRomanization && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-15 z-0">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={glyphs?.find((g) => g.romanization === referenceRomanization)?.glyph_svg_path}
+                        alt={referenceRomanization}
+                        className="h-72 object-contain"
+                      />
+                    </div>
+                  )}
                   <canvas
                     ref={canvasRef}
                     width={800}
@@ -654,7 +741,7 @@ export default function AksaraPanel() {
                     onTouchStart={startDrawing}
                     onTouchMove={draw}
                     onTouchEnd={stopDrawing}
-                    className="w-full h-80 cursor-crosshair rounded-xl touch-none bg-white"
+                    className="w-full h-80 cursor-crosshair rounded-xl touch-none"
                   />
                   {strokes.length === 0 && (
                     <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center text-slate-300 space-y-1">
