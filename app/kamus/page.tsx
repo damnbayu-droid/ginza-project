@@ -22,7 +22,7 @@ import {
   MessageSquareQuote
 } from "lucide-react";
 import { transliterateToAksara } from "@/lib/aksara-transliterate";
-import { toSpeakableMongondow } from "@/lib/mongondow-pronunciation";
+import { speakMongondow, stopSpeakingMongondow } from "@/lib/mongondow-voice";
 import ContributeCTA from "@/components/knowledge/ContributeCTA";
 
 const AKSARA_GLYPH_BASE = "/aksara-svg/";
@@ -196,21 +196,21 @@ export default function KamusPage() {
     }
   };
 
-  // Audio Text-to-Speech Pronunciation
+  // Audio Pronunciation -- coba rekaman asli verifikator dulu (voice_training_samples,
+  // via lookupRecordedSample di lib/mongondow-voice.ts), baru jatuh ke TTS sintetis.
   const handleSpeak = (text: string) => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    if (typeof window === "undefined") return;
     if (isSpeaking) {
-      window.speechSynthesis.cancel();
+      stopSpeakingMongondow();
       setIsSpeaking(false);
       return;
     }
-    const utterance = new SpeechSynthesisUtterance(toSpeakableMongondow(text));
-    utterance.lang = "id-ID";
-    utterance.rate = 0.9;
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
     setIsSpeaking(true);
-    window.speechSynthesis.speak(utterance);
+    speakMongondow(text, {
+      onStart: () => setIsSpeaking(true),
+      onEnd: () => setIsSpeaking(false),
+      onError: () => setIsSpeaking(false),
+    });
   };
 
   const openCardDetail = (card: SiderWordCard) => {

@@ -26,7 +26,7 @@ import Link from "next/link";
 import MyAILogo from "./MyAILogo";
 import LoginModal from "@/components/LoginModal";
 import { HomeChatMessage, HomeChatSession, Language } from "@/lib/types";
-import { toSpeakableMongondow } from "@/lib/mongondow-pronunciation";
+import { speakMongondow, stopSpeakingMongondow } from "@/lib/mongondow-voice";
 
 // Identitas produk Ginza Project — pakai env var yang sama dengan lib/bogani-persona.ts
 // supaya konsisten di seluruh app (bukan generic "MyAI" seperti sebelumnya).
@@ -168,30 +168,27 @@ export default function MyAIChat({
   };
 
   const handleReadAloud = (id: string, text: string) => {
-    if (typeof window === "undefined" || !('speechSynthesis' in window)) return;
+    if (typeof window === "undefined") return;
 
     if (speakingMessageId === id) {
-      window.speechSynthesis.cancel();
+      stopSpeakingMongondow();
       setSpeakingMessageId(null);
       return;
     }
 
-    window.speechSynthesis.cancel();
+    stopSpeakingMongondow();
     setSpeakingMessageId(id);
 
-    const cleanText = toSpeakableMongondow(
-      text
-        .replace(/[*_#`~]/g, '')
-        .replace(/\[.*?\]\(.*?\)/g, '')
-    );
-
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.lang = lang === 'id' ? 'id-ID' : 'en-US';
-
-    utterance.onend = () => setSpeakingMessageId(null);
-    utterance.onerror = () => setSpeakingMessageId(null);
-
-    window.speechSynthesis.speak(utterance);
+    // Coba rekaman suara asli dulu (cuma nyantol kalau balasan AI kebetulan
+    // persis sama dgn satu kata/frasa yg sudah direkam verifikator -- jarang
+    // tapi bisa terjadi, mis. balasan singkat berupa satu kata Kamus), baru
+    // jatuh ke TTS sintetis utk balasan panjang seperti biasa.
+    const strippedText = text.replace(/[*_#`~]/g, '').replace(/\[.*?\]\(.*?\)/g, '');
+    speakMongondow(strippedText, {
+      lang: lang === 'id' ? 'id-ID' : 'en-US',
+      onEnd: () => setSpeakingMessageId(null),
+      onError: () => setSpeakingMessageId(null),
+    });
   };
 
   const handleMicClick = async () => {

@@ -17,10 +17,12 @@ import {
   Undo2,
   RefreshCw,
   Layers,
+  Volume2,
 } from "lucide-react";
 import aksaraData from "@/data/aksara/aksara_mongondow.json";
 import { transliterateToAksara, AksaraSyllable } from "@/lib/aksara-transliterate";
-import { exportAsPng, exportAsJpg, exportAsPdf, exportAsDocx } from "@/lib/aksara-export";
+import { exportGlyphsAsPng, exportGlyphsAsJpg, exportGlyphsAsPdf, exportGlyphsAsDocx } from "@/lib/aksara-export";
+import { speakMongondow } from "@/lib/mongondow-voice";
 
 // ─────────────────────────────────────────────────────────────────────────
 // Types & Data
@@ -110,6 +112,20 @@ export default function AksaraMongondow({ statusMap = {} }: AksaraMongondowProps
   const [selected, setSelected] = useState<AksaraSyllable | null>(null);
   const [showInfo, setShowInfo] = useState(false);
 
+  // ── Audio: bacakan romanisasi — dipakai bersama oleh kartu suku kata (tab
+  // Matriks) & hasil transliterasi (tab Sandbox). Coba rekaman suara ASLI
+  // verifikator dulu (voice_training_samples via /api/public/voice-lookup),
+  // baru jatuh ke TTS sintetis kalau belum ada rekamannya (lib/mongondow-voice.ts).
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const speak = (text: string) => {
+    if (!text.trim()) return;
+    speakMongondow(text, {
+      onStart: () => setIsSpeaking(true),
+      onEnd: () => setIsSpeaking(false),
+      onError: () => setIsSpeaking(false),
+    });
+  };
+
   // ── 1. Sandbox Transliterasi Real-Time ───────────────────────────────
   const [sandboxInput, setSandboxInput] = useState("Mokodompis Bolaang Mongondow");
   const sandboxResult = useMemo(() => {
@@ -120,15 +136,17 @@ export default function AksaraMongondow({ statusMap = {} }: AksaraMongondowProps
   const [exportingFormat, setExportingFormat] = useState<"png" | "jpg" | "pdf" | "docx" | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
 
+  // Export memakai gambar glyph SVG asli per suku kata (persis isi box
+  // "Hasil Naskah Aksara" di bawah), BUKAN render font di box Preview Font.
   async function handleExport(format: "png" | "jpg" | "pdf" | "docx") {
-    if (!sandboxInput.trim() || exportingFormat) return;
+    if (sandboxResult.allFailed || !sandboxInput.trim() || exportingFormat) return;
     setExportError(null);
     setExportingFormat(format);
     try {
-      if (format === "png") await exportAsPng(sandboxInput);
-      else if (format === "jpg") await exportAsJpg(sandboxInput);
-      else if (format === "pdf") await exportAsPdf(sandboxInput);
-      else await exportAsDocx(sandboxInput);
+      if (format === "png") await exportGlyphsAsPng(sandboxResult.words);
+      else if (format === "jpg") await exportGlyphsAsJpg(sandboxResult.words);
+      else if (format === "pdf") await exportGlyphsAsPdf(sandboxResult.words);
+      else await exportGlyphsAsDocx(sandboxResult.words);
     } catch (err) {
       console.error("Export gagal:", err);
       setExportError("Export gagal, coba lagi.");
@@ -452,8 +470,11 @@ export default function AksaraMongondow({ statusMap = {} }: AksaraMongondowProps
             {filtered.map((s) => (
               <button
                 key={s.id}
-                onClick={() => setSelected(s)}
-                title={STATUS_LABEL[getStatus(s.romanization)]?.label ?? getStatus(s.romanization)}
+                onClick={() => {
+                  setSelected(s);
+                  speak(s.romanization);
+                }}
+                title={`Klik utk dengar bunyi "${s.romanization}" — ${STATUS_LABEL[getStatus(s.romanization)]?.label ?? getStatus(s.romanization)}`}
                 className={`relative flex flex-col items-center justify-between gap-1.5 rounded-2xl bg-[#f5f0e6] border-2 p-2.5 transition-all hover:-translate-y-1 hover:shadow-xl ${
                   selected?.id === s.id
                     ? "border-blue-500 ring-2 ring-blue-500/40 shadow-lg shadow-blue-500/20"
@@ -464,6 +485,7 @@ export default function AksaraMongondow({ statusMap = {} }: AksaraMongondowProps
                   className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full ${STATUS_LABEL[getStatus(s.romanization)]?.dot ?? "bg-emerald-500"}`}
                   aria-hidden
                 />
+                <Volume2 className="absolute top-1.5 left-1.5 w-3 h-3 text-[#8a7f6c]" aria-hidden />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={GLYPH_BASE + s.glyph_svg}
@@ -514,6 +536,13 @@ export default function AksaraMongondow({ statusMap = {} }: AksaraMongondowProps
               </div>
 
               <div className="flex items-center gap-3">
+                <button
+                  onClick={() => speak(selected.romanization)}
+                  className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-2 shadow-md transition-all"
+                >
+                  <Volume2 className="w-4 h-4" />
+                  <span>{isSpeaking ? "Memutar..." : "Dengarkan"}</span>
+                </button>
                 <button
                   onClick={() => {
                     setTracingSyllable(selected);
@@ -619,52 +648,73 @@ export default function AksaraMongondow({ statusMap = {} }: AksaraMongondowProps
                 <span className="text-2xl text-[#8a7f6c]">Ketik di kotak atas — hasilnya otomatis muncul di sini pakai font asli...</span>
               )}
             </div>
-
-            {/* Export hasil (render ulang lewat canvas + font asli, bukan screenshot DOM) */}
-            <div className="flex flex-wrap items-center gap-2 pt-1">
-              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mr-1">Export sbg:</span>
-              {(
-                [
-                  { key: "png", label: "PNG" },
-                  { key: "jpg", label: "JPG" },
-                  { key: "pdf", label: "PDF" },
-                  { key: "docx", label: "DOCX" },
-                ] as const
-              ).map((f) => (
-                <button
-                  key={f.key}
-                  disabled={!sandboxInput.trim() || exportingFormat !== null}
-                  onClick={() => handleExport(f.key)}
-                  className="px-3 py-1.5 rounded-lg text-[11px] font-bold bg-[#191b28] hover:bg-[#25283b] text-gray-200 border border-[#2a2c3d] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
-                >
-                  {exportingFormat === f.key ? "Memproses..." : f.label}
-                </button>
-              ))}
-              {exportError && <span className="text-[10px] text-red-400">{exportError}</span>}
-            </div>
           </div>
 
           {/* Render Aksara Result Box */}
           <div className="bg-[#131520] border border-[#222536] rounded-2xl p-6 space-y-4 shadow-xl">
-            <div className="flex items-center justify-between border-b border-[#212333] pb-3">
+            <div className="flex items-center justify-between border-b border-[#212333] pb-3 flex-wrap gap-2">
               <span className="text-xs font-mono uppercase font-bold text-blue-400 tracking-wider">
                 Hasil Naskah Aksara (Vector SVG)
               </span>
-              <span className="text-xs text-gray-400 font-mono">
-                {sandboxResult.success
-                  ? "100% Terpetakan"
-                  : sandboxResult.allFailed
-                  ? "Tidak Ada Kata Terpetakan"
-                  : `${sandboxResult.words.filter((w) => w.syllables).length}/${sandboxResult.words.length} Kata Terpetakan`}
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-gray-400 font-mono">
+                  {sandboxResult.success
+                    ? "100% Terpetakan"
+                    : sandboxResult.allFailed
+                    ? "Tidak Ada Kata Terpetakan"
+                    : `${sandboxResult.words.filter((w) => w.syllables).length}/${sandboxResult.words.length} Kata Terpetakan`}
+                </span>
+                {!sandboxResult.allFailed && (
+                  <button
+                    onClick={() =>
+                      speak(sandboxResult.words.map((w) => w.original).join(" "))
+                    }
+                    title="Dengarkan seluruh kalimat hasil naskah ini"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/40 transition-all"
+                  >
+                    <Volume2 className="w-3.5 h-3.5" />
+                    {isSpeaking ? "Memutar..." : "Dengarkan Hasil"}
+                  </button>
+                )}
+              </div>
             </div>
+
+            {/* Export naskah aksara ini (gambar SVG per-suku-kata, bukan render font) */}
+            {!sandboxResult.allFailed && (
+              <div className="flex flex-wrap items-center gap-2 -mt-1">
+                <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mr-1">Export sbg:</span>
+                {(
+                  [
+                    { key: "png", label: "PNG" },
+                    { key: "jpg", label: "JPG" },
+                    { key: "pdf", label: "PDF" },
+                    { key: "docx", label: "DOCX" },
+                  ] as const
+                ).map((f) => (
+                  <button
+                    key={f.key}
+                    disabled={exportingFormat !== null}
+                    onClick={() => handleExport(f.key)}
+                    className="px-3 py-1.5 rounded-lg text-[11px] font-bold bg-[#191b28] hover:bg-[#25283b] text-gray-200 border border-[#2a2c3d] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  >
+                    {exportingFormat === f.key ? "Memproses..." : f.label}
+                  </button>
+                ))}
+                {exportError && <span className="text-[10px] text-red-400">{exportError}</span>}
+              </div>
+            )}
 
             {!sandboxResult.allFailed ? (
               <div className="space-y-6 pt-2">
                 <div className="flex flex-wrap gap-6 bg-[#0c0d14] p-5 rounded-2xl border border-[#202234]">
                   {sandboxResult.words.map((word, wIdx) =>
                     word.syllables ? (
-                      <div key={wIdx} className="flex flex-col gap-1.5">
+                      <div
+                        key={wIdx}
+                        onClick={() => speak(word.original)}
+                        title={`Klik utk dengar kata "${word.original}"`}
+                        className="flex flex-col gap-1.5 cursor-pointer rounded-xl hover:bg-white/5 p-1 -m-1 transition-colors"
+                      >
                         {word.approximated && (
                           <span
                             title="Kata ini mengandung huruf di luar inventori aksara asli (c/f/j/q/v/x/z) atau huruf 'h' tanpa bentuk mati — hasil di bawah memakai padanan bunyi terdekat, bukan ejaan otentik."
