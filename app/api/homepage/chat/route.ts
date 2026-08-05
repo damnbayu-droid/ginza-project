@@ -302,16 +302,39 @@ async function logChatTurn(opts: {
   }
 }
 
-/** Helper function to create real-time streaming response */
+/**
+ * Helper function utk animasi "ketik" di client. CATATAN JUJUR: ini BUKAN
+ * streaming token asli dari provider AI -- teks yang masuk ke sini (fullText)
+ * SUDAH lengkap (upstream sudah selesai dipanggil dgn await). Ini cuma
+ * memutar ulang string yang sudah jadi, kata per kata, ke client.
+ *
+ * Sebelumnya delay antar-kata tetap 12ms terlepas dari panjang teks --
+ * untuk balasan panjang (misal 300 kata) itu nambah ~3.6 detik LATENSI
+ * MURNI di atas waktu tunggu provider AI, padahal teksnya sudah selesai
+ * dan cuma menunggu jadwal setTimeout. Sekarang total waktu animasi
+ * dibatasi (ANIMATION_BUDGET_MS) apa pun panjang balasannya -- balasan
+ * pendek tetap terasa "diketik", balasan panjang tidak kena pajak waktu
+ * tambahan yang tidak perlu.
+ *
+ * Perbaikan yang SEBENARNYA (streaming token asli dari provider, lewat
+ * `stream: true` + SSE per-provider di lib/provider-adapters/) belum
+ * dikerjakan di sini -- itu perubahan lebih besar & butuh diuji langsung
+ * di browser/deploy nyata (sandbox ini tak punya API key provider utk
+ * dites live), jadi sengaja belum disentuh biar tidak dikirim buta.
+ */
 function createTextStreamResponse(fullText: string, provider: string = "gemini"): Response {
   const encoder = new TextEncoder();
   const words = fullText.match(/\S+|\s+/g) || [fullText];
+  const ANIMATION_BUDGET_MS = 500;
+  const perWordDelayMs = words.length > 0 ? Math.min(12, ANIMATION_BUDGET_MS / words.length) : 0;
 
   const stream = new ReadableStream({
     async start(controller) {
       for (const word of words) {
         controller.enqueue(encoder.encode(word));
-        await new Promise((resolve) => setTimeout(resolve, 12));
+        if (perWordDelayMs > 0) {
+          await new Promise((resolve) => setTimeout(resolve, perWordDelayMs));
+        }
       }
       controller.close();
     },
@@ -329,6 +352,13 @@ function createTextStreamResponse(fullText: string, provider: string = "gemini")
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+
+  // Dimulai sedini mungkin, paralel dgn rate-limit check & body parsing di
+  // bawah -- profile baru benar-benar dipakai nanti di logChatTurn(), bukan
+  // sebelum panggilan AI dimulai, jadi tidak perlu menambah latensi berurutan
+  // di jalur kritis (sebelumnya di-await tepat sebelum callGateway, padahal
+  // tidak dipakai sama sekali oleh callGateway).
+  const profilePromise = getCurrentUserProfile().catch(() => null);
 
   const rateCheck = await checkRateLimit(ip, RATE_LIMITS.HOMEPAGE_CHAT);
   if (!rateCheck.allowed) {
@@ -365,7 +395,7 @@ export async function POST(req: NextRequest) {
   }
 
   const fullPrompt = buildPromptWithHistory(history, prompt);
-  const profile = await getCurrentUserProfile().catch(() => null);
+  const profile = await profilePromise;
 
   const isVoiceMode = body.isVoiceMode || body.isVoiceInput || prompt.includes("[voice]");
 
