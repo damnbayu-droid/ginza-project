@@ -359,6 +359,7 @@ function describeMicError(err: any): string {
 
 function VoiceTrainingTab({ profile }: { profile: Profile }) {
   const [samples, setSamples] = useState<any[] | null>(null);
+  const [suggested, setSuggested] = useState<string[] | null>(null);
   const [phraseQuery, setPhraseQuery] = useState("");
   const [phraseResults, setPhraseResults] = useState<{ word: string }[]>([]);
   const [word, setWord] = useState("");
@@ -377,7 +378,10 @@ function VoiceTrainingTab({ profile }: { profile: Profile }) {
   function load() {
     fetch("/api/public/verificator/voice-samples").then(r => r.json()).then(d => setSamples(d.samples ?? []));
   }
-  useEffect(() => { load(); }, []);
+  function loadSuggested() {
+    fetch("/api/public/verificator/suggested-words?count=8").then(r => r.json()).then(d => setSuggested(d.words ?? []));
+  }
+  useEffect(() => { load(); loadSuggested(); }, []);
 
   // Cari frasa/kata dari Kamus yang sudah ada — supaya rekaman terarah
   // (bukan bebas ketik apa saja), sesuai arahan Boss Bayu: "cari 1 frasa,
@@ -459,6 +463,7 @@ function VoiceTrainingTab({ profile }: { profile: Profile }) {
     setWord(""); setFile(null); setPhraseQuery("");
     resetRecording();
     load();
+    loadSuggested();
   }
 
   return (
@@ -468,6 +473,30 @@ function VoiceTrainingTab({ profile }: { profile: Profile }) {
         Cari kata/frasa dari Kamus, lalu rekam pelafalannya langsung dari mikrofon (atau upload file audio). Sampel Anda
         akan direview admin sebelum masuk korpus pelatihan.
       </p>
+
+      <div className="rounded-lg border border-bento-border bg-bento-surface p-3 mb-4 max-w-md">
+        <div className="flex items-center justify-between mb-1.5">
+          <p className="text-xs font-semibold text-bento-text-secondary">Antrian: kata yang belum ada rekamannya</p>
+          <button type="button" onClick={loadSuggested} className="text-[11px] text-bento-accent underline">acak ulang</button>
+        </div>
+        {!suggested ? (
+          <p className="text-[11px] text-bento-text-secondary">Memuat saran...</p>
+        ) : suggested.length === 0 ? (
+          <p className="text-[11px] text-bento-text-secondary">Tidak ada saran saat ini — semua sudah terekam, atau Kamus belum termuat.</p>
+        ) : (
+          <div className="flex flex-wrap gap-1.5">
+            {suggested.map(w => (
+              <button key={w} type="button"
+                onClick={() => { setWord(w); setPhraseQuery(""); setPhraseResults([]); }}
+                className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${
+                  word === w ? "bg-bento-accent text-white border-bento-accent" : "bg-bento-bg border-bento-border text-bento-text-secondary hover:border-bento-accent hover:text-bento-accent"
+                }`}>
+                {w}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-3 max-w-md mb-6">
         <div>
