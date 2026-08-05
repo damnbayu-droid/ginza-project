@@ -108,7 +108,7 @@ export default function KamusPage() {
 
   // Aksara Mongondow asli (glyph)
   const realAksara = useMemo(() => {
-    if (!activeWordData?.word) return { success: false, words: [] as ReturnType<typeof transliterateToAksara>["words"] };
+    if (!activeWordData?.word) return { success: false, allFailed: true, words: [] as ReturnType<typeof transliterateToAksara>["words"] };
     return transliterateToAksara(activeWordData.word);
   }, [activeWordData?.word]);
 
@@ -590,11 +590,11 @@ export default function KamusPage() {
                     <ScrollText className="w-3.5 h-3.5" />
                     Aksara Mongondow (Naskah Asli)
                   </span>
-                  {realAksara.success ? (
+                  {!realAksara.allFailed ? (
                     <div className="flex flex-wrap gap-3">
-                      {realAksara.words.map((wordSyllables, wIdx) => (
+                      {realAksara.words.map((word, wIdx) => (
                         <div key={wIdx} className="flex gap-1.5">
-                          {wordSyllables.map((syl, sIdx) => (
+                          {word.syllables ? word.syllables.map((syl, sIdx) => (
                             <div
                               key={`${syl.id}-${sIdx}`}
                               className="flex flex-col items-center bg-[#f5f0e6] rounded-lg p-1.5"
@@ -609,7 +609,14 @@ export default function KamusPage() {
                               />
                               <span className="text-[9px] text-[#3a2f22] font-medium">{syl.romanization}</span>
                             </div>
-                          ))}
+                          )) : (
+                            <span
+                              title="Kata ini memuat huruf di luar inventori fonem aksara"
+                              className="flex items-center justify-center bg-[#2a1f1f] border border-amber-800/50 rounded-lg px-2 py-1.5 text-[10px] text-amber-400 font-mono"
+                            >
+                              {word.original} ⚠
+                            </span>
+                          )}
                         </div>
                       ))}
                     </div>

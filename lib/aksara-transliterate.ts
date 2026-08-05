@@ -63,29 +63,45 @@ function segmentWord(word: string): AksaraSyllable[] | null {
   return result;
 }
 
+export interface WordTransliteration {
+  /** kata asli seperti diketik user (sebelum dibersihkan) */
+  original: string;
+  /** null jika kata ini gagal disegmentasi (mengandung huruf di luar inventori) */
+  syllables: AksaraSyllable[] | null;
+}
+
 export interface TransliterationResult {
   /** true jika SEMUA kata berhasil disegmentasi penuh */
   success: boolean;
-  /** array per-kata, tiap kata = array suku kata aksara berurutan */
-  words: AksaraSyllable[][];
+  /** true jika TIDAK ADA satu kata pun yang berhasil */
+  allFailed: boolean;
+  /** hasil per-kata, urutan sesuai input, termasuk kata yang gagal (syllables: null) */
+  words: WordTransliteration[];
 }
 
 /**
  * Transliterasi teks (bisa multi-kata) ke deretan suku kata aksara.
- * Jika salah satu kata gagal disegmentasi, seluruh hasil dianggap gagal
- * (success: false) supaya UI tidak menampilkan potongan glyph yang salah/parsial.
+ *
+ * Sebelumnya: kalau SATU SAJA kata gagal disegmentasi, seluruh hasil
+ * dianggap gagal total (tidak ada glyph sama sekali ditampilkan) — jadi
+ * user yang menulis kalimat panjang dengan satu kata pinjaman (mis. nama
+ * asing berisi huruf "f"/"z") tidak melihat hasil apa pun utk kata-kata
+ * lain yang sebenarnya valid. Sekarang tiap kata dievaluasi independen:
+ * kata yang berhasil tetap ditampilkan glyph-nya, kata yang gagal ditandai
+ * per-kata (bukan disembunyikan atau menggagalkan semuanya).
  */
 export function transliterateToAksara(text: string): TransliterationResult {
-  const words = text.trim().split(/\s+/).filter(Boolean);
-  const segmented: AksaraSyllable[][] = [];
+  const rawWords = text.trim().split(/\s+/).filter(Boolean);
+  const words: WordTransliteration[] = rawWords.map((original) => {
+    const seg = segmentWord(original);
+    return { original, syllables: seg && seg.length > 0 ? seg : null };
+  });
 
-  for (const w of words) {
-    const seg = segmentWord(w);
-    if (!seg || seg.length === 0) {
-      return { success: false, words: [] };
-    }
-    segmented.push(seg);
-  }
+  const successCount = words.filter((w) => w.syllables !== null).length;
 
-  return { success: segmented.length > 0, words: segmented };
+  return {
+    success: words.length > 0 && successCount === words.length,
+    allFailed: words.length > 0 && successCount === 0,
+    words,
+  };
 }

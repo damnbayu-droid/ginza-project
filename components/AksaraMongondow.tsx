@@ -225,6 +225,9 @@ export default function AksaraMongondow({ statusMap = {} }: AksaraMongondowProps
   const [quizChoices, setQuizChoices] = useState<string[]>([]);
   const [quizFeedback, setQuizFeedback] = useState<"correct" | "wrong" | null>(null);
   const [quizScore, setQuizScore] = useState({ correct: 0, total: 0 });
+  const [quizStreak, setQuizStreak] = useState(0);
+  const [quizBestStreak, setQuizBestStreak] = useState(0);
+  const [quizCategory, setQuizCategory] = useState<SyllableType | "all">("all");
 
   const syllables = DATA.syllables;
 
@@ -241,9 +244,14 @@ export default function AksaraMongondow({ statusMap = {} }: AksaraMongondowProps
   }
 
   function newQuizQuestion() {
-    const pool = syllables;
+    // Pilih dari kategori suku kata yang dipilih (mis. cuma konsonan mati/pamudpod)
+    // supaya bisa latihan terarah, bukan cuma acak dari semua 88 suku kata.
+    const pool = quizCategory === "all" ? syllables : syllables.filter((s) => s.syllable_type === quizCategory);
+    if (pool.length === 0) return;
     const q = pool[Math.floor(Math.random() * pool.length)];
-    const wrongPool = pool.filter((s) => s.romanization !== q.romanization);
+    // Distraktor tetap diambil dari SELURUH tabel (bukan cuma kategori terpilih)
+    // supaya tetap ada 4 pilihan walau kategorinya kecil (mis. final_consonant = 13 entri).
+    const wrongPool = syllables.filter((s) => s.romanization !== q.romanization);
     const wrongs: string[] = [];
     while (wrongs.length < 3 && wrongPool.length > 0) {
       const idx = Math.floor(Math.random() * wrongPool.length);
@@ -260,6 +268,7 @@ export default function AksaraMongondow({ statusMap = {} }: AksaraMongondowProps
   function startQuiz() {
     setQuizOn(true);
     setQuizScore({ correct: 0, total: 0 });
+    setQuizStreak(0);
     newQuizQuestion();
   }
 
@@ -267,13 +276,27 @@ export default function AksaraMongondow({ statusMap = {} }: AksaraMongondowProps
     if (activeTab === "quiz" && (!quizOn || !quizQuestion)) {
       startQuiz();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, quizOn, quizQuestion]);
+
+  // Ganti kategori => mulai ulang sesi kuis dgn pool baru, bukan lanjut soal lama.
+  useEffect(() => {
+    if (activeTab === "quiz" && quizOn) {
+      startQuiz();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quizCategory]);
 
   function answerQuiz(choice: string) {
     if (!quizQuestion || quizFeedback) return;
     const isCorrect = choice === quizQuestion.romanization;
     setQuizFeedback(isCorrect ? "correct" : "wrong");
     setQuizScore((prev) => ({ correct: prev.correct + (isCorrect ? 1 : 0), total: prev.total + 1 }));
+    setQuizStreak((prev) => {
+      const next = isCorrect ? prev + 1 : 0;
+      setQuizBestStreak((best) => Math.max(best, next));
+      return next;
+    });
     setTimeout(newQuizQuestion, 1100);
   }
 
@@ -535,48 +558,74 @@ export default function AksaraMongondow({ statusMap = {} }: AksaraMongondowProps
                 Hasil Naskah Aksara (Vector SVG)
               </span>
               <span className="text-xs text-gray-400 font-mono">
-                {sandboxResult.success ? "100% Terpetakan" : "Sebagian Huruf Tidak Terjangkau"}
+                {sandboxResult.success
+                  ? "100% Terpetakan"
+                  : sandboxResult.allFailed
+                  ? "Tidak Ada Kata Terpetakan"
+                  : `${sandboxResult.words.filter((w) => w.syllables).length}/${sandboxResult.words.length} Kata Terpetakan`}
               </span>
             </div>
 
-            {sandboxResult.success ? (
+            {!sandboxResult.allFailed ? (
               <div className="space-y-6 pt-2">
                 <div className="flex flex-wrap gap-6 bg-[#0c0d14] p-5 rounded-2xl border border-[#202234]">
-                  {sandboxResult.words.map((wordSyllables, wIdx) => (
-                    <div key={wIdx} className="flex gap-2">
-                      {wordSyllables.map((syl, sIdx) => (
-                        <div
-                          key={`${syl.id}-${sIdx}`}
-                          className="flex flex-col items-center bg-[#f5f0e6] rounded-xl p-2 shadow-md hover:scale-105 transition-transform"
-                          title={`${syl.romanization} (${syl.syllable_type})`}
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={GLYPH_BASE + syl.glyph_svg}
-                            alt={syl.romanization}
-                            className="w-10 h-14 object-contain"
-                            draggable={false}
-                          />
-                          <span className="text-[10px] text-[#2d2419] font-bold font-mono mt-1">
-                            {syl.romanization}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  ))}
+                  {sandboxResult.words.map((word, wIdx) =>
+                    word.syllables ? (
+                      <div key={wIdx} className="flex gap-2">
+                        {word.syllables.map((syl, sIdx) => (
+                          <div
+                            key={`${syl.id}-${sIdx}`}
+                            className="flex flex-col items-center bg-[#f5f0e6] rounded-xl p-2 shadow-md hover:scale-105 transition-transform"
+                            title={`${syl.romanization} (${syl.syllable_type})`}
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={GLYPH_BASE + syl.glyph_svg}
+                              alt={syl.romanization}
+                              className="w-10 h-14 object-contain"
+                              draggable={false}
+                            />
+                            <span className="text-[10px] text-[#2d2419] font-bold font-mono mt-1">
+                              {syl.romanization}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div
+                        key={wIdx}
+                        title="Kata ini memuat huruf di luar inventori fonem Mongondow (mis. c, f, j, q, v, x, z)"
+                        className="flex flex-col items-center justify-center bg-[#241d1a] border border-amber-800/50 rounded-xl px-4 py-3 shadow-md"
+                      >
+                        <span className="text-amber-400 font-mono font-bold text-sm">{word.original}</span>
+                        <span className="text-[10px] text-amber-500/80 mt-0.5">tidak terpetakan</span>
+                      </div>
+                    )
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   <h4 className="text-xs font-bold text-gray-300">Rincian Suku Kata per Kata:</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                    {sandboxResult.words.map((wordSyllables, wIdx) => (
-                      <div key={wIdx} className="p-3 rounded-xl bg-[#191b28] border border-[#27293a] text-xs space-y-1">
+                    {sandboxResult.words.map((word, wIdx) => (
+                      <div
+                        key={wIdx}
+                        className={`p-3 rounded-xl border text-xs space-y-1 ${
+                          word.syllables ? "bg-[#191b28] border-[#27293a]" : "bg-[#241d1a] border-amber-800/40"
+                        }`}
+                      >
                         <p className="font-bold text-white font-mono">
-                          Kata #{wIdx + 1}: {wordSyllables.map((s) => s.romanization).join("-")}
+                          Kata #{wIdx + 1}: {word.original}
                         </p>
-                        <p className="text-[11px] text-gray-400">
-                          Jumlah glif: {wordSyllables.length} suku kata
-                        </p>
+                        {word.syllables ? (
+                          <p className="text-[11px] text-gray-400">
+                            Jumlah glif: {word.syllables.length} suku kata ({word.syllables.map((s) => s.romanization).join("-")})
+                          </p>
+                        ) : (
+                          <p className="text-[11px] text-amber-500/80">
+                            Tidak terpetakan — huruf di luar inventori fonem aksara.
+                          </p>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -741,7 +790,27 @@ export default function AksaraMongondow({ statusMap = {} }: AksaraMongondowProps
                 <p className="text-lg font-mono font-bold text-blue-400">
                   {quizScore.correct} / {quizScore.total}
                 </p>
+                <p className="text-[10px] text-amber-400 font-mono mt-0.5">
+                  Runtutan benar: {quizStreak} (terbaik: {quizBestStreak})
+                </p>
               </div>
+            </div>
+
+            {/* Filter kategori -- latihan terarah per jenis suku kata, bukan cuma acak semua */}
+            <div className="flex flex-wrap gap-1.5">
+              {FILTERS.map((f) => (
+                <button
+                  key={f.key}
+                  onClick={() => setQuizCategory(f.key)}
+                  className={`px-3 py-1.5 rounded-full text-[11px] font-semibold border transition-all ${
+                    quizCategory === f.key
+                      ? "bg-blue-600 border-blue-500 text-white"
+                      : "bg-[#181a27] border-[#292c3f] text-gray-400 hover:text-white hover:border-blue-500/50"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
             </div>
 
             {/* Display Question Image */}
