@@ -22,6 +22,7 @@ import {
   MessageSquareQuote
 } from "lucide-react";
 import { transliterateToAksara } from "@/lib/aksara-transliterate";
+import { toSpeakableMongondow } from "@/lib/mongondow-pronunciation";
 import ContributeCTA from "@/components/knowledge/ContributeCTA";
 
 const AKSARA_GLYPH_BASE = "/aksara-svg/";
@@ -203,7 +204,7 @@ export default function KamusPage() {
       setIsSpeaking(false);
       return;
     }
-    const utterance = new SpeechSynthesisUtterance(text);
+    const utterance = new SpeechSynthesisUtterance(toSpeakableMongondow(text));
     utterance.lang = "id-ID";
     utterance.rate = 0.9;
     utterance.onend = () => setIsSpeaking(false);

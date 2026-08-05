@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Mic, MicOff, X, Volume2, Loader2, AlertCircle, ShieldAlert } from "lucide-react";
 import MyAILogo from "./MyAILogo";
+import { toSpeakableMongondow } from "@/lib/mongondow-pronunciation";
 
 interface VoiceModeOverlayProps {
   isOpen: boolean;
@@ -250,13 +251,11 @@ export default function VoiceModeOverlay({
   };
 
   const cleanTextForPhonetics = (text: string): string => {
-    return text
+    const stripped = text
       .replace(/[*_#`~]/g, '')
       .replace(/\[.*?\]\(.*?\)/g, '')
-      .replace(/Mongondow/gi, 'Mong-gon-dow')
-      .replace(/Bolaang/gi, 'Bo-la-ang')
-      .replace(/Bogani/gi, 'Bo-ga-ni')
       .slice(0, 450);
+    return toSpeakableMongondow(stripped);
   };
 
   const speakResponse = (text: string) => {

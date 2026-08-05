@@ -26,6 +26,7 @@ import Link from "next/link";
 import MyAILogo from "./MyAILogo";
 import LoginModal from "@/components/LoginModal";
 import { HomeChatMessage, HomeChatSession, Language } from "@/lib/types";
+import { toSpeakableMongondow } from "@/lib/mongondow-pronunciation";
 
 // Identitas produk Ginza Project — pakai env var yang sama dengan lib/bogani-persona.ts
 // supaya konsisten di seluruh app (bukan generic "MyAI" seperti sebelumnya).
@@ -178,9 +179,11 @@ export default function MyAIChat({
     window.speechSynthesis.cancel();
     setSpeakingMessageId(id);
 
-    const cleanText = text
-      .replace(/[*_#`~]/g, '')
-      .replace(/\[.*?\]\(.*?\)/g, '');
+    const cleanText = toSpeakableMongondow(
+      text
+        .replace(/[*_#`~]/g, '')
+        .replace(/\[.*?\]\(.*?\)/g, '')
+    );
 
     const utterance = new SpeechSynthesisUtterance(cleanText);
     utterance.lang = lang === 'id' ? 'id-ID' : 'en-US';
