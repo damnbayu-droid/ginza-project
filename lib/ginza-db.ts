@@ -292,6 +292,39 @@ export async function reviewVerificatorApplication(
   }
 }
 
+export interface VoiceTrainingSample {
+  id: string;
+  verificator_id: string;
+  word_or_phrase: string;
+  audio_url: string;
+  transcript: string | null;
+  status: "pending" | "approved" | "rejected";
+  reviewed_by: string | null;
+  created_at: string;
+}
+
+/** Semua sampel suara (lintas verifikator) utk panel admin — beda dari GET publik yang cuma punya sendiri. */
+export async function listVoiceSamplesForAdmin(status?: string) {
+  const db = assertDb();
+  let q = db
+    .from("voice_training_samples")
+    .select("*, profiles:verificator_id (display_name, avatar_url)")
+    .order("created_at", { ascending: false });
+  if (status) q = q.eq("status", status);
+  const { data, error } = await q;
+  if (error) throw error;
+  return (data ?? []) as (VoiceTrainingSample & { profiles: { display_name: string | null; avatar_url: string | null } | null })[];
+}
+
+export async function reviewVoiceSample(sampleId: string, approve: boolean, reviewerId: string | null) {
+  const db = assertDb();
+  const { error } = await db
+    .from("voice_training_samples")
+    .update({ status: approve ? "approved" : "rejected", reviewed_by: reviewerId })
+    .eq("id", sampleId);
+  if (error) throw error;
+}
+
 // ── Kamus ────────────────────────────────────────────────────────────────
 
 export async function listKamusEntries(opts: { search?: string; status?: string; limit?: number } = {}) {

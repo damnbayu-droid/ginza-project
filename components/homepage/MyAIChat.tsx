@@ -192,7 +192,14 @@ export default function MyAIChat({
   };
 
   const handleMicClick = async () => {
-    if (isGuestLocked) return;
+    // Sebelumnya: return diam-diam tanpa feedback apa pun kalau guest sudah
+    // habis jatah 2 obrolan gratis — dari sisi user terasa persis "klik Mic,
+    // tidak terjadi apa-apa, AI tidak dengar". Sekarang tampilkan modal login
+    // yang sama seperti tombol kirim teks, supaya user tahu kenapa.
+    if (isGuestLocked) {
+      setShowLoginModal(true);
+      return;
+    }
 
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
@@ -223,6 +230,7 @@ export default function MyAIChat({
     }
 
     setIsListening(true);
+    setFeatureNotice(null);
 
     const recognition = new SpeechRecognition();
     recognitionRef.current = recognition;
@@ -238,10 +246,41 @@ export default function MyAIChat({
       setInputText(currentText);
     };
 
-    recognition.onerror = () => setIsListening(false);
+    // Sebelumnya: error dari Web Speech API (mis. 'network' — API ini butuh
+    // koneksi ke server Google, bukan sepenuhnya offline; atau 'not-allowed')
+    // ditelan diam-diam, isListening cuma balik ke false tanpa penjelasan.
+    // Sekarang tampilkan pesan spesifik per jenis error, sama seperti di
+    // VoiceModeOverlay, supaya user tahu APA yang gagal.
+    recognition.onerror = (event: any) => {
+      console.warn("Speech recognition error:", event.error);
+      setIsListening(false);
+      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+        setFeatureNotice(
+          lang === 'id'
+            ? "Izin Mikrofon diblokir. Klik ikon gembok di URL bar browser Anda untuk mengizinkan."
+            : "Microphone permission blocked. Please allow mic in browser address bar."
+        );
+      } else if (event.error === 'network') {
+        setFeatureNotice(
+          lang === 'id'
+            ? "Speech Recognition browser butuh koneksi internet aktif (memproses lewat server Google) — periksa koneksi Anda."
+            : "Browser speech recognition needs an active internet connection — please check your connection."
+        );
+      } else if (event.error !== 'no-speech' && event.error !== 'aborted') {
+        setFeatureNotice(
+          lang === 'id' ? `Gagal mendeteksi suara (${event.error}), silakan coba lagi.` : `Speech recognition error (${event.error}), please try again.`
+        );
+      }
+    };
     recognition.onend = () => setIsListening(false);
 
-    recognition.start();
+    try {
+      recognition.start();
+    } catch (err: any) {
+      console.warn("Failed starting speech recognition:", err);
+      setIsListening(false);
+      setFeatureNotice(lang === 'id' ? "Gagal memulai input suara, silakan coba lagi." : "Failed to start voice input, please try again.");
+    }
   };
 
   const hasMessages = currentSession && currentSession.messages.length > 0;

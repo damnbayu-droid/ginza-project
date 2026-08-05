@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { ShieldCheck, Vote, Mic, Coins, ArrowLeft } from "lucide-react";
 import type { Profile } from "@/lib/ginza-db";
@@ -352,26 +352,101 @@ function VotingTab({ profile }: { profile: Profile }) {
   );
 }
 
+function describeMicError(err: any): string {
+  if (err?.name === "NotAllowedError") return "Izin mikrofon diblokir. Klik ikon gembok di URL bar untuk mengizinkan.";
+  return `Gagal mengakses mikrofon: ${err?.message || err}`;
+}
+
 function VoiceTrainingTab({ profile }: { profile: Profile }) {
   const [samples, setSamples] = useState<any[] | null>(null);
+  const [phraseQuery, setPhraseQuery] = useState("");
+  const [phraseResults, setPhraseResults] = useState<{ word: string }[]>([]);
   const [word, setWord] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [micUnsupported, setMicUnsupported] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const micStreamRef = useRef<MediaStream | null>(null);
 
   function load() {
     fetch("/api/public/verificator/voice-samples").then(r => r.json()).then(d => setSamples(d.samples ?? []));
   }
   useEffect(() => { load(); }, []);
 
+  // Cari frasa/kata dari Kamus yang sudah ada — supaya rekaman terarah
+  // (bukan bebas ketik apa saja), sesuai arahan Boss Bayu: "cari 1 frasa,
+  // mereka melafalkan itu, kita rekam". Kalau tidak ketemu, tetap bisa pakai
+  // teks bebas yang diketik (fallback, mis. utk frasa yang belum ada di Kamus).
+  useEffect(() => {
+    if (!phraseQuery.trim()) { setPhraseResults([]); return; }
+    const t = setTimeout(() => {
+      fetch(`/api/kamus?query=${encodeURIComponent(phraseQuery.trim())}&limit=8`)
+        .then(r => r.json())
+        .then(d => setPhraseResults(d.data ?? []))
+        .catch(() => setPhraseResults([]));
+    }, 300);
+    return () => clearTimeout(t);
+  }, [phraseQuery]);
+
+  function resetRecording() {
+    setRecordedBlob(null);
+    if (previewUrl) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
+  }
+
+  async function startRecording() {
+    setMessage(null);
+    resetRecording();
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+      setMicUnsupported(true);
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      micStreamRef.current = stream;
+      const recorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = recorder;
+      audioChunksRef.current = [];
+
+      recorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+      recorder.onstop = () => {
+        const blob = new Blob(audioChunksRef.current, { type: recorder.mimeType || "audio/webm" });
+        setRecordedBlob(blob);
+        setPreviewUrl(URL.createObjectURL(blob));
+        stream.getTracks().forEach(t => t.stop());
+        micStreamRef.current = null;
+      };
+
+      recorder.start();
+      setIsRecording(true);
+    } catch (err: any) {
+      setMessage(describeMicError(err));
+    }
+  }
+
+  function stopRecording() {
+    mediaRecorderRef.current?.stop();
+    setIsRecording(false);
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!file || !word) return;
+    if (!word) { setMessage("Pilih atau ketik dulu kata/frasa yang direkam."); return; }
+    const audioSource: Blob | File | null = recordedBlob ?? file;
+    if (!audioSource) { setMessage("Rekam langsung atau upload file audio dulu."); return; }
+
     setUploading(true);
     setMessage(null);
     const supabase = getSupabaseBrowserClient();
-    const path = `${profile.id}/${Date.now()}_${file.name}`;
-    const { error: upErr } = await supabase.storage.from("voice-samples").upload(path, file);
+    const ext = audioSource instanceof File ? audioSource.name.split(".").pop() || "webm" : "webm";
+    const path = `${profile.id}/${Date.now()}_${word.replace(/\s+/g, "_")}.${ext}`;
+    const { error: upErr } = await supabase.storage.from("voice-samples").upload(path, audioSource);
     if (upErr) { setMessage(`Gagal upload: ${upErr.message}`); setUploading(false); return; }
     const { data: signed } = await supabase.storage.from("voice-samples").createSignedUrl(path, 60 * 60 * 24 * 30);
 
@@ -381,19 +456,68 @@ function VoiceTrainingTab({ profile }: { profile: Profile }) {
       body: JSON.stringify({ wordOrPhrase: word, audioUrl: signed?.signedUrl ?? path }),
     });
     setUploading(false);
-    setWord(""); setFile(null);
+    setWord(""); setFile(null); setPhraseQuery("");
+    resetRecording();
     load();
   }
 
   return (
     <div>
       <h2 className="text-lg font-bold mb-2">Pelatihan Suara Bogani AI</h2>
-      <p className="text-sm text-bento-text-secondary mb-4">Rekam pelafalan kata/frasa Bahasa Mongondow untuk melatih Bogani AI. Sampel Anda akan direview admin.</p>
+      <p className="text-sm text-bento-text-secondary mb-4">
+        Cari kata/frasa dari Kamus, lalu rekam pelafalannya langsung dari mikrofon (atau upload file audio). Sampel Anda
+        akan direview admin sebelum masuk korpus pelatihan.
+      </p>
 
       <form onSubmit={handleSubmit} className="space-y-3 max-w-md mb-6">
-        <input value={word} onChange={e => setWord(e.target.value)} placeholder="Kata / frasa yang direkam" required
-          className="w-full rounded-lg border border-bento-border bg-bento-surface px-3 py-2 text-sm outline-none focus:border-bento-accent" />
-        <input type="file" accept="audio/*" onChange={e => setFile(e.target.files?.[0] ?? null)} required className="w-full text-xs text-bento-text-secondary" />
+        <div>
+          <label className="block text-xs font-semibold text-bento-text-secondary mb-1">Kata / frasa</label>
+          <input
+            value={word || phraseQuery}
+            onChange={e => { setWord(""); setPhraseQuery(e.target.value); }}
+            placeholder="Ketik untuk cari di Kamus, atau tulis frasa bebas..."
+            className="w-full rounded-lg border border-bento-border bg-bento-surface px-3 py-2 text-sm outline-none focus:border-bento-accent"
+          />
+          {phraseResults.length > 0 && !word && (
+            <div className="mt-1 flex flex-wrap gap-1.5">
+              {phraseResults.map(r => (
+                <button key={r.word} type="button"
+                  onClick={() => { setWord(r.word); setPhraseQuery(""); setPhraseResults([]); }}
+                  className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-bento-bg border border-bento-border text-bento-text-secondary hover:border-bento-accent hover:text-bento-accent">
+                  {r.word}
+                </button>
+              ))}
+            </div>
+          )}
+          {word && <p className="text-[11px] text-bento-accent mt-1">Terpilih: &quot;{word}&quot; <button type="button" onClick={() => setWord("")} className="underline">ganti</button></p>}
+        </div>
+
+        <div className="rounded-lg border border-bento-border p-3 space-y-2">
+          {micUnsupported ? (
+            <p className="text-xs text-bento-text-secondary">Browser ini tidak mendukung perekaman mikrofon langsung — gunakan opsi upload file di bawah.</p>
+          ) : (
+            <div className="flex items-center gap-2">
+              {!isRecording ? (
+                <button type="button" onClick={startRecording}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-bento-accent text-white text-xs font-medium">
+                  <Mic className="h-3.5 w-3.5" /> Mulai Rekam
+                </button>
+              ) : (
+                <button type="button" onClick={stopRecording}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500 text-white text-xs font-medium animate-pulse">
+                  <Mic className="h-3.5 w-3.5" /> Berhenti Rekam
+                </button>
+              )}
+              {previewUrl && <audio controls src={previewUrl} className="h-8" />}
+            </div>
+          )}
+          <div>
+            <p className="text-[11px] text-bento-text-secondary mb-1">Atau upload file audio yang sudah ada:</p>
+            <input type="file" accept="audio/*" onChange={e => { setFile(e.target.files?.[0] ?? null); resetRecording(); }}
+              className="w-full text-xs text-bento-text-secondary" />
+          </div>
+        </div>
+
         {message && <p className="text-xs text-red-400">{message}</p>}
         <button type="submit" disabled={uploading} className="rounded-lg bg-bento-accent text-white px-4 py-2 text-sm font-medium disabled:opacity-50">
           {uploading ? "Mengunggah..." : "Kirim Sampel Suara"}
