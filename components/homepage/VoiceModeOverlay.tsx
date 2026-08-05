@@ -32,6 +32,11 @@ export default function VoiceModeOverlay({
   const analyserRef = useRef<AnalyserNode | null>(null);
   const micStreamRef = useRef<MediaStream | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  // updateVolume() hidup lintas render di dalam requestAnimationFrame loop,
+  // jadi butuh ref (bukan langsung baca state `status`) supaya nilainya
+  // selalu yang terbaru, tidak stale-closure ke status saat loop dibuat.
+  const statusRef = useRef(status);
+  useEffect(() => { statusRef.current = status; }, [status]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -68,7 +73,10 @@ export default function VoiceModeOverlay({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
-  const stopVoiceSession = () => {
+  // Melepas mic stream + audio context + loop VAD. Dipanggil saat sesi suara
+  // benar-benar ditutup (bukan antar-giliran bicara) supaya tidak menumpuk
+  // stream/AudioContext baru di setiap giliran percakapan.
+  const cleanupAudioResources = () => {
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
@@ -83,6 +91,11 @@ export default function VoiceModeOverlay({
       } catch {}
       audioContextRef.current = null;
     }
+    analyserRef.current = null;
+  };
+
+  const stopVoiceSession = () => {
+    cleanupAudioResources();
     if (recognitionRef.current) {
       try {
         recognitionRef.current.stop();
@@ -93,6 +106,36 @@ export default function VoiceModeOverlay({
     }
     setStatus('idle');
     setAudioLevel(0);
+  };
+
+  // Mic stream + analyser dipakai untuk visualisasi level suara & deteksi
+  // barge-in (VAD kasar) — TIDAK dipakai oleh SpeechRecognition itu sendiri
+  // (browser menangani capture audio recognition-nya sendiri secara terpisah).
+  // Karena itu stream ini aman dipakai ulang lintas giliran bicara, tidak
+  // perlu getUserMedia() baru tiap kali user mulai bicara lagi.
+  const ensureMicAnalyser = async (): Promise<boolean> => {
+    if (micStreamRef.current && micStreamRef.current.getTracks().some((t) => t.readyState === "live")) {
+      return true;
+    }
+    if (!navigator.mediaDevices?.getUserMedia) return false;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+      });
+      micStreamRef.current = stream;
+      setPermissionState('granted');
+      setupAudioAnalyser(stream);
+      return true;
+    } catch (err) {
+      console.warn("Microphone permission denied:", err);
+      setPermissionState('denied');
+      setErrorMessage(
+        lang === 'id'
+          ? "Izin Mikrofon diblokir. Klik ikon gembok di URL bar browser Anda untuk mengizinkan akses mikrofon."
+          : "Microphone access blocked. Click the lock icon in your browser URL bar to allow microphone."
+      );
+      return false;
+    }
   };
 
   const setupAudioAnalyser = (stream: MediaStream) => {
@@ -123,10 +166,13 @@ export default function VoiceModeOverlay({
         const normalized = Math.min(100, Math.round((average / 128) * 100));
         setAudioLevel(normalized);
 
-        // VAD / Barge-in: if AI is speaking and user starts talking loudly, cancel AI speech
-        if (normalized > 35 && synthRef.current?.speaking) {
+        // VAD / Barge-in: kalau AI sedang bicara dan user mulai bicara cukup keras,
+        // batalkan suara AI DAN langsung mulai rekam interupsi user (bukan cuma
+        // ganti status) -- sebelumnya recognition baru tidak pernah dimulai lagi
+        // di titik ini, jadi ucapan interupsi user tidak pernah benar-benar tertangkap.
+        if (normalized > 35 && synthRef.current?.speaking && statusRef.current !== 'listening') {
           synthRef.current.cancel();
-          setStatus('listening');
+          startListening();
         }
 
         animationFrameRef.current = requestAnimationFrame(updateVolume);
@@ -156,30 +202,21 @@ export default function VoiceModeOverlay({
       synthRef.current.cancel();
     }
 
-    // 1. Request microphone access with high quality audio constraints
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
-          },
-        });
-        micStreamRef.current = stream;
-        setPermissionState('granted');
-        setupAudioAnalyser(stream);
-      } catch (err: any) {
-        console.warn("Microphone permission denied:", err);
-        setPermissionState('denied');
-        setErrorMessage(
-          lang === 'id'
-            ? "Izin Mikrofon diblokir. Klik ikon gembok di URL bar browser Anda untuk mengizinkan akses mikrofon."
-            : "Microphone access blocked. Click the lock icon in your browser URL bar to allow microphone."
-        );
-        setStatus('idle');
-        return;
-      }
+    // 1. Pastikan mic stream + analyser (utk visualisasi & VAD) aktif -- dipakai
+    //    ulang lintas giliran bicara kalau sudah ada, jadi tidak numpuk stream
+    //    baru setiap kali user/AI gantian bicara.
+    const micOk = await ensureMicAnalyser();
+    if (!micOk) {
+      setStatus('idle');
+      return;
+    }
+
+    // Kalau ada recognition instance sebelumnya yang masih jalan (mis. dari
+    // barge-in yang menimpa giliran lama), hentikan dulu supaya tidak ada
+    // dua instance SpeechRecognition aktif bersamaan.
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch {}
+      recognitionRef.current = null;
     }
 
     setErrorMessage("");
