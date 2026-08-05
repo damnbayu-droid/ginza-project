@@ -11,6 +11,7 @@ interface GlyphRow {
   glyph_svg_path: string;
   status: string;
   notes: string | null;
+  source_reference?: string | null;
   consonant?: string | null;
   vowel?: string | null;
 }
@@ -51,6 +52,7 @@ export default function AksaraPanel() {
   const [newRomanization, setNewRomanization] = useState("");
   const [newSyllableType, setNewSyllableType] = useState<string>("vowel_a");
   const [newNotes, setNewNotes] = useState("");
+  const [newSourceReference, setNewSourceReference] = useState("");
   const [brushWidth, setBrushWidth] = useState(9);
   const [brushStyle, setBrushStyle] = useState<"calligraphy" | "quill" | "vector">("calligraphy");
   const [inkColor, setInkColor] = useState("#0f172a");
@@ -248,8 +250,12 @@ export default function AksaraPanel() {
         romanization: newRomanization.trim().toLowerCase(),
         syllable_type: newSyllableType,
         glyph_svg_path: dataUrl,
-        status: "verified",
+        // Belum "verified" — huruf baru dari kurator tetap harus lewat alur
+        // verifikasi komunitas/peneliti sebelum berstatus final (lihat
+        // aksara_glyph_verifications), sesuai arahan Boss Bayu 2026-08-05.
+        status: "pending_review",
         notes: newNotes.trim() || "Karakter Aksara digambar dengan Kuas Kaligrafi Adat oleh Admin Kurator",
+        source_reference: newSourceReference.trim() || null,
       };
 
       const res = await fetch("/api/admin/aksara", {
@@ -262,6 +268,7 @@ export default function AksaraPanel() {
         setShowDrawModal(false);
         setNewRomanization("");
         setNewNotes("");
+        setNewSourceReference("");
         setStrokes([]);
         loadData();
       } else {
@@ -673,6 +680,25 @@ export default function AksaraPanel() {
                 />
               </div>
 
+              {/* Sitasi / Rujukan Sumber */}
+              <div>
+                <label className="block text-xs font-semibold text-bento-text-secondary mb-1">
+                  Rujukan / Sitasi Sumber (opsional, tapi disarankan)
+                </label>
+                <textarea
+                  rows={2}
+                  value={newSourceReference}
+                  onChange={(e) => setNewSourceReference(e.target.value)}
+                  placeholder="Mis. naskah/foto/perbandingan spesifik yang jadi dasar bentuk huruf ini — supaya bisa ditelusuri/disanggah peneliti."
+                  className="w-full px-3.5 py-2 rounded-xl border border-bento-border bg-bento-bg text-sm outline-none focus:border-bento-accent"
+                />
+              </div>
+
+              <p className="text-[11px] text-bento-text-secondary opacity-70">
+                Huruf baru akan tersimpan berstatus <strong>Menunggu Verifikasi</strong> — tampil ke publik dengan label
+                belum terverifikasi sampai direview verifikator/peneliti.
+              </p>
+
               {/* Actions */}
               <div className="pt-4 border-t border-bento-border flex items-center justify-end gap-3">
                 <Button type="button" variant="default" onClick={() => setShowDrawModal(false)}>
@@ -680,7 +706,7 @@ export default function AksaraPanel() {
                 </Button>
                 <Button type="submit" variant="primary" disabled={isSavingCanvas} className="flex items-center gap-1.5">
                   <Save className="w-4 h-4" />
-                  <span>{isSavingCanvas ? "Menyimpan..." : "Simpan & Terbitkan Aksara Baru"}</span>
+                  <span>{isSavingCanvas ? "Menyimpan..." : "Simpan sebagai Draf (Menunggu Verifikasi)"}</span>
                 </Button>
               </div>
             </form>

@@ -1,10 +1,25 @@
-'use client';
-
 import Link from "next/link";
 import { ArrowLeft, ScrollText } from "lucide-react";
 import AksaraMongondow from "@/components/AksaraMongondow";
+import { listAksaraGlyphs } from "@/lib/ginza-db";
+import { isSupabaseReady } from "@/lib/supabase";
 
-export default function AksaraMongondowPage() {
+export default async function AksaraMongondowPage() {
+  // Status verifikasi per huruf (verified/pending_review/draft/archived) —
+  // ditarik live dari aksara_glyphs supaya publik & peneliti bisa lihat mana
+  // yang sudah terverifikasi vs masih perlu ditinjau. Gagal-aman ke {} kalau
+  // DB belum siap (AksaraMongondow lalu menganggap semua "verified", sesuai
+  // status dataset dasar Fase 1).
+  let statusMap: Record<string, string> = {};
+  if (isSupabaseReady) {
+    try {
+      const glyphs = await listAksaraGlyphs();
+      statusMap = Object.fromEntries(glyphs.map((g) => [g.romanization, g.status]));
+    } catch {
+      statusMap = {};
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#090a0f] text-white p-4 md:p-8 font-sans flex flex-col justify-between selection:bg-blue-500 selection:text-white">
       <div className="max-w-6xl mx-auto w-full space-y-6">
@@ -32,7 +47,7 @@ export default function AksaraMongondowPage() {
           </div>
         </div>
 
-        <AksaraMongondow />
+        <AksaraMongondow statusMap={statusMap} />
       </div>
 
       <footer className="text-center text-xs text-gray-600 pt-10">

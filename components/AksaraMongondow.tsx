@@ -77,7 +77,20 @@ interface Stroke {
   color: string;
 }
 
-export default function AksaraMongondow() {
+interface AksaraMongondowProps {
+  /** romanization -> status ("draft" | "pending_review" | "verified" | "archived"), dari aksara_glyphs (DB). */
+  statusMap?: Record<string, string>;
+}
+
+const STATUS_LABEL: Record<string, { label: string; dot: string }> = {
+  verified: { label: "Terverifikasi", dot: "bg-emerald-500" },
+  pending_review: { label: "Menunggu Verifikasi", dot: "bg-amber-500" },
+  draft: { label: "Draf", dot: "bg-amber-500" },
+  archived: { label: "Diarsipkan", dot: "bg-gray-500" },
+};
+
+export default function AksaraMongondow({ statusMap = {} }: AksaraMongondowProps) {
+  const getStatus = (romanization: string) => statusMap[romanization] ?? "verified";
   const [activeTab, setActiveTab] = useState<"matrix" | "sandbox" | "tracing" | "quiz">("matrix");
   const [filter, setFilter] = useState<SyllableType | "all">("all");
   const [query, setQuery] = useState("");
@@ -108,7 +121,7 @@ export default function AksaraMongondow() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     for (const stroke of strokesList) {
-      if (stroke.points.length === 0) continue;
+      if (!stroke || stroke.points.length === 0) continue;
       ctx.strokeStyle = stroke.color;
       ctx.fillStyle = stroke.color;
       ctx.lineCap = "round";
@@ -188,7 +201,12 @@ export default function AksaraMongondow() {
 
   const stopTracing = () => {
     if (!isDrawingRef.current || !currentStrokeRef.current) return;
-    setTracingStrokes((prev) => [...prev, currentStrokeRef.current!]);
+    // Ambil nilainya dulu ke variabel lokal — JANGAN baca currentStrokeRef.current
+    // di dalam updater setState, karena baris di bawah menge-null-kan ref itu
+    // sebelum React tentu sudah menjalankan updater-nya (race condition yang
+    // menyebabkan null ikut masuk ke tracingStrokes -> crash di redrawCanvas).
+    const finishedStroke = currentStrokeRef.current;
+    setTracingStrokes((prev) => [...prev, finishedStroke]);
     currentStrokeRef.current = null;
     isDrawingRef.current = false;
   };
@@ -378,12 +396,17 @@ export default function AksaraMongondow() {
               <button
                 key={s.id}
                 onClick={() => setSelected(s)}
-                className={`flex flex-col items-center justify-between gap-1.5 rounded-2xl bg-[#f5f0e6] border-2 p-2.5 transition-all hover:-translate-y-1 hover:shadow-xl ${
+                title={STATUS_LABEL[getStatus(s.romanization)]?.label ?? getStatus(s.romanization)}
+                className={`relative flex flex-col items-center justify-between gap-1.5 rounded-2xl bg-[#f5f0e6] border-2 p-2.5 transition-all hover:-translate-y-1 hover:shadow-xl ${
                   selected?.id === s.id
                     ? "border-blue-500 ring-2 ring-blue-500/40 shadow-lg shadow-blue-500/20"
                     : "border-transparent"
                 }`}
               >
+                <span
+                  className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full ${STATUS_LABEL[getStatus(s.romanization)]?.dot ?? "bg-emerald-500"}`}
+                  aria-hidden
+                />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={GLYPH_BASE + s.glyph_svg}
@@ -423,6 +446,12 @@ export default function AksaraMongondow() {
                   </p>
                   <p className="text-[11px] text-gray-400">
                     Kategori: {FILTERS.find((f) => f.key === selected.syllable_type)?.label}
+                  </p>
+                  <p className="text-[11px] flex items-center gap-1.5 pt-0.5">
+                    <span className={`w-2 h-2 rounded-full ${STATUS_LABEL[getStatus(selected.romanization)]?.dot ?? "bg-emerald-500"}`} aria-hidden />
+                    <span className="text-gray-300 font-semibold">
+                      Status: {STATUS_LABEL[getStatus(selected.romanization)]?.label ?? getStatus(selected.romanization)}
+                    </span>
                   </p>
                 </div>
               </div>

@@ -6,11 +6,28 @@ import { PanelHeader, Card, LoadingState, ErrorState, Badge, Button } from "@/co
 interface AppRow {
   id: string;
   user_id: string;
-  ktp_image_url: string;
+  applicant_type?: "warga_bmr" | "peneliti_eksternal";
+  ktp_image_url: string | null;
+  institution_name?: string | null;
+  credential_url?: string | null;
   full_name: string | null;
   status: string;
   created_at: string;
+  expertise?: string[] | null;
+  face_front_url?: string | null;
+  face_left_url?: string | null;
+  face_right_url?: string | null;
+  ai_face_check_status?: string | null;
+  ai_face_check_notes?: string | null;
 }
+
+const AI_CHECK_LABEL: Record<string, { label: string; tone: "success" | "warning" | "danger" | "default" }> = {
+  passed: { label: "AI: Lolos", tone: "success" },
+  flagged: { label: "AI: Perlu Ditinjau", tone: "danger" },
+  skipped: { label: "AI: Dilewati", tone: "default" },
+  error: { label: "AI: Error", tone: "warning" },
+  pending: { label: "AI: Pending", tone: "default" },
+};
 
 export default function VerificatorManagementPanel() {
   const [apps, setApps] = useState<AppRow[] | null>(null);
@@ -59,21 +76,62 @@ export default function VerificatorManagementPanel() {
         <div className="space-y-3">
           {apps.length === 0 && <p className="text-sm text-bento-text-secondary">Tidak ada pengajuan.</p>}
           {apps.map(app => (
-            <Card key={app.id} className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-semibold">{app.full_name ?? "(nama belum diisi)"}</p>
-                <p className="text-xs text-bento-text-secondary">Diajukan: {new Date(app.created_at).toLocaleString("id-ID")}</p>
-                <a href={app.ktp_image_url} target="_blank" rel="noreferrer" className="text-xs text-bento-accent underline">Lihat foto KTP</a>
+            <Card key={app.id} className="flex flex-col gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm font-semibold">{app.full_name ?? "(nama belum diisi)"}</p>
+                  <p className="text-xs text-bento-text-secondary">Diajukan: {new Date(app.created_at).toLocaleString("id-ID")}</p>
+                  {app.applicant_type === "peneliti_eksternal" ? (
+                    <>
+                      <p className="text-xs text-bento-text-secondary">Institusi: {app.institution_name ?? "-"}</p>
+                      {app.credential_url && (
+                        <a href={app.credential_url} target="_blank" rel="noreferrer" className="text-xs text-bento-accent underline">Lihat tautan kredensial</a>
+                      )}
+                    </>
+                  ) : (
+                    app.ktp_image_url && (
+                      <a href={app.ktp_image_url} target="_blank" rel="noreferrer" className="text-xs text-bento-accent underline">Lihat foto KTP</a>
+                    )
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge tone="default">{app.applicant_type === "peneliti_eksternal" ? "Peneliti Eksternal" : "Warga BMR"}</Badge>
+                  <Badge tone={app.status === "approved" ? "success" : app.status === "rejected" ? "danger" : "warning"}>{app.status}</Badge>
+                  {app.status === "pending" && (
+                    <>
+                      <Button variant="primary" onClick={() => review(app, true)}>Approve</Button>
+                      <Button variant="danger" onClick={() => review(app, false)}>Reject</Button>
+                    </>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Badge tone={app.status === "approved" ? "success" : app.status === "rejected" ? "danger" : "warning"}>{app.status}</Badge>
-                {app.status === "pending" && (
-                  <>
-                    <Button variant="primary" onClick={() => review(app, true)}>Approve</Button>
-                    <Button variant="danger" onClick={() => review(app, false)}>Reject</Button>
-                  </>
-                )}
-              </div>
+
+              {(app.face_front_url || app.expertise?.length) && (
+                <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-bento-border">
+                  {app.face_front_url && (
+                    <div className="flex items-center gap-1.5">
+                      {[["Depan", app.face_front_url], ["Kiri", app.face_left_url], ["Kanan", app.face_right_url]].map(([label, url]) => (
+                        url ? (
+                          <a key={label} href={url as string} target="_blank" rel="noreferrer" className="text-[11px] text-bento-accent underline">
+                            Foto {label}
+                          </a>
+                        ) : null
+                      ))}
+                    </div>
+                  )}
+                  {app.ai_face_check_status && (
+                    <span title={app.ai_face_check_notes ?? undefined}>
+                      <Badge tone={AI_CHECK_LABEL[app.ai_face_check_status]?.tone ?? "default"}>
+                        {AI_CHECK_LABEL[app.ai_face_check_status]?.label ?? app.ai_face_check_status}
+                      </Badge>
+                    </span>
+                  )}
+                  {app.expertise?.map(e => <Badge key={e} tone="default">{e}</Badge>)}
+                </div>
+              )}
+              {app.ai_face_check_notes && (
+                <p className="text-[11px] text-bento-text-secondary opacity-70">Catatan AI: {app.ai_face_check_notes}</p>
+              )}
             </Card>
           ))}
         </div>

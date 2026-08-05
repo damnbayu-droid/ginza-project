@@ -32,7 +32,17 @@ export interface Profile {
 export interface VerificatorApplication {
   id: string;
   user_id: string;
-  ktp_image_url: string;
+  applicant_type: "warga_bmr" | "peneliti_eksternal";
+  ktp_image_url: string | null;
+  institution_name: string | null;
+  credential_url: string | null;
+  expertise: string[];
+  face_front_url: string | null;
+  face_left_url: string | null;
+  face_right_url: string | null;
+  consent_given_at: string | null;
+  ai_face_check_status: "pending" | "passed" | "flagged" | "skipped" | "error";
+  ai_face_check_notes: string | null;
   full_name: string | null;
   status: "pending" | "approved" | "rejected";
   reviewed_by: string | null;
@@ -116,6 +126,7 @@ export interface AksaraGlyphRow {
   display_order: number;
   status: "draft" | "pending_review" | "verified" | "archived";
   notes: string | null;
+  source_reference: string | null;
   created_by: string | null;
   created_at: string;
   updated_at: string;
@@ -353,6 +364,7 @@ function getFallbackAksaraGlyphs(status?: string): AksaraGlyphRow[] {
     display_order: s.display_order || 10,
     status: "verified",
     notes: "Aksara Mongondow (Fase 1: Vektor SVG)",
+    source_reference: (aksaraFallbackData as any).script?.credit ?? null,
     created_by: null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),

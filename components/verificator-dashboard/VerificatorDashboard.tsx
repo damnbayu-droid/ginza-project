@@ -18,50 +18,117 @@ export default function VerificatorDashboard({ profile }: { profile: Profile }) 
 
 // ── Layar pengajuan jadi verifikator (role masih 'user') ────────────────
 
+const EXPERTISE_OPTIONS = [
+  { key: "sejarah", label: "Peneliti Sejarah" },
+  { key: "aksara", label: "Ahli Aksara/Epigrafi" },
+  { key: "bahasa", label: "Ahli Bahasa/Linguistik" },
+  { key: "adat_budaya", label: "Tetua/Pemangku Adat & Budaya" },
+  { key: "pemerintahan", label: "Pemerintahan Daerah" },
+  { key: "pendidikan", label: "Pendidikan/Pengajar" },
+  { key: "lainnya", label: "Lainnya" },
+];
+
 function KtpApplicationScreen({ profile }: { profile: Profile }) {
   const [application, setApplication] = useState<any>(undefined);
+  const [applicantType, setApplicantType] = useState<"warga_bmr" | "peneliti_eksternal">("warga_bmr");
   const [fullName, setFullName] = useState(profile.display_name ?? "");
   const [ktpFile, setKtpFile] = useState<File | null>(null);
+  const [institutionName, setInstitutionName] = useState("");
+  const [credentialUrl, setCredentialUrl] = useState("");
+  const [expertise, setExpertise] = useState<string[]>([]);
+  const [faceFront, setFaceFront] = useState<File | null>(null);
+  const [faceLeft, setFaceLeft] = useState<File | null>(null);
+  const [faceRight, setFaceRight] = useState<File | null>(null);
+  const [consentGiven, setConsentGiven] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadStage, setUploadStage] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/public/verificator/apply").then(r => r.json()).then(d => setApplication(d.application));
   }, []);
 
+  function toggleExpertise(key: string) {
+    setExpertise(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
+  }
+
+  async function uploadPrivateFile(bucket: string, file: File): Promise<string | null> {
+    const supabase = getSupabaseBrowserClient();
+    const path = `${profile.id}/${Date.now()}_${file.name}`;
+    const { error: upErr } = await supabase.storage.from(bucket).upload(path, file);
+    if (upErr) return null;
+    const { data: signed } = await supabase.storage.from(bucket).createSignedUrl(path, 60 * 60 * 24 * 30);
+    return signed?.signedUrl ?? path;
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!ktpFile) { setMessage("Pilih foto KTP dulu."); return; }
-    setUploading(true);
     setMessage(null);
 
-    const supabase = getSupabaseBrowserClient();
-    const path = `${profile.id}/${Date.now()}_${ktpFile.name}`;
-    const { error: upErr } = await supabase.storage.from("ktp-verifikator").upload(path, ktpFile);
-    if (upErr) { setMessage(`Gagal upload KTP: ${upErr.message}`); setUploading(false); return; }
+    if (applicantType === "peneliti_eksternal" && (!institutionName || !credentialUrl)) {
+      setMessage("Isi afiliasi institusi & tautan kredensial dulu.");
+      return;
+    }
+    if (applicantType === "warga_bmr" && !ktpFile) {
+      setMessage("Pilih foto KTP dulu.");
+      return;
+    }
+    if (!faceFront || !faceLeft || !faceRight) {
+      setMessage("Ambil ketiga foto wajah (depan, kiri, kanan) dulu.");
+      return;
+    }
+    if (!consentGiven) {
+      setMessage("Centang dulu persetujuan penyimpanan foto wajah.");
+      return;
+    }
 
-    // Bucket privat — simpan path saja, admin akan buka via signed URL kalau perlu
-    const { data: signed } = await supabase.storage.from("ktp-verifikator").createSignedUrl(path, 60 * 60 * 24 * 30);
+    setUploading(true);
 
+    let ktpImageUrl: string | null = null;
+    if (applicantType === "warga_bmr" && ktpFile) {
+      setUploadStage("Mengunggah foto KTP...");
+      ktpImageUrl = await uploadPrivateFile("ktp-verifikator", ktpFile);
+      if (!ktpImageUrl) { setMessage("Gagal upload foto KTP."); setUploading(false); setUploadStage(null); return; }
+    }
+
+    setUploadStage("Mengunggah foto wajah (depan)...");
+    const faceFrontUrl = await uploadPrivateFile("verificator-faces", faceFront);
+    setUploadStage("Mengunggah foto wajah (kiri)...");
+    const faceLeftUrl = await uploadPrivateFile("verificator-faces", faceLeft);
+    setUploadStage("Mengunggah foto wajah (kanan)...");
+    const faceRightUrl = await uploadPrivateFile("verificator-faces", faceRight);
+    if (!faceFrontUrl || !faceLeftUrl || !faceRightUrl) {
+      setMessage("Gagal upload salah satu foto wajah.");
+      setUploading(false);
+      setUploadStage(null);
+      return;
+    }
+
+    setUploadStage("Memeriksa foto & mengirim pengajuan...");
     const res = await fetch("/api/public/verificator/apply", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ktpImageUrl: signed?.signedUrl ?? path, fullName }),
+      body: JSON.stringify({
+        applicantType, fullName, institutionName, credentialUrl, ktpImageUrl,
+        expertise, faceFrontUrl, faceLeftUrl, faceRightUrl, consentGiven,
+      }),
     });
     setUploading(false);
+    setUploadStage(null);
     if (res.ok) {
       const d = await res.json();
       setApplication(d.application);
       setMessage("Pengajuan terkirim, menunggu review admin.");
     } else {
-      setMessage("Gagal mengirim pengajuan.");
+      const d = await res.json().catch(() => ({}));
+      setMessage(d.error || "Gagal mengirim pengajuan.");
     }
   }
 
   if (application === undefined) return <div className="min-h-screen bg-bento-bg" />;
 
   return (
-    <div className="min-h-screen bg-bento-bg text-bento-text-primary flex items-center justify-center px-4">
+    <div className="min-h-screen bg-bento-bg text-bento-text-primary flex items-center justify-center px-4 py-8">
       <div className="max-w-md w-full space-y-4">
         <a href="/u" className="inline-flex items-center gap-1 text-xs text-bento-text-secondary hover:text-bento-text-primary">
           <ArrowLeft className="h-3 w-3" /> Kembali ke Dashboard
@@ -80,14 +147,101 @@ function KtpApplicationScreen({ profile }: { profile: Profile }) {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-3">
               <p className="text-sm text-bento-text-secondary">
-                Verifikator bertugas memverifikasi kata Kamus, voting kontribusi user, dan melatih Bogani AI melafalkan
-                Bahasa Mongondow. Upload foto KTP untuk verifikasi identitas (wajib — hanya admin yang bisa melihatnya).
+                Verifikator bertugas memverifikasi kata Kamus, huruf Aksara, sejarah/adat, dan voting kontribusi. Siapa saja
+                boleh mendaftar — dalam maupun luar negeri — tapi status Anda tetap <strong>menunggu</strong> sampai
+                dikonfirmasi admin.
               </p>
-              <input value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Nama lengkap sesuai KTP" required
+
+              <div className="flex rounded-lg border border-bento-border overflow-hidden text-xs font-medium">
+                <button type="button" onClick={() => setApplicantType("warga_bmr")}
+                  className={`flex-1 py-2 ${applicantType === "warga_bmr" ? "bg-bento-accent text-white" : "bg-bento-bg text-bento-text-secondary"}`}>
+                  Warga BMR (KTP)
+                </button>
+                <button type="button" onClick={() => setApplicantType("peneliti_eksternal")}
+                  className={`flex-1 py-2 ${applicantType === "peneliti_eksternal" ? "bg-bento-accent text-white" : "bg-bento-bg text-bento-text-secondary"}`}>
+                  Peneliti/Akademisi Eksternal
+                </button>
+              </div>
+
+              <input value={fullName} onChange={e => setFullName(e.target.value)}
+                placeholder={applicantType === "warga_bmr" ? "Nama lengkap sesuai KTP" : "Nama lengkap"} required
                 className="w-full rounded-lg border border-bento-border bg-bento-bg px-3 py-2 text-sm outline-none focus:border-bento-accent" />
-              <input type="file" accept="image/*" onChange={e => setKtpFile(e.target.files?.[0] ?? null)} required
-                className="w-full text-xs text-bento-text-secondary" />
+
+              {applicantType === "warga_bmr" ? (
+                <>
+                  <p className="text-xs text-bento-text-secondary">Upload foto KTP untuk verifikasi identitas (wajib — hanya admin yang bisa melihatnya).</p>
+                  <input type="file" accept="image/*" onChange={e => setKtpFile(e.target.files?.[0] ?? null)} required
+                    className="w-full text-xs text-bento-text-secondary" />
+                </>
+              ) : (
+                <>
+                  <input value={institutionName} onChange={e => setInstitutionName(e.target.value)}
+                    placeholder="Afiliasi institusi (universitas/lembaga riset)" required
+                    className="w-full rounded-lg border border-bento-border bg-bento-bg px-3 py-2 text-sm outline-none focus:border-bento-accent" />
+                  <input value={credentialUrl} onChange={e => setCredentialUrl(e.target.value)}
+                    placeholder="Tautan kredensial (profil institusi/publikasi/ORCID/Google Scholar)" required
+                    className="w-full rounded-lg border border-bento-border bg-bento-bg px-3 py-2 text-sm outline-none focus:border-bento-accent" />
+                  <p className="text-xs text-bento-text-secondary">Admin akan meninjau tautan ini secara manual sebagai pengganti KTP.</p>
+                </>
+              )}
+
+              {/* Spesialisasi keahlian */}
+              <div>
+                <p className="text-xs font-semibold text-bento-text-secondary mb-1.5">Spesialisasi keahlian (opsional, boleh lebih dari satu)</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {EXPERTISE_OPTIONS.map(opt => (
+                    <button key={opt.key} type="button" onClick={() => toggleExpertise(opt.key)}
+                      className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${
+                        expertise.includes(opt.key)
+                          ? "bg-bento-accent text-white border-bento-accent"
+                          : "bg-bento-bg text-bento-text-secondary border-bento-border"
+                      }`}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Foto wajah wajib */}
+              <div className="space-y-1.5 pt-1 border-t border-bento-border">
+                <p className="text-xs font-semibold text-bento-text-secondary pt-2">Foto wajah (wajib — depan, kiri, kanan)</p>
+                <p className="text-[11px] text-bento-text-secondary">
+                  Tersimpan privat, hanya admin yang bisa melihat, dan tidak bisa dihapus/diubah sendiri setelah dikirim.
+                  Sistem AI akan memeriksa awal apakah ini foto wajah manusia asli — hasil akhir tetap ditentukan admin.
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  <label className="flex flex-col items-center gap-1 text-[10px] text-bento-text-secondary">
+                    Depan
+                    <input type="file" accept="image/*" capture="user" required
+                      onChange={e => setFaceFront(e.target.files?.[0] ?? null)}
+                      className="w-full text-[10px]" />
+                  </label>
+                  <label className="flex flex-col items-center gap-1 text-[10px] text-bento-text-secondary">
+                    Kiri
+                    <input type="file" accept="image/*" capture="user" required
+                      onChange={e => setFaceLeft(e.target.files?.[0] ?? null)}
+                      className="w-full text-[10px]" />
+                  </label>
+                  <label className="flex flex-col items-center gap-1 text-[10px] text-bento-text-secondary">
+                    Kanan
+                    <input type="file" accept="image/*" capture="user" required
+                      onChange={e => setFaceRight(e.target.files?.[0] ?? null)}
+                      className="w-full text-[10px]" />
+                  </label>
+                </div>
+              </div>
+
+              <label className="flex items-start gap-2 text-[11px] text-bento-text-secondary pt-1">
+                <input type="checkbox" checked={consentGiven} onChange={e => setConsentGiven(e.target.checked)} required
+                  className="mt-0.5" />
+                <span>
+                  Saya setuju foto wajah saya disimpan MongondowPedia sebagai data identitas verifikator, hanya dapat diakses
+                  admin, dan tidak dapat saya hapus sendiri.
+                </span>
+              </label>
+
               {message && <p className="text-xs text-bento-text-secondary">{message}</p>}
+              {uploadStage && <p className="text-xs text-bento-accent">{uploadStage}</p>}
               <button type="submit" disabled={uploading}
                 className="w-full rounded-lg bg-bento-accent text-white py-2 text-sm font-medium disabled:opacity-50">
                 {uploading ? "Mengirim..." : "Kirim Pengajuan"}
