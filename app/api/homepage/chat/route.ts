@@ -5,7 +5,7 @@ import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { PROVIDER_REGISTRY } from "@/lib/provider-adapters";
 import { parseUploadedFile } from "@/lib/file-parser";
 import type { HomeChatMessage, Language } from "@/lib/types";
-import { searchKamusEntries } from "@/lib/kamus-parser";
+import { searchKamusEntries, getFeaturedSiderCards } from "@/lib/kamus-parser";
 import { AI_NAME, WEBSITE_NAME, PROJECT_NAME, BOGANI_PERSONA_ID, BOGANI_PERSONA_EN } from "@/lib/bogani-persona";
 import { getKnowledgeContext } from "@/lib/knowledge-retrieval";
 import { getCurrentUserProfile } from "@/lib/supabase-auth-server";
@@ -28,11 +28,35 @@ function getKamusContext(userPrompt: string): string {
       }
       if (matchedWords.size >= 25) break;
     }
-    if (matchedWords.size > 0) {
-      return `\n\n--- KONTEKS KOSA KATA KAMUS MONGONDOWPEDIA (${matchedWords.size} KATA TERHUBUNG) ---\n` +
-        Array.from(matchedWords).join(", ") +
-        `\n--- AKHIR KONTEKS KAMUS ---`;
+    if (matchedWords.size === 0) return "";
+
+    // Kata yang cocok dengan salah satu Featured Sider Card sudah punya
+    // makna+contoh kalimat asli (bukan tebakan) -- sertakan itu, jangan cuma
+    // daftar kata mentah tanpa arti. Ini memberi Bogani AI pijakan nyata utk
+    // berbicara Mongondow beneran, bukan cuma menyapa lalu balik ke Indonesia
+    // karena tidak tahu artinya. Sisanya (belum ada gloss tersimpan) tetap
+    // dilampirkan sbg daftar kata polos spt sebelumnya.
+    const featured = getFeaturedSiderCards();
+    const glossed: string[] = [];
+    const plainWords: string[] = [];
+    for (const w of matchedWords) {
+      const card = featured.find((f) => f.word.toLowerCase() === w.toLowerCase());
+      if (card) {
+        glossed.push(`${card.word} = ${card.meaning} (Contoh: "${card.example}")`);
+      } else {
+        plainWords.push(w);
+      }
     }
+
+    let ctx = `\n\n--- KONTEKS KOSA KATA KAMUS MONGONDOWPEDIA (${matchedWords.size} KATA TERHUBUNG) ---\n`;
+    if (glossed.length > 0) {
+      ctx += `Kata dengan makna & contoh kalimat terverifikasi:\n${glossed.join("\n")}\n`;
+    }
+    if (plainWords.length > 0) {
+      ctx += `Kata lain yang terhubung (belum ada gloss/makna tersimpan -- jangan mengarang artinya):\n${plainWords.join(", ")}\n`;
+    }
+    ctx += `--- AKHIR KONTEKS KAMUS ---`;
+    return ctx;
   } catch (e) {
     console.warn("[homepage-chat] Failed retrieving kamus context:", e);
   }
