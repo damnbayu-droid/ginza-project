@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import aksaraData from "@/data/aksara/aksara_mongondow.json";
 import { transliterateToAksara, AksaraSyllable } from "@/lib/aksara-transliterate";
+import { exportAsPng, exportAsJpg, exportAsPdf, exportAsDocx } from "@/lib/aksara-export";
 
 // ─────────────────────────────────────────────────────────────────────────
 // Types & Data
@@ -92,6 +93,18 @@ const STATUS_LABEL: Record<string, { label: string; dot: string }> = {
 export default function AksaraMongondow({ statusMap = {} }: AksaraMongondowProps) {
   const getStatus = (romanization: string) => statusMap[romanization] ?? "verified";
   const [activeTab, setActiveTab] = useState<"matrix" | "sandbox" | "tracing" | "quiz">("matrix");
+
+  // Dukung deep-link dari CTA sidebar homepage, mis. /aksara-mongondow?tab=sandbox
+  // supaya "CTA Transliterasi" bisa langsung buka tab Transliterasi. Dibaca dari
+  // window.location langsung (bukan useSearchParams) supaya tak perlu Suspense
+  // boundary tambahan di app/aksara-mongondow/page.tsx.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const tabParam = new URLSearchParams(window.location.search).get("tab");
+    if (tabParam === "sandbox" || tabParam === "matrix" || tabParam === "tracing" || tabParam === "quiz") {
+      setActiveTab(tabParam);
+    }
+  }, []);
   const [filter, setFilter] = useState<SyllableType | "all">("all");
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<AksaraSyllable | null>(null);
@@ -102,6 +115,27 @@ export default function AksaraMongondow({ statusMap = {} }: AksaraMongondowProps
   const sandboxResult = useMemo(() => {
     return transliterateToAksara(sandboxInput);
   }, [sandboxInput]);
+
+  // Export hasil preview font (canvas -> PNG/JPG/PDF/DOCX). Lihat lib/aksara-export.ts.
+  const [exportingFormat, setExportingFormat] = useState<"png" | "jpg" | "pdf" | "docx" | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
+
+  async function handleExport(format: "png" | "jpg" | "pdf" | "docx") {
+    if (!sandboxInput.trim() || exportingFormat) return;
+    setExportError(null);
+    setExportingFormat(format);
+    try {
+      if (format === "png") await exportAsPng(sandboxInput);
+      else if (format === "jpg") await exportAsJpg(sandboxInput);
+      else if (format === "pdf") await exportAsPdf(sandboxInput);
+      else await exportAsDocx(sandboxInput);
+    } catch (err) {
+      console.error("Export gagal:", err);
+      setExportError("Export gagal, coba lagi.");
+    } finally {
+      setExportingFormat(null);
+    }
+  }
 
   // ── 2. Studio Latihan Menulis (Tracing Canvas) ────────────────────────
   const [tracingSyllable, setTracingSyllable] = useState<AksaraSyllable>(DATA.syllables[0]);
@@ -551,6 +585,65 @@ export default function AksaraMongondow({ statusMap = {} }: AksaraMongondowProps
             </div>
           </div>
 
+          {/* Preview Font Aksara Mongondow (live, OpenType ligature) */}
+          <div className="bg-[#131520] border border-emerald-700/40 rounded-2xl p-6 space-y-3 shadow-xl">
+            <div className="flex items-center justify-between border-b border-[#212333] pb-3 flex-wrap gap-2">
+              <span className="text-xs font-mono uppercase font-bold text-emerald-400 tracking-wider">
+                Preview Font Aksara Mongondow (Font Asli, Bukan Gambar)
+              </span>
+              <div className="flex items-center gap-2">
+                <a
+                  href="/fonts/AksaraMongondow.ttf"
+                  download
+                  className="text-[10px] font-semibold text-emerald-300 bg-emerald-500/10 border border-emerald-500/30 rounded-full px-3 py-1 hover:bg-emerald-500/20 transition-all"
+                >
+                  ⬇ Unduh Font (.ttf)
+                </a>
+              </div>
+            </div>
+            <p className="text-[11px] text-gray-400 -mt-1">
+              Ini bukan rangkaian gambar SVG — ini font sungguhan (OpenType) yang otomatis merangkai huruf Latin
+              yang kamu ketik menjadi suku kata Aksara Mongondow (fitur ligature/<code>calt</code>), memakai bentuk
+              huruf asli hasil vektorisasi bagan &quot;Loloda Mokoagow&quot;. Bisa diinstal &amp; dipakai langsung di
+              Word/Google Docs/Canva dsb — huruf yang belum membentuk suku kata valid tetap tampil sbg huruf Latin biasa.
+            </p>
+            <div
+              style={{
+                fontFamily: "'AksaraMongondow', sans-serif",
+                fontFeatureSettings: '"liga" 1, "calt" 1, "clig" 1',
+                WebkitFontFeatureSettings: '"liga" 1, "calt" 1, "clig" 1',
+              }}
+              className="min-h-[80px] bg-[#f5f0e6] text-[#1c1712] rounded-xl p-5 text-4xl leading-relaxed break-words"
+            >
+              {sandboxInput || (
+                <span className="text-2xl text-[#8a7f6c]">Ketik di kotak atas — hasilnya otomatis muncul di sini pakai font asli...</span>
+              )}
+            </div>
+
+            {/* Export hasil (render ulang lewat canvas + font asli, bukan screenshot DOM) */}
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mr-1">Export sbg:</span>
+              {(
+                [
+                  { key: "png", label: "PNG" },
+                  { key: "jpg", label: "JPG" },
+                  { key: "pdf", label: "PDF" },
+                  { key: "docx", label: "DOCX" },
+                ] as const
+              ).map((f) => (
+                <button
+                  key={f.key}
+                  disabled={!sandboxInput.trim() || exportingFormat !== null}
+                  onClick={() => handleExport(f.key)}
+                  className="px-3 py-1.5 rounded-lg text-[11px] font-bold bg-[#191b28] hover:bg-[#25283b] text-gray-200 border border-[#2a2c3d] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                >
+                  {exportingFormat === f.key ? "Memproses..." : f.label}
+                </button>
+              ))}
+              {exportError && <span className="text-[10px] text-red-400">{exportError}</span>}
+            </div>
+          </div>
+
           {/* Render Aksara Result Box */}
           <div className="bg-[#131520] border border-[#222536] rounded-2xl p-6 space-y-4 shadow-xl">
             <div className="flex items-center justify-between border-b border-[#212333] pb-3">
@@ -571,30 +664,40 @@ export default function AksaraMongondow({ statusMap = {} }: AksaraMongondowProps
                 <div className="flex flex-wrap gap-6 bg-[#0c0d14] p-5 rounded-2xl border border-[#202234]">
                   {sandboxResult.words.map((word, wIdx) =>
                     word.syllables ? (
-                      <div key={wIdx} className="flex gap-2">
-                        {word.syllables.map((syl, sIdx) => (
-                          <div
-                            key={`${syl.id}-${sIdx}`}
-                            className="flex flex-col items-center bg-[#f5f0e6] rounded-xl p-2 shadow-md hover:scale-105 transition-transform"
-                            title={`${syl.romanization} (${syl.syllable_type})`}
+                      <div key={wIdx} className="flex flex-col gap-1.5">
+                        {word.approximated && (
+                          <span
+                            title="Kata ini mengandung huruf di luar inventori aksara asli (c/f/j/q/v/x/z) atau huruf 'h' tanpa bentuk mati — hasil di bawah memakai padanan bunyi terdekat, bukan ejaan otentik."
+                            className="self-start text-[9px] font-bold uppercase tracking-wide text-violet-300 bg-violet-500/10 border border-violet-500/30 rounded-full px-2 py-0.5"
                           >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={GLYPH_BASE + syl.glyph_svg}
-                              alt={syl.romanization}
-                              className="w-10 h-14 object-contain"
-                              draggable={false}
-                            />
-                            <span className="text-[10px] text-[#2d2419] font-bold font-mono mt-1">
-                              {syl.romanization}
-                            </span>
-                          </div>
-                        ))}
+                            ≈ Pendekatan fonetis · belum terverifikasi
+                          </span>
+                        )}
+                        <div className="flex gap-2">
+                          {word.syllables.map((syl, sIdx) => (
+                            <div
+                              key={`${syl.id}-${sIdx}`}
+                              className="flex flex-col items-center bg-[#f5f0e6] rounded-xl p-2 shadow-md hover:scale-105 transition-transform"
+                              title={`${syl.romanization} (${syl.syllable_type})`}
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={GLYPH_BASE + syl.glyph_svg}
+                                alt={syl.romanization}
+                                className="w-10 h-14 object-contain"
+                                draggable={false}
+                              />
+                              <span className="text-[10px] text-[#2d2419] font-bold font-mono mt-1">
+                                {syl.romanization}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     ) : (
                       <div
                         key={wIdx}
-                        title="Kata ini memuat huruf di luar inventori fonem Mongondow (mis. c, f, j, q, v, x, z)"
+                        title="Sudah dicoba dgn padanan bunyi terdekat, tapi gugus hurufnya tetap tak bisa disusun jadi suku kata konsonan-vokal Mongondow (mis. kombinasi konsonan berurutan yang tak lazim)."
                         className="flex flex-col items-center justify-center bg-[#241d1a] border border-amber-800/50 rounded-xl px-4 py-3 shadow-md"
                       >
                         <span className="text-amber-400 font-mono font-bold text-sm">{word.original}</span>
@@ -620,6 +723,9 @@ export default function AksaraMongondow({ statusMap = {} }: AksaraMongondowProps
                         {word.syllables ? (
                           <p className="text-[11px] text-gray-400">
                             Jumlah glif: {word.syllables.length} suku kata ({word.syllables.map((s) => s.romanization).join("-")})
+                            {word.approximated && (
+                              <span className="text-violet-300"> · pendekatan fonetis, belum terverifikasi</span>
+                            )}
                           </p>
                         ) : (
                           <p className="text-[11px] text-amber-500/80">

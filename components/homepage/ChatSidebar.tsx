@@ -21,7 +21,9 @@ import {
   UserX,
   ShieldCheck,
   BookOpen,
-  Database
+  Database,
+  Type,
+  ScrollText
 } from "lucide-react";
 import Link from "next/link";
 import { HomeChatSession, Language } from "@/lib/types";
@@ -173,6 +175,27 @@ export default function ChatSidebar({
             >
               <Database className="w-4 h-4 text-blue-400 shrink-0" />
               <span className="truncate">Knowledge</span>
+            </Link>
+          </div>
+
+          {/* Navigation Items: Transliterasi & Aksara */}
+          <div className="grid grid-cols-2 gap-2">
+            <Link
+              href="/aksara-mongondow?tab=sandbox"
+              onClick={onCloseMobile}
+              className="py-2 px-2.5 rounded-xl bg-[#212121] hover:bg-[#2b2b2b] text-gray-300 hover:text-white border border-[#333] text-xs font-semibold flex items-center gap-2 transition-all"
+            >
+              <Type className="w-4 h-4 text-violet-400 shrink-0" />
+              <span className="truncate">Transliterasi</span>
+            </Link>
+
+            <Link
+              href="/aksara-mongondow"
+              onClick={onCloseMobile}
+              className="py-2 px-2.5 rounded-xl bg-[#212121] hover:bg-[#2b2b2b] text-gray-300 hover:text-white border border-[#333] text-xs font-semibold flex items-center gap-2 transition-all"
+            >
+              <ScrollText className="w-4 h-4 text-amber-400 shrink-0" />
+              <span className="truncate">Aksara</span>
             </Link>
           </div>
         </div>

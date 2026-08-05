@@ -739,7 +739,7 @@ export default function MyAIChat({
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={lang === 'id' ? "Tanyakan apa saja ke Bogani AI..." : "Ask anything to Bogani AI..."}
+                placeholder={lang === 'id' ? "Tanyakan apa saja ke Abo..." : "Ask anything to Abo..."}
                 className="flex-1 bg-transparent text-sm text-white placeholder-gray-500 focus:outline-none resize-none py-1.5 max-h-36 custom-scrollbar"
               />
 

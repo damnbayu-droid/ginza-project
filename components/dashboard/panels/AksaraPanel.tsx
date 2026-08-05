@@ -35,6 +35,126 @@ const TYPE_LABEL: Record<string, string> = {
   final_consonant: "Konsonan Mati (Pamudpod / Silang)",
 };
 
+/**
+ * Brief desain 7 huruf BARU sepenuhnya orisinal utk menutup 7 fonem yang
+ * memang tak ada representasinya di Aksara Mongondow tradisional: c, f, j,
+ * q, v, x, z.
+ *
+ * REVISI 2026-08-05 malam: bentuk dasar (baris vokal-a) tiap huruf sudah
+ * DISEPAKATI lewat rapat konsensus BMR (5 huruf diturunkan dari SA/PA/YA/
+ * KA/WA + modifikasi kecil per huruf — lihat kolom "consensusMod"). Yang
+ * BELUM ada polanya sampai rapat tsb: baris e/i, o/u, dan bentuk mati.
+ *
+ * Pola yang diusulkan utk 3 baris sisanya — BUKAN reka-reka baru, tapi
+ * penerapan konsisten dari sistem yang SUDAH didokumentasikan sbg sifat
+ * abugida aksara ini sendiri (lihat data/aksara/aksara_mongondow.json ->
+ * script.type: "diubah dengan diakritik utk vokal lain, tanda silang utk
+ * mematikan vokal"), sekaligus selaras dgn konvensi kudlit Baybayin (induk
+ * aksara ini): titik DI ATAS govern huruf -> ubah jadi e/i; titik DI BAWAH
+ * -> ubah jadi o/u; silang "+" menimpa bentuk dasar -> mati/konsonan akhir.
+ * Jadi begitu bentuk-a disepakati/digambar, 3 baris lain tinggal MENAMBAH
+ * satu tanda kecil yang sama di baris manapun -- bukan menggambar ulang
+ * bentuk baru dari nol per baris.
+ */
+const NEW_LETTER_BRIEFS: Array<{
+  letter: string;
+  rationale: string;
+  consensusMod: string;
+  forms: Array<{ rom: string; type: string; ref: string; markNote: string }>;
+}> = [
+  {
+    letter: "c",
+    rationale: "Bunyi terdekat: /s/ (mis. \"Cinta\" umum diserap sbg \"Sinta\").",
+    consensusMod: "Diturunkan dari SA — modifikasi: menambahkan kait kecil di bagian atas kanan.",
+    forms: [
+      { rom: "ca", type: "vowel_a", ref: "sa", markNote: "Bentuk dasar (sdh disepakati rapat)" },
+      { rom: "ce", type: "vowel_e_i", ref: "sa", markNote: "= ca + titik kecil DI ATAS" },
+      { rom: "ci", type: "vowel_e_i", ref: "sa", markNote: "= ca + titik kecil DI ATAS (sama dgn ce)" },
+      { rom: "co", type: "vowel_o_u", ref: "sa", markNote: "= ca + titik kecil DI BAWAH" },
+      { rom: "cu", type: "vowel_o_u", ref: "sa", markNote: "= ca + titik kecil DI BAWAH (sama dgn co)" },
+      { rom: "c", type: "final_consonant", ref: "sa", markNote: "= ca + tanda silang \"+\" (mati)" },
+    ],
+  },
+  {
+    letter: "f",
+    rationale: "Bunyi terdekat: /p/ (labial tak bersuara; huruf serapan resmi EYD utk kata asing/serapan).",
+    consensusMod: "Diturunkan dari PA — modifikasi: menambahkan garis pendek di bagian atas.",
+    forms: [
+      { rom: "fa", type: "vowel_a", ref: "pa", markNote: "Bentuk dasar (sdh disepakati rapat)" },
+      { rom: "fe", type: "vowel_e_i", ref: "pa", markNote: "= fa + titik kecil DI ATAS" },
+      { rom: "fi", type: "vowel_e_i", ref: "pa", markNote: "= fa + titik kecil DI ATAS (sama dgn fe)" },
+      { rom: "fo", type: "vowel_o_u", ref: "pa", markNote: "= fa + titik kecil DI BAWAH" },
+      { rom: "fu", type: "vowel_o_u", ref: "pa", markNote: "= fa + titik kecil DI BAWAH (sama dgn fo)" },
+      { rom: "f", type: "final_consonant", ref: "pa", markNote: "= fa + tanda silang \"+\" (mati)" },
+    ],
+  },
+  {
+    letter: "j",
+    rationale: "Bunyi terdekat: /d/~/dʒ/; huruf asli/wajib dlm ejaan Indonesia modern (jalan, jujur — bukan sekadar serapan).",
+    consensusMod: "Diturunkan dari YA — modifikasi: mengikuti bentuk YA asli dgn lengkungan ujung.",
+    forms: [
+      { rom: "ja", type: "vowel_a", ref: "ya", markNote: "Bentuk dasar (sdh disepakati rapat)" },
+      { rom: "je", type: "vowel_e_i", ref: "ya", markNote: "= ja + titik kecil DI ATAS" },
+      { rom: "ji", type: "vowel_e_i", ref: "ya", markNote: "= ja + titik kecil DI ATAS (sama dgn je)" },
+      { rom: "jo", type: "vowel_o_u", ref: "ya", markNote: "= ja + titik kecil DI BAWAH" },
+      { rom: "ju", type: "vowel_o_u", ref: "ya", markNote: "= ja + titik kecil DI BAWAH (sama dgn jo)" },
+      { rom: "j", type: "final_consonant", ref: "ya", markNote: "= ja + tanda silang \"+\" (mati)" },
+    ],
+  },
+  {
+    letter: "q",
+    rationale: "Bunyi terdekat: /k/; dlm EYD huruf q resmi HANYA utk nama diri & istilah ilmu tertentu — paling jarang dipakai dari ke-7.",
+    consensusMod: "Diturunkan dari KA — modifikasi: menambahkan titik kecil di bawah.",
+    forms: [
+      { rom: "qa", type: "vowel_a", ref: "ka", markNote: "Bentuk dasar (sdh disepakati rapat)" },
+      { rom: "qe", type: "vowel_e_i", ref: "ka", markNote: "= qa + titik kecil DI ATAS" },
+      { rom: "qi", type: "vowel_e_i", ref: "ka", markNote: "= qa + titik kecil DI ATAS (sama dgn qe)" },
+      { rom: "qo", type: "vowel_o_u", ref: "ka", markNote: "= qa + titik kecil DI BAWAH" },
+      { rom: "qu", type: "vowel_o_u", ref: "ka", markNote: "= qa + titik kecil DI BAWAH (sama dgn qo)" },
+      { rom: "q", type: "final_consonant", ref: "ka", markNote: "= qa + tanda silang \"+\" (mati)" },
+    ],
+  },
+  {
+    letter: "v",
+    rationale: "Bunyi terdekat: /b/ (labial bersuara); huruf serapan resmi EYD (mis. \"valid\", \"vitamin\").",
+    consensusMod: "Diturunkan dari WA — modifikasi: menambahkan garis kecil tegak di tengah atas.",
+    forms: [
+      { rom: "va", type: "vowel_a", ref: "wa", markNote: "Bentuk dasar (sdh disepakati rapat)" },
+      { rom: "ve", type: "vowel_e_i", ref: "wa", markNote: "= va + titik kecil DI ATAS" },
+      { rom: "vi", type: "vowel_e_i", ref: "wa", markNote: "= va + titik kecil DI ATAS (sama dgn ve)" },
+      { rom: "vo", type: "vowel_o_u", ref: "wa", markNote: "= va + titik kecil DI BAWAH" },
+      { rom: "vu", type: "vowel_o_u", ref: "wa", markNote: "= va + titik kecil DI BAWAH (sama dgn vo)" },
+      { rom: "v", type: "final_consonant", ref: "wa", markNote: "= va + tanda silang \"+\" (mati)" },
+    ],
+  },
+  {
+    letter: "x",
+    rationale: "Bunyi terdekat: gugus /ks/; dlm EYD huruf x resmi HANYA utk nama diri & istilah ilmu tertentu — sama jarangnya dgn q.",
+    consensusMod: "Diturunkan dari KA — modifikasi: mengikuti bentuk KA asli dgn tambahan lengkungan.",
+    forms: [
+      { rom: "xa", type: "vowel_a", ref: "ka", markNote: "Bentuk dasar (sdh disepakati rapat)" },
+      { rom: "xe", type: "vowel_e_i", ref: "ka", markNote: "= xa + titik kecil DI ATAS" },
+      { rom: "xi", type: "vowel_e_i", ref: "ka", markNote: "= xa + titik kecil DI ATAS (sama dgn xe)" },
+      { rom: "xo", type: "vowel_o_u", ref: "ka", markNote: "= xa + titik kecil DI BAWAH" },
+      { rom: "xu", type: "vowel_o_u", ref: "ka", markNote: "= xa + titik kecil DI BAWAH (sama dgn xo)" },
+      { rom: "x", type: "final_consonant", ref: "ka", markNote: "= xa + tanda silang \"+\" (mati)" },
+    ],
+  },
+  {
+    letter: "z",
+    rationale: "Bunyi terdekat: /s/ bersuara; huruf serapan resmi EYD (mis. \"zakat\", \"lezat\").",
+    consensusMod: "Diturunkan dari SA — modifikasi: menambahkan titik kecil di kanan atas.",
+    forms: [
+      { rom: "za", type: "vowel_a", ref: "sa", markNote: "Bentuk dasar (sdh disepakati rapat)" },
+      { rom: "ze", type: "vowel_e_i", ref: "sa", markNote: "= za + titik kecil DI ATAS" },
+      { rom: "zi", type: "vowel_e_i", ref: "sa", markNote: "= za + titik kecil DI ATAS (sama dgn ze)" },
+      { rom: "zo", type: "vowel_o_u", ref: "sa", markNote: "= za + titik kecil DI BAWAH" },
+      { rom: "zu", type: "vowel_o_u", ref: "sa", markNote: "= za + titik kecil DI BAWAH (sama dgn zo)" },
+      { rom: "z", type: "final_consonant", ref: "sa", markNote: "= za + tanda silang \"+\" (mati)" },
+    ],
+  },
+];
+
 export default function AksaraPanel() {
   const [glyphs, setGlyphs] = useState<GlyphRow[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -65,6 +185,7 @@ export default function AksaraPanel() {
   // yg dimodifikasi dari huruf berbunyi mirip).
   const [referenceRomanization, setReferenceRomanization] = useState<string>("");
   const [showReferenceOverlay, setShowReferenceOverlay] = useState(true);
+  const [selectedNewLetter, setSelectedNewLetter] = useState<string>(NEW_LETTER_BRIEFS[0].letter);
 
   // Undo / Stroke history state
   const [strokes, setStrokes] = useState<Stroke[]>([]);
@@ -612,6 +733,74 @@ export default function AksaraPanel() {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* Prioritas BARU (arahan Boss Bayu 2026-08-05): 7 huruf sepenuhnya
+                  orisinal utk fonem yang tak ada di aksara asli (c, f, j, q, v, x,
+                  z) -- BUKAN pinjam diakritik, BUKAN substitusi fonetis. Substitusi
+                  fonetis (lib/aksara-transliterate.ts) tetap jadi fallback tools
+                  transliterasi SAMPAI huruf-huruf ini selesai digambar &
+                  terverifikasi di sini. */}
+              <div className="rounded-xl border border-violet-500/30 bg-violet-500/5 p-3 space-y-2.5">
+                <p className="text-[11px] font-semibold text-violet-300">
+                  Prioritas baru: 7 huruf sepenuhnya orisinal utk fonem yang tak ada di aksara asli (c, f, j, q, v, x, z).
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {NEW_LETTER_BRIEFS.map((b) => (
+                    <button
+                      key={b.letter}
+                      type="button"
+                      onClick={() => setSelectedNewLetter(b.letter)}
+                      className={`w-8 h-8 rounded-lg text-xs font-mono font-bold border transition-all ${
+                        selectedNewLetter === b.letter
+                          ? "bg-violet-500 text-white border-violet-500"
+                          : "bg-violet-500/10 border-violet-500/40 text-violet-300 hover:bg-violet-500/20"
+                      }`}
+                    >
+                      {b.letter}
+                    </button>
+                  ))}
+                </div>
+
+                {(() => {
+                  const brief = NEW_LETTER_BRIEFS.find((b) => b.letter === selectedNewLetter);
+                  if (!brief) return null;
+                  return (
+                    <>
+                      <p className="text-[11px] text-violet-200/80 leading-relaxed">{brief.rationale}</p>
+                      <p className="text-[11px] font-semibold text-emerald-400/90">
+                        ✓ Konsensus rapat 5 Agustus 2026: {brief.consensusMod}
+                      </p>
+                      <p className="text-[10px] text-violet-200/60 leading-relaxed">
+                        Pola baris e/i, o/u, mati: MENAMBAH tanda kecil yang sama di baris manapun pada bentuk-a di
+                        atas — titik di ATAS = e/i, titik di BAWAH = o/u, tanda silang &quot;+&quot; = mati/konsonan
+                        akhir (konvensi kudlit Baybayin, induk aksara ini). Klik salah satu baris di bawah utk
+                        mengisi form — acuan visual otomatis ikut bentuk-a huruf ini sendiri begitu sudah tersimpan.
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {brief.forms.map((sug) => (
+                          <button
+                            key={sug.rom}
+                            type="button"
+                            title={sug.markNote}
+                            onClick={() => {
+                              setNewRomanization(sug.rom);
+                              setNewSyllableType(sug.type);
+                              setReferenceRomanization(sug.ref);
+                              setShowReferenceOverlay(true);
+                              setNewSourceReference(
+                                `Huruf baru "${brief.letter}" — ${brief.consensusMod} Baris ini (${sug.rom}): ${sug.markNote}. Konsensus rapat BMR 5 Agustus 2026.`
+                              );
+                            }}
+                            className="px-2.5 py-1 rounded-full text-[11px] font-mono font-semibold bg-violet-500/10 border border-violet-500/40 text-violet-300 hover:bg-violet-500/20"
+                          >
+                            {sug.rom}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
 
               {/* Referensi ghost overlay -- pilih huruf yang sudah ada sbg acuan

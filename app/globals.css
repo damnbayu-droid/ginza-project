@@ -1,6 +1,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
+/* ── Font Aksara Mongondow ──
+   Font kustom yang dibangun dari 88 glyph SVG asli + tabel GSUB (ligature
+   substitution): ketik romanisasi Latin biasa (mis. "mongondow"), font ini
+   otomatis merangkainya jadi suku kata Aksara Mongondow (greedy longest-match,
+   sama seperti mesin transliterasi lib/aksara-transliterate.ts). Huruf Latin
+   yang tak membentuk suku kata valid tetap tampil sbg huruf Latin biasa
+   (fallback dari DejaVu Sans yang di-embed). Belum mencakup konsonan-mati
+   berdiri sendiri di tengah kata secara kontekstual -- itu perbaikan fase 2. */
+@font-face {
+  font-family: 'AksaraMongondow';
+  src: url('/fonts/AksaraMongondow.woff2') format('woff2'),
+       url('/fonts/AksaraMongondow.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* ── Design Tokens (Light Mode default) ── */
 :root {
   --bg: #FAFAFA;

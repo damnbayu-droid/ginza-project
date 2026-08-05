@@ -593,30 +593,40 @@ export default function KamusPage() {
                   {!realAksara.allFailed ? (
                     <div className="flex flex-wrap gap-3">
                       {realAksara.words.map((word, wIdx) => (
-                        <div key={wIdx} className="flex gap-1.5">
-                          {word.syllables ? word.syllables.map((syl, sIdx) => (
-                            <div
-                              key={`${syl.id}-${sIdx}`}
-                              className="flex flex-col items-center bg-[#f5f0e6] rounded-lg p-1.5"
-                              title={syl.romanization}
-                            >
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src={AKSARA_GLYPH_BASE + syl.glyph_svg}
-                                alt={syl.romanization}
-                                className="w-8 h-11 object-contain"
-                                draggable={false}
-                              />
-                              <span className="text-[9px] text-[#3a2f22] font-medium">{syl.romanization}</span>
-                            </div>
-                          )) : (
+                        <div key={wIdx} className="flex flex-col gap-1">
+                          {word.syllables && word.approximated && (
                             <span
-                              title="Kata ini memuat huruf di luar inventori fonem aksara"
-                              className="flex items-center justify-center bg-[#2a1f1f] border border-amber-800/50 rounded-lg px-2 py-1.5 text-[10px] text-amber-400 font-mono"
+                              title="Kata ini mengandung huruf di luar inventori aksara asli (c/f/j/q/v/x/z) atau huruf 'h' tanpa bentuk mati — hasil di bawah memakai padanan bunyi terdekat, bukan ejaan otentik."
+                              className="self-start text-[8px] font-bold uppercase tracking-wide text-violet-300 bg-violet-500/10 border border-violet-500/30 rounded-full px-1.5 py-0.5"
                             >
-                              {word.original} ⚠
+                              ≈ pendekatan fonetis
                             </span>
                           )}
+                          <div className="flex gap-1.5">
+                            {word.syllables ? word.syllables.map((syl, sIdx) => (
+                              <div
+                                key={`${syl.id}-${sIdx}`}
+                                className="flex flex-col items-center bg-[#f5f0e6] rounded-lg p-1.5"
+                                title={syl.romanization}
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={AKSARA_GLYPH_BASE + syl.glyph_svg}
+                                  alt={syl.romanization}
+                                  className="w-8 h-11 object-contain"
+                                  draggable={false}
+                                />
+                                <span className="text-[9px] text-[#3a2f22] font-medium">{syl.romanization}</span>
+                              </div>
+                            )) : (
+                              <span
+                                title="Sudah dicoba dgn padanan bunyi terdekat, tapi gugus hurufnya tetap tak bisa disusun jadi suku kata Mongondow."
+                                className="flex items-center justify-center bg-[#2a1f1f] border border-amber-800/50 rounded-lg px-2 py-1.5 text-[10px] text-amber-400 font-mono"
+                              >
+                                {word.original} ⚠
+                              </span>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
