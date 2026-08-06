@@ -32,9 +32,16 @@ import {
 } from "lucide-react";
 
 export default function ProposalPage() {
-  const [expandAll, setExpandAll] = useState<boolean>(true);
+  const [expandAll, setExpandAll] = useState<boolean>(false);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [selectedDistrict, setSelectedDistrict] = useState<string>("all");
+
+  const handlePrintPDF = () => {
+    setExpandAll(true);
+    setTimeout(() => {
+      window.print();
+    }, 100);
+  };
 
   const districts = [
     { id: "all", name: "Semua 5 Daerah (Konsorsium Total)" },
@@ -568,7 +575,7 @@ export default function ProposalPage() {
             </button>
 
             <button
-              onClick={() => window.print()}
+              onClick={handlePrintPDF}
               className="text-xs font-bold px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white transition-all shadow-md flex items-center gap-1.5"
               title="Cetak Proposal / Simpan Sebagai PDF A4"
             >
