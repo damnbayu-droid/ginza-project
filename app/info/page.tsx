@@ -381,6 +381,74 @@ export default function InfoPage() {
             </div>
 
           </div>
+
+          {/* Sumbangsi Pihak Ke-3 & Pendaftaran Verifikator Online */}
+          <div className="p-6 md:p-8 rounded-3xl bg-[#111318] border border-[#1F222C] space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1F222C] pb-4">
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] font-mono font-bold uppercase">
+                  Open Recruitment • Verifikator Online
+                </div>
+                <h3 className="text-lg md:text-xl font-bold text-white tracking-tight">
+                  Sumbangsi Pihak Ke-3 & Pendaftaran Verifikator Online
+                </h3>
+                <p className="text-xs text-gray-400 leading-relaxed">
+                  Ginza Project membuka pendaftaran terbuka bagi para pakar dan pemerhati budaya untuk bergabung sebagai Verifikator Resmi MongondowPedia.
+                </p>
+              </div>
+
+              <a
+                href="mailto:developer@mongondowpedia.com?subject=Pendaftaran%20Verifikator%20MongondowPedia"
+                className="py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 shrink-0 self-start md:self-auto"
+              >
+                <UserCheck className="w-4 h-4" />
+                <span>Daftar Verifikator Online</span>
+              </a>
+            </div>
+
+            <div className="space-y-3">
+              <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-amber-400">
+                Spesialisasi & Bidang Keahlian Yang Dicari:
+              </h4>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                <div className="p-3 rounded-2xl bg-[#161822] border border-[#232736] space-y-1">
+                  <p className="text-xs font-bold text-white">Paleografer</p>
+                  <p className="text-[10px] text-gray-400">Ahli naskah & aksara kuno</p>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-[#161822] border border-[#232736] space-y-1">
+                  <p className="text-xs font-bold text-white">Linguis</p>
+                  <p className="text-[10px] text-gray-400">Ahli struktur bahasa BMR</p>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-[#161822] border border-[#232736] space-y-1">
+                  <p className="text-xs font-bold text-white">Filolog</p>
+                  <p className="text-[10px] text-gray-400">Ahli tradisi sastra lisan</p>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-[#161822] border border-[#232736] space-y-1">
+                  <p className="text-xs font-bold text-white">Arkeolog</p>
+                  <p className="text-[10px] text-gray-400">Ahli situs & cagar budaya</p>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-[#161822] border border-[#232736] space-y-1">
+                  <p className="text-xs font-bold text-white">Epigraf</p>
+                  <p className="text-[10px] text-gray-400">Ahli prasasti & ukiran kuno</p>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-[#161822] border border-[#232736] space-y-1">
+                  <p className="text-xs font-bold text-white">Historian</p>
+                  <p className="text-[10px] text-gray-400">Ahli sejarah dinasti kerajaan</p>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-[#161822] border border-[#232736] space-y-1 col-span-2 sm:col-span-1">
+                  <p className="text-xs font-bold text-white">Others / Tokoh Adat</p>
+                  <p className="text-[10px] text-gray-400">Pemangku adat & penutur asli</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* ==================================================================== */}

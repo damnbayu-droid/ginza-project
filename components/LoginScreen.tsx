@@ -107,10 +107,10 @@ export default function LoginScreen() {
   };
 
   const devResources = [
-    { icon: BookOpen, label: lang === 'id' ? "Dokumentasi" : "Documentation", href: "/docs" },
-    { icon: Code2,    label: lang === 'id' ? "Referensi API" : "API Reference", href: "/api-reference" },
-    { icon: Layers,   label: lang === 'id' ? "Contoh Starter" : "Starter Examples", href: "/examples" },
-    { icon: FileText, label: lang === 'id' ? "Panduan" : "Guides", href: "/guides" },
+    { icon: BookOpen, label: lang === 'id' ? "Dokumentasi" : "Documentation", href: "/dokumentasi", isExternal: false },
+    { icon: Code2,    label: lang === 'id' ? "Referensi API" : "API Reference", href: "https://console.myai.nexus", isExternal: true },
+    { icon: Layers,   label: lang === 'id' ? "Contoh Starter" : "Starter Examples", href: "https://myai.nexus", isExternal: true },
+    { icon: FileText, label: lang === 'id' ? "Panduan" : "Guides", href: "/panduan", isExternal: false },
   ];
 
   return (
@@ -347,7 +347,18 @@ export default function LoginScreen() {
         <div className="grid grid-cols-4 gap-2" id="dev-resources-grid">
           {devResources.map(resource => {
             const Icon = resource.icon;
-            return (
+            return resource.isExternal ? (
+              <a
+                key={resource.label}
+                href={resource.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-3 rounded-2xl border border-[#1D1E22] bg-[#111214] hover:bg-[#18191E] flex flex-col items-center justify-center gap-1.5 transition-all group text-center"
+              >
+                <Icon className="h-4 w-4 text-[#9CA3AF] group-hover:text-[#5B8DEF] transition-colors" />
+                <span className="text-[10px] font-semibold text-[#9CA3AF] group-hover:text-white transition-colors truncate w-full">{resource.label}</span>
+              </a>
+            ) : (
               <Link
                 key={resource.label}
                 href={resource.href}
