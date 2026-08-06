@@ -313,49 +313,12 @@ export default function MyAIChat({
             <Menu className="w-5 h-5" />
           </button>
 
-          {/* Model Auto-Detect & Dropdown Selector */}
-          <div className="relative">
-            <button
-              onClick={() => setShowModelDropdown(!showModelDropdown)}
-              className="flex items-center gap-2 text-sm font-semibold text-white/90 hover:text-white px-3 py-1.5 rounded-xl hover:bg-[#212121] transition-all border border-transparent hover:border-[#333]"
-            >
-              <span className="font-sans">Bogani AI</span>
-              <span className={`text-[10px] font-mono px-2 py-0.5 rounded-md border font-bold ${currentModelDisplay.color} ${currentModelDisplay.border}`}>
-                {currentModelDisplay.badge}
-              </span>
-              <ChevronDown className="w-4 h-4 text-gray-400" />
-            </button>
-
-            {showModelDropdown && (
-              <div className="absolute top-12 left-0 z-50 bg-[#212121] border border-[#333333] rounded-2xl p-2 w-64 shadow-2xl space-y-1 text-left text-xs animate-scale-up">
-                <p className="px-3 py-1.5 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
-                  Deteksi & Pilihan Model AI Gateway:
-                </p>
-                {Object.entries(modelConfigs).map(([key, config]) => (
-                  <button
-                    key={key}
-                    onClick={() => {
-                      setSelectedModelOverride(key);
-                      setShowModelDropdown(false);
-                    }}
-                    className={`w-full p-2.5 rounded-xl flex items-center justify-between text-left transition-colors ${
-                      selectedModelOverride === key
-                        ? 'bg-blue-600/20 text-white font-medium border border-blue-500/30'
-                        : 'hover:bg-[#2b2b2b] text-gray-300'
-                    }`}
-                  >
-                    <div className="space-y-0.5">
-                      <p className="font-semibold text-xs flex items-center gap-1.5">
-                        <span>{config.name}</span>
-                        {key === 'auto' && <span className="text-[9px] bg-blue-500 text-white px-1 rounded">Rekomendasi</span>}
-                      </p>
-                      <p className="text-[10px] text-gray-400">{config.desc}</p>
-                    </div>
-                    {selectedModelOverride === key && <Check className="w-4 h-4 text-blue-400 shrink-0" />}
-                  </button>
-                ))}
-              </div>
-            )}
+          {/* Header Title & MyAI OS Badge */}
+          <div className="flex items-center gap-2 px-2 py-1.5">
+            <span className="font-sans font-semibold text-sm text-white/90">Bogani AI</span>
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded-md border font-bold text-emerald-400 bg-emerald-500/10 border-emerald-500/30">
+              MyAI OS
+            </span>
           </div>
         </div>
 
@@ -387,9 +350,7 @@ export default function MyAIChat({
         {!hasMessages ? (
           <div className="my-auto w-full max-w-2xl mx-auto px-4 py-8 flex flex-col items-center justify-center text-center space-y-8 animate-fade-in">
             <div className="space-y-3">
-              <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[#212121] border border-[#333] shadow-xl mb-2">
-                <MyAILogo size="lg" />
-              </div>
+              <MyAILogo size="lg" className="mb-2 mx-auto" />
               <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-white">
                 {lang === 'id'
                   ? `Apa yang bisa ${AI_NAME} bantu hari ini?`
@@ -568,8 +529,8 @@ export default function MyAIChat({
                     {!isUser && (
                       <div className="flex items-center gap-2">
                         <span className="text-[11px] font-semibold text-white">Bogani AI</span>
-                        <span className={`text-[9px] font-mono px-1.5 py-0.2 rounded border font-semibold ${msgModelConfig.color} ${msgModelConfig.border}`}>
-                          {msgModelConfig.badge}
+                        <span className="text-[9px] font-mono px-1.5 py-0.5 rounded border font-semibold text-emerald-400 bg-emerald-500/10 border-emerald-500/30">
+                          MyAI OS
                         </span>
                       </div>
                     )}
@@ -778,14 +739,14 @@ export default function MyAIChat({
           </form>
 
           <p className="text-[11px] text-gray-500 text-center mt-2 font-sans">
-            BOGANI AI powered by MyAI OS (Ginza Project).
+            (Ginza Project) MongondowPedia Inc. All rights reserved.
           </p>
         </div>
       )}
 
       {!hasMessages && (
         <p className="text-[11px] text-gray-500 text-center pb-4 px-4 font-sans shrink-0">
-          BOGANI AI powered by MyAI OS (Ginza Project).
+          (Ginza Project) MongondowPedia Inc. All rights reserved.
         </p>
       )}
 

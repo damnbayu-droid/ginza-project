@@ -37,9 +37,15 @@ export default function Sidebar({ lang, theme, adminEmail, activePanel, onSelect
   const [collapsed, setCollapsed] = useState(false);
 
   const handleLogout = async () => {
+    try {
+      const { getSupabaseBrowserClient } = await import("@/lib/supabase-browser-auth");
+      const supabase = getSupabaseBrowserClient();
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.warn("[Sidebar] Supabase signout notice:", e);
+    }
     await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/");
-    router.refresh();
+    window.location.href = "/";
   };
 
   return (
@@ -48,8 +54,8 @@ export default function Sidebar({ lang, theme, adminEmail, activePanel, onSelect
     } ${theme === 'dark' ? 'bg-[#0F1012]' : 'bg-[#F9FAFB]'}`}>
 
       {/* Brand Header */}
-      <div className={`p-4 border-b border-bento-border flex items-center justify-between`}>
-        <div className={`flex items-center ${collapsed ? 'justify-center w-full' : 'gap-3'}`}>
+      <div className={`px-4 py-3.5 border-b border-bento-border flex items-center justify-between`}>
+        <div className={`flex items-center ${collapsed ? 'justify-center w-full' : 'gap-3 pl-1.5'}`}>
           <div className="p-2 rounded-lg bg-bento-accent-muted text-bento-accent shrink-0">
             <Code className="h-5 w-5" id="brand-logo-icon" />
           </div>

@@ -3,6 +3,19 @@ import "./globals.css";
 import GlobalClickFeedback from "@/components/GlobalClickFeedback";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://mongondowpedia.com"),
+  alternates: {
+    canonical: "https://mongondowpedia.com",
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon.png", type: "image/png" },
+      { url: "/logo.webp", type: "image/webp" }
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/favicon.png",
+  },
   title: {
     default: "MongondowPedia — Ginza Project",
     template: "%s — MongondowPedia"
@@ -31,6 +44,9 @@ export default function RootLayout({
   return (
     <html lang="id" suppressHydrationWarning>
       <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href="/logo.webp" type="image/webp" />
+        <link rel="apple-touch-icon" href="/favicon.png" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link

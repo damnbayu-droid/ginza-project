@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, FormEvent } from "react";
-import { Mail, Lock, Eye, EyeOff, X, ArrowRight, UserPlus, KeyRound, CheckCircle2, AlertCircle } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, X, ArrowRight, UserPlus, KeyRound, CheckCircle2, AlertCircle, Info } from "lucide-react";
 import { supabaseClient } from "@/lib/supabase-client";
 
 interface LoginModalProps {
@@ -20,6 +20,7 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [oauthNotice, setOauthNotice] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
@@ -88,18 +89,22 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
   const handleOAuthLogin = async (provider: 'google' | 'facebook') => {
     setError("");
     setMessage("");
-    if (supabaseClient) {
-      const { error: oauthError } = await supabaseClient.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-      if (oauthError) {
-        setError(`Gagal terhubung ke ${provider}: ${oauthError.message}`);
+    if (provider === 'google') {
+      if (supabaseClient) {
+        const { error: oauthError } = await supabaseClient.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: `${window.location.origin}/auth/callback`,
+          },
+        });
+        if (oauthError) {
+          setError(`Gagal terhubung ke Google: ${oauthError.message}`);
+        }
+      } else {
+        setError("Supabase Client belum terkonfigurasi pada browser.");
       }
     } else {
-      setError(`Provider ${provider} sedang dikonfigurasi pada Supabase Gateway.`);
+      setOauthNotice("Maaf Integrasi Facebook sedang dalam proses penyiapan");
     }
   };
 
@@ -313,6 +318,33 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
           </div>
         )}
       </div>
+
+      {/* Mini Popup Notice for Google / Facebook OAuth Integration */}
+      {oauthNotice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in font-sans">
+          <div className="bg-[#181920] border border-[#2b2d3c] rounded-3xl p-6 max-w-sm w-full shadow-2xl text-center space-y-4 relative animate-scale-up overflow-hidden">
+            <button
+              onClick={() => setOauthNotice(null)}
+              className="absolute top-3.5 right-3.5 p-1.5 text-gray-400 hover:text-white rounded-full hover:bg-[#252838] transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center mx-auto shadow-inner mt-1">
+              <Info className="w-6 h-6" />
+            </div>
+            <div className="space-y-1.5 px-2">
+              <h3 className="text-sm font-bold text-white tracking-tight">Pemberitahuan Integrasi</h3>
+              <p className="text-xs text-gray-300 leading-relaxed font-medium">{oauthNotice}</p>
+            </div>
+            <button
+              onClick={() => setOauthNotice(null)}
+              className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition-all shadow-lg shadow-blue-600/25 active:scale-95 cursor-pointer"
+            >
+              Mengerti
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -208,6 +208,26 @@ export async function getProfile(id: string) {
   return data as Profile | null;
 }
 
+export async function upsertProfile(data: {
+  id: string;
+  display_name?: string | null;
+  avatar_url?: string | null;
+  role?: UserRole;
+}) {
+  const db = assertDb();
+  const { error } = await db.from("profiles").upsert(
+    {
+      id: data.id,
+      display_name: data.display_name ?? null,
+      avatar_url: data.avatar_url ?? null,
+      role: data.role ?? "user",
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "id" }
+  );
+  if (error) throw error;
+}
+
 export async function setUserBanStatus(userId: string, banned: boolean, reason?: string) {
   const db = assertDb();
   const { error } = await db

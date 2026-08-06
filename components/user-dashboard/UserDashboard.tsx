@@ -14,10 +14,14 @@ export default function UserDashboard({ profile }: { profile: Profile }) {
   const [tab, setTab] = useState<Tab>("profil");
 
   async function handleLogout() {
-    const supabase = getSupabaseBrowserClient();
-    await supabase.auth.signOut();
-    router.push("/");
-    router.refresh();
+    try {
+      const supabase = getSupabaseBrowserClient();
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.warn("[UserDashboard] Supabase signout notice:", e);
+    }
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.href = "/";
   }
 
   const NAV: { key: Tab; label: string; icon: typeof User }[] = [

@@ -152,8 +152,10 @@ Kalau kata ini tidak ada di KONTEKS KNOWLEDGE BASE maupun referensi kata terinde
               endpoint: "kamus_ai_define",
               tokens_used: (res.promptTokens ?? 0) + (res.completionTokens ?? 0),
             })
-            .then(() => {})
-            .catch((e: unknown) => console.warn("[kamus-ai-define] Failed logging token_usage:", e));
+            .then(
+              () => {},
+              (e: unknown) => console.warn("[kamus-ai-define] Failed logging token_usage:", e)
+            );
         }
       }
     }
@@ -205,8 +207,10 @@ Kalau kata ini tidak ada di KONTEKS KNOWLEDGE BASE maupun referensi kata terinde
         supabaseAdmin
           .from("token_usage")
           .insert({ user_id: quotaProfile.id, provider: "fallback", endpoint: "kamus_ai_define", tokens_used: 0 })
-          .then(() => {})
-          .catch((e: unknown) => console.warn("[kamus-ai-define] Failed logging fallback token_usage:", e));
+          .then(
+            () => {},
+            (e: unknown) => console.warn("[kamus-ai-define] Failed logging fallback token_usage:", e)
+          );
       }
     }
 

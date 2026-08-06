@@ -46,6 +46,17 @@ export async function createSession(
     .setExpirationTime(`${SESSION_DURATION_HOURS}h`)
     .sign(secret);
 
+  // Clear explicit logout marker if present
+  res.cookies.delete("myai_logged_out");
+  res.cookies.set("myai_logged_out", "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 0,
+    expires: new Date(0),
+    path: "/",
+  });
+
   res.cookies.set(COOKIE_NAME, token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -62,6 +73,9 @@ export async function createSession(
 export async function getSession(
   req: NextRequest
 ): Promise<SessionPayload | null> {
+  const isLoggedOut = req.cookies.get("myai_logged_out")?.value === "true";
+  if (isLoggedOut) return null;
+
   if (AUTH_DISABLED) return BYPASS_SESSION;
 
   const token = req.cookies.get(COOKIE_NAME)?.value;
@@ -83,9 +97,12 @@ export async function getSession(
  * Get session from server component context (uses next/headers).
  */
 export async function getServerSession(): Promise<SessionPayload | null> {
+  const cookieStore = await cookies();
+  const isLoggedOut = cookieStore.get("myai_logged_out")?.value === "true";
+  if (isLoggedOut) return null;
+
   if (AUTH_DISABLED) return BYPASS_SESSION;
 
-  const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   if (!token) return null;
 
@@ -105,11 +122,21 @@ export async function getServerSession(): Promise<SessionPayload | null> {
  * Destroy the session cookie (logout).
  */
 export function destroySession(res: NextResponse): void {
+  res.cookies.delete(COOKIE_NAME);
   res.cookies.set(COOKIE_NAME, "", {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
     maxAge: 0,
+    expires: new Date(0),
+    path: "/",
+  });
+  // Mark explicit logout so bypass flags don't override explicit user logout
+  res.cookies.set("myai_logged_out", "true", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: 30 * 24 * 60 * 60,
     path: "/",
   });
 }

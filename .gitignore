@@ -36,6 +36,7 @@ next-env.d.ts
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+client_secret_*.json
 
 # ── Scratch Files (Temporer) ──────────────────────────────────────────────────
 scratch/

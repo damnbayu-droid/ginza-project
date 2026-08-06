@@ -26,7 +26,9 @@ import {
   ScrollText
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { HomeChatSession, Language } from "@/lib/types";
+import MyAILogo from "./MyAILogo";
 
 interface ChatSidebarProps {
   sessions: HomeChatSession[];
@@ -93,8 +95,15 @@ export default function ChatSidebar({
   const grouped = groupSessionsByDate(filteredSessions);
 
   const handleLogout = async () => {
+    try {
+      const { getSupabaseBrowserClient } = await import("@/lib/supabase-browser-auth");
+      const supabase = getSupabaseBrowserClient();
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.warn("[ChatSidebar] Supabase signout notice:", e);
+    }
     await fetch("/api/auth/logout", { method: "POST" });
-    window.location.reload();
+    window.location.href = "/";
   };
 
   return (
@@ -111,10 +120,19 @@ export default function ChatSidebar({
           isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         }`}
       >
-        {/* Top Header (No logo per user request) */}
-        <div className="p-3.5 flex items-center justify-between border-b border-[#262626]">
-          <div className="flex items-center gap-2">
-            <h1 className="font-semibold text-sm tracking-tight text-white flex items-center gap-2">
+        {/* Top Header */}
+        <div className="px-4 py-3.5 flex items-center justify-between border-b border-[#262626]">
+          <div className="flex items-center gap-2.5 pl-1.5">
+            <Image
+              src="/logo.webp"
+              alt="MongondowPedia Logo"
+              width={24}
+              height={24}
+              className="w-6 h-6 object-contain rounded-md shrink-0 shadow-sm"
+              unoptimized
+              priority
+            />
+            <h1 className="font-semibold text-sm tracking-tight text-white">
               <span>MongondowPedia</span>
             </h1>
           </div>
@@ -269,13 +287,15 @@ export default function ChatSidebar({
             <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-blue-500 text-white font-bold">7 Modul</span>
           </Link>
 
-          <Link
-            href="/dashboard"
-            className="w-full p-2.5 rounded-xl text-xs font-medium text-gray-300 hover:bg-[#212121] flex items-center gap-2.5 transition-colors"
-          >
-            <LayoutDashboard className="w-4 h-4 text-gray-400" />
-            <span>Dashboard</span>
-          </Link>
+          {user && (
+            <Link
+              href="/dashboard"
+              className="w-full p-2.5 rounded-xl text-xs font-medium text-gray-300 hover:bg-[#212121] flex items-center gap-2.5 transition-colors"
+            >
+              <LayoutDashboard className="w-4 h-4 text-gray-400" />
+              <span>Dashboard</span>
+            </Link>
+          )}
 
           <button
             onClick={() => setShowSettingsModal(true)}

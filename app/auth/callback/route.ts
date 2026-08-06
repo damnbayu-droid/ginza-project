@@ -27,11 +27,35 @@ export async function GET(req: NextRequest) {
       let redirectTo = next;
 
       if (user && supabaseAdmin) {
+        const displayName =
+          user.user_metadata?.full_name ||
+          user.user_metadata?.name ||
+          user.email?.split("@")[0] ||
+          "User";
+        const avatarUrl = user.user_metadata?.avatar_url || null;
+
+        // Otomatis simpan & sinkronkan profil user OAuth ke tabel profiles / User Management Dashboard
+        try {
+          await supabaseAdmin.from("profiles").upsert(
+            {
+              id: user.id,
+              display_name: displayName,
+              avatar_url: avatarUrl,
+              role: "user",
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: "id", ignoreDuplicates: false }
+          );
+        } catch (e) {
+          console.warn("[auth/callback] Gagal autosync profiles:", e);
+        }
+
         const { data: profile } = await supabaseAdmin
           .from("profiles")
           .select("role")
           .eq("id", user.id)
           .maybeSingle();
+
         if (profile?.role === "admin") redirectTo = "/dashboard";
         else if (profile?.role === "verificator") redirectTo = "/verifikator";
       }
@@ -40,5 +64,5 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  return NextResponse.redirect(`${origin}/akun/masuk?error=oauth_gagal`);
+  return NextResponse.redirect(`${origin}/login?error=oauth_gagal`);
 }

@@ -3,6 +3,7 @@ import { ArrowLeft, Database, BookOpenText, ScrollText } from "lucide-react";
 import { listKnowledgeCategories, listKnowledgeArticles } from "@/lib/ginza-db";
 import { isSupabaseReady } from "@/lib/supabase";
 import ContributeCTA from "@/components/knowledge/ContributeCTA";
+import KnowledgeGraphViewer from "@/components/knowledge/KnowledgeGraphViewer";
 
 export const metadata = {
   title: "Knowledge Base MongondowPedia — Ensiklopedia Bolaang Mongondow",
@@ -96,6 +97,9 @@ export default async function KnowledgePage() {
             ))}
           </div>
         )}
+
+        {/* Visualisasi Interactive Knowledge Graphify */}
+        <KnowledgeGraphViewer />
 
         <ContributeCTA type="knowledge" />
       </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, FormEvent } from "react";
-import { Code, Mail, Lock, Globe, Eye, EyeOff, BookOpen, Code2, Layers, FileText } from "lucide-react";
+import { Code, Mail, Lock, Globe, Eye, EyeOff, BookOpen, Code2, Layers, FileText, Info, X, ArrowLeft } from "lucide-react";
 import { Language } from "@/lib/types";
 import { translations } from "@/lib/i18n";
 import { useRouter } from "next/navigation";
@@ -82,21 +82,27 @@ export default function LoginScreen() {
     }
   };
 
+  const [oauthNotice, setOauthNotice] = useState<string | null>(null);
+
   const handleOAuthLogin = async (provider: 'google' | 'facebook') => {
     setError("");
     setInfoMessage("");
-    if (supabaseClient) {
-      const { error: oauthError } = await supabaseClient.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-      if (oauthError) {
-        setError(`Gagal terhubung ke ${provider}: ${oauthError.message}`);
+    if (provider === 'google') {
+      if (supabaseClient) {
+        const { error: oauthError } = await supabaseClient.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: `${window.location.origin}/auth/callback`,
+          },
+        });
+        if (oauthError) {
+          setError(`Gagal terhubung ke Google: ${oauthError.message}`);
+        }
+      } else {
+        setError("Supabase Client belum terkonfigurasi pada browser.");
       }
     } else {
-      setError(`Provider ${provider} sedang dikonfigurasi pada Supabase Gateway.`);
+      setOauthNotice("Maaf Integrasi Facebook sedang dalam proses penyiapan");
     }
   };
 
@@ -113,6 +119,16 @@ export default function LoginScreen() {
       {/* Decorative Background Glows */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-[#5B8DEF]/5 blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-[#2DD4BF]/5 blur-3xl pointer-events-none" />
+
+      {/* Exit CTA Button (Top Left) */}
+      <Link
+        href="/"
+        className="absolute top-6 left-6 flex items-center gap-2 text-xs font-bold px-3.5 py-2 rounded-xl border border-[#1D1E22] bg-[#111214] text-[#9CA3AF] hover:text-white hover:border-gray-700 transition-all shadow-sm group z-20"
+        title="Kembali ke Beranda Utama (Exit)"
+      >
+        <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform text-[#5B8DEF]" />
+        <span>Exit</span>
+      </Link>
 
       {/* Language Toggle */}
       <div className="absolute top-6 right-6 flex items-center gap-2">
@@ -135,7 +151,7 @@ export default function LoginScreen() {
           </div>
           <div className="space-y-1">
             <h1 className="text-2xl font-bold tracking-tight">MongondowPedia</h1>
-            <p className="text-xs font-semibold tracking-widest uppercase opacity-60 font-mono">Ginza Project • Bogani AI</p>
+            <p className="text-xs font-semibold tracking-widest uppercase opacity-60 font-mono">Bogani AI • (Abo) </p>
           </div>
           <div className="max-w-xs mx-auto">
             <p className="text-xs text-gray-400 font-medium leading-relaxed">{t.tagline}</p>
@@ -143,8 +159,16 @@ export default function LoginScreen() {
         </div>
 
         {/* Login/Register/Forgot Card */}
-        <div className="p-8 rounded-3xl border bg-[#111215] border-[#1D1E22]" id="login-card">
-          <div className="mb-6">
+        <div className="p-8 rounded-3xl border bg-[#111215] border-[#1D1E22] relative" id="login-card">
+          <Link
+            href="/"
+            className="absolute top-5 right-5 p-1.5 rounded-xl bg-[#1C1E24] hover:bg-[#262933] text-gray-400 hover:text-white border border-[#25262B] transition-colors"
+            title="Keluar ke Beranda (Exit)"
+          >
+            <X className="w-4 h-4" />
+          </Link>
+
+          <div className="mb-6 pr-6">
             <h2 className="text-base font-bold tracking-tight mb-1" id="login-card-title">
               {mode === 'login' && "Masuk ke MongondowPedia"}
               {mode === 'register' && "Daftar Akun Baru"}
@@ -349,6 +373,33 @@ export default function LoginScreen() {
           <span>© 2026 MongondowPedia™ (Ginza Project) All Rights Reserved</span>
         </div>
       </div>
+
+      {/* Mini Popup Notice for Google / Facebook OAuth Integration */}
+      {oauthNotice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in font-sans">
+          <div className="bg-[#181920] border border-[#2b2d3c] rounded-3xl p-6 max-w-sm w-full shadow-2xl text-center space-y-4 relative animate-scale-up overflow-hidden">
+            <button
+              onClick={() => setOauthNotice(null)}
+              className="absolute top-3.5 right-3.5 p-1.5 text-gray-400 hover:text-white rounded-full hover:bg-[#252838] transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <div className="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center mx-auto shadow-inner mt-1">
+              <Info className="w-6 h-6" />
+            </div>
+            <div className="space-y-1.5 px-2">
+              <h3 className="text-sm font-bold text-white tracking-tight">Pemberitahuan Integrasi</h3>
+              <p className="text-xs text-gray-300 leading-relaxed font-medium">{oauthNotice}</p>
+            </div>
+            <button
+              onClick={() => setOauthNotice(null)}
+              className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs transition-all shadow-lg shadow-blue-600/25 active:scale-95 cursor-pointer"
+            >
+              Mengerti
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
