@@ -13,19 +13,23 @@ import {
   FileText,
   UserCheck,
   Sparkles,
-  HelpCircle,
   ArrowRight,
   Info,
   Layers,
-  Search,
   ExternalLink,
-  Bot
+  Bot,
+  MapPin,
+  Cpu,
+  Globe,
+  HeartHandshake,
+  Building2,
+  GraduationCap
 } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Pusat Informasi & Direktori Tools — MongondowPedia",
   description:
-    "Direktori lengkap alat (Tools), basis pengetahuan (Knowledge Base), serta standar verifikasi data kebudayaan Bolaang Mongondow di MongondowPedia (Ginza Project).",
+    "Direktori lengkap alat (Tools), basis pengetahuan (Knowledge Base), MyAI OS, Ginza Project, serta standar verifikasi data kebudayaan Bolaang Mongondow di MongondowPedia.",
 };
 
 export default function InfoPage() {
@@ -136,7 +140,7 @@ export default function InfoPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#07080A] text-white font-sans selection:bg-blue-500/30 pb-20">
+    <div className="min-h-screen bg-[#07080A] text-white font-sans selection:bg-blue-500/30 pb-16">
       
       {/* Background Lighting Elements */}
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-blue-600/10 via-indigo-600/5 to-transparent blur-3xl pointer-events-none z-0" />
@@ -144,17 +148,29 @@ export default function InfoPage() {
       {/* Main Container */}
       <div className="relative z-10 max-w-6xl mx-auto px-4 pt-8 md:pt-12 space-y-12">
         
-        {/* Navigation Breadcrumb */}
-        <div className="flex items-center justify-between border-b border-[#1C1E24] pb-4">
-          <div className="flex items-center gap-2 text-xs font-semibold text-gray-400">
+        {/* Navigation Breadcrumb with Location Address */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#1C1E24] pb-4 gap-3">
+          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-gray-400">
             <Link href="/" className="hover:text-white transition-colors">Beranda</Link>
             <span>/</span>
-            <span className="text-blue-400">Info & Informasi Lengkap</span>
+            <span className="text-blue-400">Info</span>
+            <span className="text-gray-600 hidden sm:inline">•</span>
+            <a
+              href="https://maps.app.goo.gl/Gznpt6NtqFNLxE4F8"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-gray-400 hover:text-cyan-400 transition-colors bg-[#111318] px-2.5 py-1 rounded-lg border border-[#232733]"
+              title="Buka Peta Lokasi"
+            >
+              <MapPin className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+              <span>Kotabunan, Jl. Tangkudegan</span>
+              <ExternalLink className="w-3 h-3 text-gray-500" />
+            </a>
           </div>
 
           <Link
             href="/"
-            className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-[#252833] bg-[#111318] text-gray-300 hover:text-white hover:border-gray-600 transition-all flex items-center gap-1.5"
+            className="self-start sm:self-auto text-xs font-semibold px-3 py-1.5 rounded-xl border border-[#252833] bg-[#111318] text-gray-300 hover:text-white hover:border-gray-600 transition-all flex items-center gap-1.5 shrink-0"
           >
             <span>Kembali ke Beranda</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -173,7 +189,7 @@ export default function InfoPage() {
           </h1>
 
           <p className="text-sm md:text-base text-gray-400 leading-relaxed font-normal">
-            Panduan menyeluruh mengenai seluruh perkakas digital (Tools), basis pengetahuan RAG (Knowledge Base), serta mekanisme tata kelola verifikasi kebudayaan di MongondowPedia.
+            Panduan menyeluruh mengenai seluruh perkakas digital (Tools), basis pengetahuan RAG (Knowledge Base), MyAI OS, serta mekanisme Ginza Project di MongondowPedia.
           </p>
         </div>
 
@@ -371,10 +387,170 @@ export default function InfoPage() {
           </div>
         </div>
 
-        {/* Footer Attribution */}
-        <div className="pt-8 border-t border-[#1C1F28] text-center text-xs text-gray-500 space-y-1">
-          <p>© {new Date().getFullYear()} MongondowPedia — Ginza Project. Hak Cipta Dilindungi Undang-Undang.</p>
-          <p className="font-mono text-[10px]">Portal Kebudayaan & Bahasa Bolaang Mongondow Raya • Powered by MyAI OS</p>
+        {/* ==================================================================== */}
+        {/* SECTION 4: INFORMASI TENTANG MyAI OS (myai.nexus) */}
+        {/* ==================================================================== */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between border-b border-[#1D2029] pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+                <Cpu className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white tracking-tight">Teknologi Pintar: MyAI OS</h2>
+                <p className="text-xs text-gray-400">Sistem Operasi Kecerdasan Buatan Terpadu (AI Engine)</p>
+              </div>
+            </div>
+            <a
+              href="https://myai.nexus"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-mono font-semibold px-3 py-1.5 rounded-xl border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 transition-all flex items-center gap-1.5"
+            >
+              <Globe className="w-3.5 h-3.5" />
+              <span>myai.nexus</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
+
+          <div className="p-6 md:p-8 rounded-3xl bg-[#111318] border border-[#1F222C] space-y-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-80 h-80 bg-cyan-500/5 blur-3xl pointer-events-none" />
+
+            <div className="space-y-3 max-w-3xl">
+              <span className="text-[10px] font-mono font-bold tracking-widest px-2.5 py-1 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 uppercase">
+                AI Operating System Architecture
+              </span>
+              <h3 className="text-lg md:text-2xl font-bold text-white leading-tight">
+                Penopang Utama Penalaran Kecerdasan Buatan & Interaksi Suara Real-Time
+              </h3>
+              <p className="text-xs md:text-sm text-gray-300 leading-relaxed">
+                <strong>MyAI OS</strong> adalah fondasi platform kecerdasan buatan terpadu yang memotori mesin Bogani AI (Abo&apos;), sistem pencarian dokumen RAG (Retrieval-Augmented Generation), alih aksara Fonotaktik Austronesia, hingga streaming interaksi percakapan suara (*Real-Time Voice Mode*).
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+              <div className="p-4 rounded-2xl bg-[#161922] border border-[#242836] space-y-2">
+                <div className="flex items-center gap-2 text-cyan-400 font-semibold text-xs">
+                  <Database className="w-4 h-4 shrink-0" />
+                  <span>Knowledge Graph Memory</span>
+                </div>
+                <p className="text-xs text-gray-400 leading-relaxed">
+                  Menghubungkan entri kosa kata, silsilah kerajaan, dan naskah adat Bolaang Mongondow dalam struktur grafis terintegrasi.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-[#161922] border border-[#242836] space-y-2">
+                <div className="flex items-center gap-2 text-blue-400 font-semibold text-xs">
+                  <Bot className="w-4 h-4 shrink-0" />
+                  <span>Real-Time Low-Latency Voice</span>
+                </div>
+                <p className="text-xs text-gray-400 leading-relaxed">
+                  Dukungan percakapan suara dua arah secara langsung dengan respon fonetik Mongondow yang alami & lancar.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-[#161922] border border-[#242836] space-y-2">
+                <div className="flex items-center gap-2 text-purple-400 font-semibold text-xs">
+                  <Globe className="w-4 h-4 shrink-0" />
+                  <span>Dokumentasi Resmi</span>
+                </div>
+                <p className="text-xs text-gray-400 leading-relaxed">
+                  Pelajari selengkapnya mengenai spesifikasi dan kapabilitas teknis MyAI OS di situs resmi{" "}
+                  <a
+                    href="https://myai.nexus"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-cyan-400 underline hover:text-cyan-300 font-mono"
+                  >
+                    https://myai.nexus
+                  </a>.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ==================================================================== */}
+        {/* SECTION 5: GINZA PROJECT & INISIASI YAYASAN (PALING BAWAH) */}
+        {/* ==================================================================== */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between border-b border-[#1D2029] pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                <GraduationCap className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white tracking-tight">Ginza Project & Inisiasi Yayasan</h2>
+                <p className="text-xs text-gray-400">Proyek Edukasi Sejarah, Kebudayaan & Modernisasi Teknologi BMR</p>
+              </div>
+            </div>
+            <span className="text-xs font-mono font-semibold px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-400">
+              Educational Project
+            </span>
+          </div>
+
+          <div className="p-6 md:p-8 rounded-3xl bg-[#111318] border border-[#1F222C] space-y-6 relative overflow-hidden">
+            <div className="space-y-4 max-w-4xl">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/30 uppercase">
+                  Inisiasi Kebudayaan & Edukasi
+                </span>
+                <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/30 uppercase">
+                  Yayasan Bolaang Mongondow Raya
+                </span>
+              </div>
+
+              <h3 className="text-xl md:text-2xl font-bold text-white leading-tight">
+                Modernisasi Teknologi Sejarah & Kebudayaan Bolaang Mongondow
+              </h3>
+
+              <p className="text-xs md:text-sm text-gray-300 leading-relaxed">
+                <strong>Ginza Project</strong> merupakan proyek edukasi (<em>Educational Project</em>) yang mendedikasikan diri untuk dokumentasi sejarah, pelestarian bahasa, serta modernisasi kebudayaan Bolaang Mongondow melalui integrasi Bogani AI dan berbagai alat digital interaktif lainnya.
+              </p>
+
+              <div className="p-4 rounded-2xl bg-[#171922] border border-[#262B3B] space-y-3">
+                <div className="flex items-center gap-2 text-amber-400 font-semibold text-xs md:text-sm">
+                  <Building2 className="w-4 h-4 shrink-0" />
+                  <span>Inisiasi Pembentukan Yayasan & Verifikator Internal</span>
+                </div>
+                <p className="text-xs text-gray-300 leading-relaxed">
+                  Saat ini, Ginza Project sedang menginisiasi pendirian <strong>Yayasan &ldquo;Bolaang Mongondow Raya&rdquo;</strong> dan berada dalam tahapan pembentukan Pengurus Yayasan. Pengurus ini nantinya akan bertindak sebagai <strong>Verifikator Internal</strong> dari MongondowPedia sekaligus <strong>Trainer Penyempurnaan penalaran kecerdasan buatan Bogani AI</strong>.
+                </p>
+              </div>
+
+              <p className="text-xs text-gray-400 leading-relaxed italic">
+                Project ini sedang dalam tahap aktif pengembangan dan membutuhkan banyak sumber daya, kolaborasi riset, serta dukungan berkelanjutan untuk mencapai kesuksesannya secara menyeluruh.
+              </p>
+            </div>
+
+            {/* Proposal Request Download CTA Button (Kosong / Placeholder) */}
+            <div className="pt-4 border-t border-[#1D202A] flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+              <a
+                href="#"
+                onClick={(e) => e.preventDefault()}
+                className="py-3 px-5 rounded-2xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold text-xs transition-all shadow-lg shadow-amber-600/20 flex items-center justify-center gap-2 cursor-not-allowed opacity-90"
+                title="Proposal Bantuan Dana Pengembangan (Segera Hadir)"
+              >
+                <HeartHandshake className="w-4 h-4" />
+                <span>Permintaan Bantuan Dana Pengembangan (Proposal)</span>
+              </a>
+              <span className="text-[11px] text-gray-500 font-mono text-center sm:text-left">
+                (Link proposal pendanaan pengembangan akan segera diunggah)
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* ==================================================================== */}
+        {/* HOMEPAGE MATCHING FOOTER */}
+        {/* ==================================================================== */}
+        <div className="pt-8 border-t border-[#1C1F28] text-center space-y-2">
+          <p className="text-xs text-gray-500 font-sans">
+            (Ginza Project) MongondowPedia Inc. All rights reserved.
+          </p>
+          <p className="font-mono text-[10px] text-gray-600">
+            Portal Kebudayaan & Bahasa Bolaang Mongondow Raya • Powered by MyAI OS
+          </p>
         </div>
 
       </div>
