@@ -339,7 +339,7 @@ export default function ChatSidebar({
               <div className="space-y-2">
                 <div className="flex items-center justify-between px-1">
                   <span className="text-[10px] text-amber-400 font-semibold flex items-center gap-1">
-                    <UserX className="w-3 h-3" /> Mode Gratis ({guestCount}/3 Pertanyaan)
+                    <UserX className="w-3 h-3" /> Mode Gratis (Penggunaan Terbatas)
                   </span>
                   <span className="text-[9px] font-mono text-gray-500">Tamu</span>
                 </div>

@@ -66,12 +66,44 @@ export default function VoiceModeOverlay({
 
     setErrorMessage("");
     setStatus('idle');
+    startListening();
 
     return () => {
       stopVoiceSession();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
+
+  const requestPermission = async () => {
+    setErrorMessage("");
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setErrorMessage(
+        lang === 'id'
+          ? "Browser Anda tidak mendukung akses perangkat mikrofon."
+          : "Your browser does not support microphone device access."
+      );
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+      });
+      micStreamRef.current = stream;
+      setPermissionState('granted');
+      setErrorMessage("");
+      setupAudioAnalyser(stream);
+      startListening();
+    } catch (err: any) {
+      console.warn("Microphone permission request error:", err);
+      setPermissionState('denied');
+      setErrorMessage(
+        lang === 'id'
+          ? "Izin Mikrofon & Speaker ditolak/diblokir. Mohon izinkan akses mikrofon di setelan browser."
+          : "Microphone & Speaker access denied. Please allow mic in browser settings."
+      );
+    }
+  };
 
   // Melepas mic stream + audio context + loop VAD. Dipanggil saat sesi suara
   // benar-benar ditutup (bukan antar-giliran bicara) supaya tidak menumpuk
@@ -437,23 +469,44 @@ export default function VoiceModeOverlay({
             </p>
           )}
 
-          {/* Permission Blocked Alert Banner */}
+          {/* Permission Blocked Alert Banner & Ask Permission Button */}
           {permissionState === 'denied' && (
-            <div className="flex items-start gap-2 text-left text-xs text-rose-300 bg-rose-950/60 p-3.5 rounded-xl border border-rose-800/60">
-              <ShieldAlert className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-semibold text-rose-200">Akses Mikrofon Diblokir</p>
-                <p className="text-rose-300/90 text-[11px] mt-0.5">
-                  Klik ikon gembok (🔒) di URL bar browser <code className="bg-black/40 px-1 py-0.5 rounded text-rose-200">localhost:3005</code> lalu ubah Izin Mikrofon ke <strong>Izinkan (Allow)</strong>.
-                </p>
+            <div className="flex flex-col gap-2.5 text-left text-xs text-rose-300 bg-rose-950/70 p-4 rounded-2xl border border-rose-800/60 shadow-xl animate-fade-in">
+              <div className="flex items-start gap-2.5">
+                <ShieldAlert className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+                <div className="space-y-1 flex-1">
+                  <p className="font-semibold text-rose-200">Akses Mikrofon & Speaker Diblokir</p>
+                  <p className="text-rose-300/90 text-[11px] leading-relaxed">
+                    Aplikasi memerlukan izin akses perangkat mikrofon dan audio speaker untuk menjalankan percakapan suara real-time Bogani AI.
+                  </p>
+                </div>
               </div>
+
+              <button
+                type="button"
+                onClick={requestPermission}
+                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white font-bold text-xs transition-all shadow-md flex items-center justify-center gap-2 mt-1"
+              >
+                <Mic className="w-4 h-4" />
+                <span>{lang === 'id' ? 'Minta Izin Akses (Ask Permission)' : 'Ask Permission'}</span>
+              </button>
             </div>
           )}
 
           {errorMessage && permissionState !== 'denied' && (
-            <div className="flex items-center justify-center gap-1.5 text-xs text-rose-400 bg-rose-950/40 px-3 py-1.5 rounded-lg border border-rose-800/40">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{errorMessage}</span>
+            <div className="flex flex-col items-center gap-2 text-xs text-rose-300 bg-rose-950/40 p-3 rounded-xl border border-rose-800/40 w-full">
+              <div className="flex items-center gap-1.5 text-rose-400 font-medium">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{errorMessage}</span>
+              </div>
+              <button
+                type="button"
+                onClick={requestPermission}
+                className="mt-1 py-1.5 px-3 rounded-lg bg-rose-900/60 hover:bg-rose-800/80 text-white text-[11px] font-semibold transition-colors flex items-center gap-1.5"
+              >
+                <Mic className="w-3.5 h-3.5" />
+                <span>Ask Permission</span>
+              </button>
             </div>
           )}
         </div>
