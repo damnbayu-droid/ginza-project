@@ -28,10 +28,7 @@ import {
   Calculator,
   Award,
   Layers,
-  Compass,
-  Target,
-  Bookmark,
-  Scale
+  Target
 } from "lucide-react";
 
 export default function ProposalPage() {
@@ -201,13 +198,18 @@ export default function ProposalPage() {
       title: "1. Pendahuluan & Visi Utama Ginza Project (Developer Perspective)",
       icon: Cpu,
       content: (
-        <div className="space-y-3 text-xs md:text-sm text-gray-300 leading-relaxed">
+        <div className="space-y-2 text-xs md:text-sm text-gray-300 leading-relaxed print-text-dark print:text-[9.5pt]">
           <p>
-            Dari perspektif Tim Pengembang (*System Architects & Developers*), <strong>Ginza Project</strong> lahir sebagai penyelesaian berbasis teknologi atas ancaman kepunahan bahasa dan pemisahan generasi muda dari memori sejarah Bolaang Mongondow Raya (BMR). Dokumentasi fisik konvensional tidak lagi cukup untuk menahan laju modernisasi jika tidak ditopang oleh ekosistem kecerdasan buatan modern.
+            Dari sudut pandang pengembang sistem (*System Architecture & Engineering Perspective*), <strong>Ginza Project</strong> diinisiasi sebagai arsitektur teknologi pelestarian bahasa dan sejarah paling komprehensif bagi suku bangsa Bolaang Mongondow Raya (BMR). Penurunan dramatis jumlah penutur asli bahasa daerah serta hilangnya dokumen sejarah fisik menjadi latar belakang utama dibangunnya platform digital ini.
           </p>
           <p>
-            Platform MongondowPedia dibangun dengan arsitektur web modern kelas dunia (Next.js 16 App Router, Supabase Vector DB, dan AI Engine <strong>MyAI OS / Bogani AI</strong>). Visi utamanya adalah menjadikan warisan budaya Mongondow dapat diakses secara instan, akurat, dan interaktif oleh siapa pun di seluruh dunia.
+            Platform MongondowPedia tidak sekadar situs informasi biasa, melainkan sebuah **Infrastruktur Kecerdasan Buatan Terpadu** yang menggabungkan basis data vektor terenkripsi, mesin pencari dokumen RAG (*Retrieval-Augmented Generation*), dan model bahasa alami berbasis kecerdasan buatan <strong>MyAI OS / Bogani AI (Abo&apos;)</strong>.
           </p>
+          <ul className="list-disc list-inside space-y-1 pl-1 text-[#9CA3AF] print-text-dark font-medium">
+            <li>Digitalisasi 100.000+ entri kosa kata, variasi dialekTotabuan, serta fonetik IPA baku.</li>
+            <li>Restorasi aksara native suku kata kuno Mongondow ke format font komputer & smartphone.</li>
+            <li>Penyediaan antarmuka edukasi interaktif untuk seluruh lapisan sekolah dan masyarakat.</li>
+          </ul>
         </div>
       )
     },
@@ -216,19 +218,19 @@ export default function ProposalPage() {
       title: "2. Sasaran Proposal Ditujukan Kepada 5 Pemda Kab/Kota & Masyarakat",
       icon: Building2,
       content: (
-        <div className="space-y-3 text-xs md:text-sm text-gray-300 leading-relaxed">
+        <div className="space-y-2 text-xs md:text-sm text-gray-300 leading-relaxed print-text-dark print:text-[9.5pt]">
           <p>
-            Dokumen proposal ini disusun secara resmi dan ditujukan kepada 5 Pemerintah Daerah Kabupaten/Kota se-Bolaang Mongondow Raya:
+            Inisiatif ini dirancang sebagai konsorsium kolaboratif lintas wilayah yang secara resmi ditujukan kepada **5 Pemerintah Daerah Kabupaten/Kota se-Bolaang Mongondow Raya**:
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 py-2">
-            <div className="p-3 rounded-xl bg-[#171922] border border-[#242836] font-semibold text-white">1. Pemkab Bolaang Mongondow Timur</div>
-            <div className="p-3 rounded-xl bg-[#171922] border border-[#242836] font-semibold text-white">2. Pemkab Bolaang Mongondow Selatan</div>
-            <div className="p-3 rounded-xl bg-[#171922] border border-[#242836] font-semibold text-white">3. Pemkab Bolaang Mongondow Utara</div>
-            <div className="p-3 rounded-xl bg-[#171922] border border-[#242836] font-semibold text-white">4. Pemkab Bolaang Mongondow</div>
-            <div className="p-3 rounded-xl bg-[#171922] border border-[#242836] font-semibold text-white">5. Pemkot Kotamobagu</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 py-1 print:gap-1">
+            <div className="p-2.5 rounded-xl bg-[#171922] border border-[#242836] font-semibold text-white print:bg-gray-100 print:border-gray-300 print:text-black">1. Pemkab Bolaang Mongondow Timur</div>
+            <div className="p-2.5 rounded-xl bg-[#171922] border border-[#242836] font-semibold text-white print:bg-gray-100 print:border-gray-300 print:text-black">2. Pemkab Bolaang Mongondow Selatan</div>
+            <div className="p-2.5 rounded-xl bg-[#171922] border border-[#242836] font-semibold text-white print:bg-gray-100 print:border-gray-300 print:text-black">3. Pemkab Bolaang Mongondow Utara</div>
+            <div className="p-2.5 rounded-xl bg-[#171922] border border-[#242836] font-semibold text-white print:bg-gray-100 print:border-gray-300 print:text-black">4. Pemkab Bolaang Mongondow</div>
+            <div className="p-2.5 rounded-xl bg-[#171922] border border-[#242836] font-semibold text-white print:bg-gray-100 print:border-gray-300 print:text-black">5. Pemkot Kotamobagu</div>
           </div>
           <p>
-            Serta ditujukan kepada <strong>Masyarakat Pemerhati Sejarah, Pemangku Adat, Tokoh Pemuda, dan Akademisi BMR</strong> untuk bersama-sama mendanai dan mengawal pembentukan infrastruktur kebudayaan bersama.
+            Selain itu, proposal ini juga ditujukan kepada **Masyarakat Pemerhati Sejarah, Pemangku Adat, Tokoh Pemuda, dan Akademisi** untuk bersama-sama mendanai, mendukung riset, serta mengawal keabsahan narasi kebudayaan tanah Bolaang Mongondow.
           </p>
         </div>
       )
@@ -238,12 +240,12 @@ export default function ProposalPage() {
       title: "3. Inisiasi & Pendirian Resmi Yayasan Bolaang Mongondow Raya",
       icon: FileText,
       content: (
-        <div className="space-y-3 text-xs md:text-sm text-gray-300 leading-relaxed">
+        <div className="space-y-2 text-xs md:text-sm text-gray-300 leading-relaxed print-text-dark print:text-[9.5pt]">
           <p>
-            Guna menjamin kepastian hukum, transparansi, dan keberlanjutan jangka panjang, Ginza Project menginisiasi pendirian badan hukum resmi berupa **Yayasan Bolaang Mongondow Raya**.
+            Guna menjamin kepastian legalitas, akuntabilitas keuangan, dan tata kelola program yang profesional, Ginza Project memfasilitasi pembentukan badan hukum nirlaba permanen yaitu **Yayasan Bolaang Mongondow Raya**.
           </p>
           <p>
-            Pengurusan legalitas meliputi penerbitan Akta Notaris pendirian, Surat Keputusan (SK) Pengesahan dari Kementerian Hukum dan Hak Asasi Manusia (Kemenkumham RI), pendaftaran NPWP Badan, serta pengurusan NIB Sektor Pendidikan Kebudayaan.
+            Tahapan pendaftaran hukum mencakup penyusunan Akta Notaris pendirian badan yayasan, pengesahan Surat Keputusan (SK) dari Kemenkumham RI, penerbitan NPWP Badan, pendaftaran NIB Sektor Pendidikan & Kebudayaan, serta pembukaan rekening konsorsium resmi.
           </p>
         </div>
       )
@@ -253,15 +255,15 @@ export default function ProposalPage() {
       title: "4. Pembentukan Pengurus Yayasan & Keterwakilan 5 Daerah",
       icon: Users,
       content: (
-        <div className="space-y-3 text-xs md:text-sm text-gray-300 leading-relaxed">
+        <div className="space-y-2 text-xs md:text-sm text-gray-300 leading-relaxed print-text-dark print:text-[9.5pt]">
           <p>
-            Struktur Kepengurusan Yayasan dirancang dengan mengedepankan **prinsip keterwakilan seimbang dari 5 Kabupaten/Kota**, melingkupi gabungan unsur Pemerintah Daerah (Dinas Pendidikan & Kebudayaan) serta Unsur Non-Pemerintah (Tokoh Adat, Budayawan, & Peneliti Independent).
+            Pengurus Yayasan dibentuk berdasarkan **prinsip proporsional dan keterwakilan seimbang dari 5 Kabupaten/Kota**, mengombinasikan unsur Pemerintah Daerah (Dinas Pendidikan & Kebudayaan) serta unsur Non-Pemerintah (Tokoh Adat, Peneliti, & Komunitas Kebudayaan).
           </p>
-          <div className="p-4 rounded-2xl bg-[#171922] border border-[#242836] space-y-2">
-            <h4 className="font-bold text-amber-400">Dua Fungsi Strategis Pengurus Yayasan:</h4>
-            <ul className="list-disc list-inside space-y-1 text-xs">
-              <li><strong>Verifikator Internal:</strong> Memvalidasi dan menyidangkan entri kosa kata kamus, naskah lisan, dan artikel sejarah sebelum diterbitkan publik.</li>
-              <li><strong>Trainer Penyempurnaan AI:</strong> Memberikan umpan balik ilmiah untuk melatih dan menyempurnakan pemahaman penalaran Bogani AI.</li>
+          <div className="p-3 rounded-2xl bg-[#171922] border border-[#242836] space-y-1.5 print:bg-gray-50 print:border-gray-300">
+            <h4 className="font-bold text-amber-400 print-accent">Dua Fungsi Utama Dewan Pengurus:</h4>
+            <ul className="list-disc list-inside space-y-1 text-xs print:text-[9pt]">
+              <li><strong>Verifikator Internal:</strong> Menjadi majelis verifikasi data yang meninjau, menguji, dan menyetujui seluruh naskah sejarah serta entri kosa kata sebelum diunggah ke publik.</li>
+              <li><strong>Trainer Penalaran AI:</strong> Memberikan supervisi ilmiah untuk melakukan fine-tuning dan memperkuat kemampuan penalaran cerdas dari Bogani AI.</li>
             </ul>
           </div>
         </div>
@@ -272,12 +274,12 @@ export default function ProposalPage() {
       title: "5. Penyewaan Lokasi Markas Kebudayaan 'Baloy'",
       icon: Home,
       content: (
-        <div className="space-y-3 text-xs md:text-sm text-gray-300 leading-relaxed">
+        <div className="space-y-2 text-xs md:text-sm text-gray-300 leading-relaxed print-text-dark print:text-[9.5pt]">
           <p>
-            Dibutuhkan lokasi fisik permanen sebagai Pusat Operasional, Laboratorium Riset Bahasa, dan Perpustakaan Manuskrip yang diberi nama **Markas Kebudayaan &ldquo;Baloy&rdquo;**.
+            Keberadaan markas fisik permanen diperlukan sebagai pusat riset, administrasi, dan koordinasi yang diberi nama **Markas Kebudayaan &ldquo;Baloy&rdquo;**.
           </p>
           <p>
-            Gedung Baloy akan menjadi tempat penyelenggaraan sidang verifikasi berkala, studio rekaman fonetik penutur native, serta pusat kunjungan edukasi budaya bagi para siswa dan peneliti.
+            Gedung Baloy difungsikan sebagai: (1) Ruang Sidang Verifikasi Data oleh Dewan Pakar; (2) Studio Rekaman Audio Fonetik Penutur Native; (3) Perpustakaan Digital Manuskrip Kuno; dan (4) Pusat Pelatihan Literasi Aksara Mongondow bagi Pelajar.
           </p>
         </div>
       )
@@ -287,21 +289,21 @@ export default function ProposalPage() {
       title: "6. Operasional Tim Verifikator & Pengumpul Data Sejarah",
       icon: ShieldCheck,
       content: (
-        <div className="space-y-3 text-xs md:text-sm text-gray-300 leading-relaxed">
+        <div className="space-y-2 text-xs md:text-sm text-gray-300 leading-relaxed print-text-dark print:text-[9.5pt]">
           <p>
-            Proses riset dan verifikasi informasi memerlukan alokasi insentif serta operasional lapangan bagi 7 disiplin pakar verifikator:
+            Proses verifikasi ilmiah membutuhkan dukungan operasional dan insentif kehormatan bagi 7 disiplin pakar verifikator:
           </p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs font-mono text-center">
-            <div className="p-2 rounded-lg bg-[#181B26] border border-[#262B3D] text-amber-400 font-bold">1. Paleografer</div>
-            <div className="p-2 rounded-lg bg-[#181B26] border border-[#262B3D] text-cyan-400 font-bold">2. Linguis</div>
-            <div className="p-2 rounded-lg bg-[#181B26] border border-[#262B3D] text-purple-400 font-bold">3. Filolog</div>
-            <div className="p-2 rounded-lg bg-[#181B26] border border-[#262B3D] text-emerald-400 font-bold">4. Arkeolog</div>
-            <div className="p-2 rounded-lg bg-[#181B26] border border-[#262B3D] text-rose-400 font-bold">5. Epigraf</div>
-            <div className="p-2 rounded-lg bg-[#181B26] border border-[#262B3D] text-blue-400 font-bold">6. Historian</div>
-            <div className="p-2 rounded-lg bg-[#181B26] border border-[#262B3D] text-amber-300 font-bold col-span-2 md:col-span-2">7. Tokoh Adat / Penutur Asli</div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5 text-xs font-mono text-center print:gap-1">
+            <div className="p-1.5 rounded bg-[#181B26] border border-[#262B3D] text-amber-400 font-bold print:bg-gray-100 print:border-gray-300 print:text-black">1. Paleografer</div>
+            <div className="p-1.5 rounded bg-[#181B26] border border-[#262B3D] text-cyan-400 font-bold print:bg-gray-100 print:border-gray-300 print:text-black">2. Linguis</div>
+            <div className="p-1.5 rounded bg-[#181B26] border border-[#262B3D] text-purple-400 font-bold print:bg-gray-100 print:border-gray-300 print:text-black">3. Filolog</div>
+            <div className="p-1.5 rounded bg-[#181B26] border border-[#262B3D] text-emerald-400 font-bold print:bg-gray-100 print:border-gray-300 print:text-black">4. Arkeolog</div>
+            <div className="p-1.5 rounded bg-[#181B26] border border-[#262B3D] text-rose-400 font-bold print:bg-gray-100 print:border-gray-300 print:text-black">5. Epigraf</div>
+            <div className="p-1.5 rounded bg-[#181B26] border border-[#262B3D] text-blue-400 font-bold print:bg-gray-100 print:border-gray-300 print:text-black">6. Historian</div>
+            <div className="p-1.5 rounded bg-[#181B26] border border-[#262B3D] text-amber-300 font-bold col-span-2 md:col-span-2 print:bg-gray-100 print:border-gray-300 print:text-black">7. Tokoh Adat / Penutur Asli</div>
           </div>
           <p>
-            Tim ini bertugas mendatangi desa-desa tua adat di seluruh BMR untuk merekam sastra lisan Owadu/Katu-katu, memotret manuskrip kuno, dan memverifikasi arti kata.
+            Tim pakar bertugas melakukan ekspedisi riset ke desa-desa tua adat, merekam penutur lisan Owadu/Katu-katu, memotret manuskrip kayu/kertas kuno, dan memvalidasi struktur etimologi kata.
           </p>
         </div>
       )
@@ -311,9 +313,9 @@ export default function ProposalPage() {
       title: "7. Biaya Penyempurnaan Website: UI/UX Design & Micro-Animations",
       icon: Layout,
       content: (
-        <div className="space-y-3 text-xs md:text-sm text-gray-300 leading-relaxed">
+        <div className="space-y-2 text-xs md:text-sm text-gray-300 leading-relaxed print-text-dark print:text-[9.5pt]">
           <p>
-            Perancangan antarmuka pengguna (UI/UX Design System) bertaraf modern dengan skema warna HSL yang teratur, tipografi modern Inter & Roboto, mikro-animasi responsif, serta jaminan visual yang memukau (*state-of-the-art*).
+            Perancangan Design System UI/UX kelas dunia dengan sistem warna HSL yang fleksibel, tipografi modern Inter & Roboto, mikro-animasi transisi yang halus, serta arsitektur antarmuka yang siap bersaing dengan platform internasional (*state-of-the-art*).
           </p>
         </div>
       )
@@ -323,9 +325,9 @@ export default function ProposalPage() {
       title: "8. Biaya Penyempurnaan Website: Domain & Keamanan Data",
       icon: Globe,
       content: (
-        <div className="space-y-3 text-xs md:text-sm text-gray-300 leading-relaxed">
+        <div className="space-y-2 text-xs md:text-sm text-gray-300 leading-relaxed print-text-dark print:text-[9.5pt]">
           <p>
-            Sewa domain resmi `mongondowpedia.com`, sertifikasi enkripsi SSL Enterprise 256-bit, pengamanan Cloudflare Pro dari serangan DDoS, serta sistem *automated daily backup* database.
+            Alokasi sewa domain resmi `mongondowpedia.com`, sertifikat enkripsi SSL Enterprise 256-bit, fitur proteksi serangan DDoS dari Cloudflare Pro, serta backup basis data otomatis secara harian.
           </p>
         </div>
       )
@@ -335,9 +337,9 @@ export default function ProposalPage() {
       title: "9. Biaya Penyempurnaan Website: Vector Database & Knowledge Base RAG",
       icon: Database,
       content: (
-        <div className="space-y-3 text-xs md:text-sm text-gray-300 leading-relaxed">
+        <div className="space-y-2 text-xs md:text-sm text-gray-300 leading-relaxed print-text-dark print:text-[9.5pt]">
           <p>
-            Infrastruktur database Supabase PostgreSQL enterprise dengan modul pgvector untuk mengindeks 100.000+ entri kata, silsilah raja-raja, dan naskah adat ke dalam matriks vektor RAG.
+            Penggunaan infrastruktur Supabase Enterprise PostgreSQL dengan ekstensi `pgvector` guna mengindeks lebih dari 100.000 dokumen, manuskrip, dan kamus menjadi representasi matriks vektor RAG untuk jawaban AI yang presisi.
           </p>
         </div>
       )
@@ -347,9 +349,9 @@ export default function ProposalPage() {
       title: "10. Biaya Penyempurnaan Website: AI Provider (Gemini Pro & Voice TTS)",
       icon: Cpu,
       content: (
-        <div className="space-y-3 text-xs md:text-sm text-gray-300 leading-relaxed">
+        <div className="space-y-2 text-xs md:text-sm text-gray-300 leading-relaxed print-text-dark print:text-[9.5pt]">
           <p>
-            Alokasi pemrosesan token API kecerdasan buatan Google Gemini 1.5 Pro & mesin audio sintetis suara dua arah (*Bogani AI Voice Mode*) dengan latensi rendah.
+            Pembiayaan token API High-Volume Google Gemini 1.5 Pro dan mesin sintetis suara dua arah (*Bogani AI Voice Mode*) untuk merespons pertanyaan pengguna via ucapan audio dalam waktu 5-10 detik.
           </p>
         </div>
       )
@@ -359,9 +361,9 @@ export default function ProposalPage() {
       title: "11. Pengembangan Mobile Application (Android & iOS)",
       icon: Smartphone,
       content: (
-        <div className="space-y-3 text-xs md:text-sm text-gray-300 leading-relaxed">
+        <div className="space-y-2 text-xs md:text-sm text-gray-300 leading-relaxed print-text-dark print:text-[9.5pt]">
           <p>
-            Pengembangan aplikasi ponsel cross-platform (Android & iOS) yang dapat diunduh gratis melalui Google Play Store dan Apple App Store. Aplikasi ini dilengkapi **Mode Offline Kamus** sehingga tetap dapat digunakan oleh para siswa di daerah sulit sinyal.
+            Pengembangan aplikasi mobile native cross-platform (Android & iOS) yang didistribusikan gratis melalui Google Play Store dan Apple App Store. Aplikasi ini dilengkapi fitur **Offline Mode Kamus** agar tetap dapat dibuka oleh siswa di area pelosok tanpa koneksi internet.
           </p>
         </div>
       )
@@ -371,9 +373,9 @@ export default function ProposalPage() {
       title: "12. Tools Educational 'Muatan Lokal': Tingkat SD (Sekolah Dasar)",
       icon: GraduationCap,
       content: (
-        <div className="space-y-3 text-xs md:text-sm text-gray-300 leading-relaxed">
+        <div className="space-y-2 text-xs md:text-sm text-gray-300 leading-relaxed print-text-dark print:text-[9.5pt]">
           <p>
-            Pengembangan modul digital Muatan Lokal SD: kuis bergambar interaktif tebak aksara, audio dongeng cerita rakyat Mongondow, dan permainan pengenalan kata benda sekitar.
+            Pengembangan modul digital Muatan Lokal SD: kuis interaktif tebak gambar aksara, audio dongeng cerita rakyat Mongondow, dan media pengenalan kata benda dalam bahasa ibu untuk siswa sekolah dasar.
           </p>
         </div>
       )
@@ -383,7 +385,7 @@ export default function ProposalPage() {
       title: "13. Tools Educational 'Muatan Lokal': Tingkat SMP (Sekolah Menengah Pertama)",
       icon: GraduationCap,
       content: (
-        <div className="space-y-3 text-xs md:text-sm text-gray-300 leading-relaxed">
+        <div className="space-y-2 text-xs md:text-sm text-gray-300 leading-relaxed print-text-dark print:text-[9.5pt]">
           <p>
             Modul digital Muatan Lokal SMP: mesin alih aksara Latin ↔ Aksara Mongondow, studio latihan menulis *stroke* aksara di layar sentuh, dan pembelajaran tata bahasa dasar (*Morfologi Prefiks Mo-, Moko-, Moto-*).
           </p>
@@ -395,7 +397,7 @@ export default function ProposalPage() {
       title: "14. Tools Educational 'Muatan Lokal': Tingkat SMA/SMK (Sekolah Menengah Atas)",
       icon: GraduationCap,
       content: (
-        <div className="space-y-3 text-xs md:text-sm text-gray-300 leading-relaxed">
+        <div className="space-y-2 text-xs md:text-sm text-gray-300 leading-relaxed print-text-dark print:text-[9.5pt]">
           <p>
             Modul digital Muatan Lokal SMA/SMK: eksplorasi interaktif Graphify silsilah kerajaan BMR, hukum adat Totabuan, analisis sastra lisan Owadu/Katu-katu, serta penulisan karya ilmiah sejarah lokal.
           </p>
@@ -407,7 +409,7 @@ export default function ProposalPage() {
       title: "15. Program Non-Financing: Gerakan Literasi Mongondow & Pelatihan Guru",
       icon: BookOpen,
       content: (
-        <div className="space-y-3 text-xs md:text-sm text-gray-300 leading-relaxed">
+        <div className="space-y-2 text-xs md:text-sm text-gray-300 leading-relaxed print-text-dark print:text-[9.5pt]">
           <p>
             Program non-finansial swadaya: Pelatihan pengajaran Aksara Mongondow untuk guru-guru sekolah, pembentukan klub literasi di tiap kecamatan, serta webinar pendidikan sejarah BMR.
           </p>
@@ -419,7 +421,7 @@ export default function ProposalPage() {
       title: "16. Program Non-Financing: Gema Tradisi, Teater Budaya & Festival BMR",
       icon: Sparkles,
       content: (
-        <div className="space-y-3 text-xs md:text-sm text-gray-300 leading-relaxed">
+        <div className="space-y-2 text-xs md:text-sm text-gray-300 leading-relaxed print-text-dark print:text-[9.5pt]">
           <p>
             Penyelenggaraan kegiatan pelestarian seni tutur tradisional (Gema Tradisi), teater cerita rakyat anak muda, dan Festival Kebudayaan Bolaang Mongondow Raya tahunan berbasis keterlibatan publik.
           </p>
@@ -431,18 +433,18 @@ export default function ProposalPage() {
       title: "17. Tabel Rincian Anggaran Biaya (RAB) & Skema Konsorsium Gotong-Royong",
       icon: Calculator,
       content: (
-        <div className="space-y-4 text-xs md:text-sm text-gray-300 leading-relaxed">
+        <div className="space-y-3 text-xs md:text-sm text-gray-300 leading-relaxed print-text-dark print:text-[9.5pt]">
           <p>
             Perkiraan alokasi dana secara transparan dengan skema pembiayaan konsorsium gotong-royong yang dibagi rata kepada 5 Pemerintah Kabupaten/Kota se-BMR:
           </p>
-          <div className="p-4 rounded-2xl bg-[#171922] border border-[#242836] flex flex-col md:flex-row justify-between items-center gap-4 font-mono">
+          <div className="p-3 rounded-2xl bg-[#171922] border border-[#242836] flex flex-col md:flex-row justify-between items-center gap-3 font-mono print:bg-gray-100 print:border-gray-300">
             <div>
-              <p className="text-gray-400 text-xs">Total Anggaran (1 Tahun):</p>
-              <p className="text-xl md:text-2xl font-bold text-amber-400">Rp {grandTotalCost.toLocaleString("id-ID")}</p>
+              <p className="text-gray-400 text-xs print:text-black">Total Anggaran (1 Tahun):</p>
+              <p className="text-lg md:text-xl font-bold text-amber-400 print:text-black">Rp {grandTotalCost.toLocaleString("id-ID")}</p>
             </div>
             <div>
-              <p className="text-gray-400 text-xs">Alokasi Per Pemda (5 Daerah):</p>
-              <p className="text-xl md:text-2xl font-bold text-cyan-400">Rp {totalPerDistrict.toLocaleString("id-ID")} / Pemda</p>
+              <p className="text-gray-400 text-xs print:text-black">Alokasi Per Pemda (5 Daerah):</p>
+              <p className="text-lg md:text-xl font-bold text-cyan-400 print:text-blue-900">Rp {totalPerDistrict.toLocaleString("id-ID")} / Pemda</p>
             </div>
           </div>
         </div>
@@ -453,11 +455,11 @@ export default function ProposalPage() {
       title: "18. Mekanisme Akuntabilitas, Audit Transparansi & Langkah Selanjutnya",
       icon: HeartHandshake,
       content: (
-        <div className="space-y-3 text-xs md:text-sm text-gray-300 leading-relaxed">
+        <div className="space-y-2 text-xs md:text-sm text-gray-300 leading-relaxed print-text-dark print:text-[9.5pt]">
           <p>
             Penggunaan dana hibah akan diaudit secara terbuka oleh Akuntan Publik Independen dan laporan pemanfaatan dana dipublikasikan secara transparan di situs MongondowPedia.
           </p>
-          <p className="font-semibold text-white">
+          <p className="font-semibold text-white print:text-black">
             Langkah Selanjutnya: Penjadwalan Audiensi Resmi bersama Bupati/Wali Kota dan Kepala Dinas Pendidikan & Kebudayaan 5 Daerah se-Bolaang Mongondow Raya.
           </p>
         </div>
@@ -468,17 +470,19 @@ export default function ProposalPage() {
   return (
     <div className="min-h-screen bg-[#07080A] text-white font-sans selection:bg-amber-500/30 pb-24 print:bg-white print:text-black print:pb-0">
       
-      {/* CSS Print Styles for A4 PDF Output */}
+      {/* CSS Print Styles for A4 PDF Output - Compact Layout to Eliminate Huge Gaps */}
       <style jsx global>{`
         @media print {
           @page {
             size: A4 portrait;
-            margin: 15mm 12mm 15mm 12mm;
+            margin: 10mm 10mm 10mm 10mm;
           }
           body {
             background-color: #ffffff !important;
             color: #000000 !important;
-            font-family: Arial, sans-serif !important;
+            font-family: Arial, Helvetica, sans-serif !important;
+            font-size: 9.5pt !important;
+            line-height: 1.35 !important;
           }
           .no-print {
             display: none !important;
@@ -489,18 +493,38 @@ export default function ProposalPage() {
             margin: 0 !important;
             padding: 0 !important;
           }
+          /* Eliminate massive vertical gaps by setting continuous page flow */
+          .space-y-10 > :not([hidden]) ~ :not([hidden]) {
+            margin-top: 8pt !important;
+          }
+          .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+            margin-top: 6pt !important;
+          }
+          .space-y-4 > :not([hidden]) ~ :not([hidden]) {
+            margin-top: 4pt !important;
+          }
+          .space-y-3 > :not([hidden]) ~ :not([hidden]) {
+            margin-top: 3pt !important;
+          }
           .print-section {
             background-color: #ffffff !important;
-            border: 1px solid #d1d5db !important;
+            border: 1px solid #e5e7eb !important;
             color: #000000 !important;
             box-shadow: none !important;
+            page-break-inside: auto !important;
+            break-inside: auto !important;
+            margin-bottom: 6pt !important;
+            padding: 8pt 10pt !important;
+            border-radius: 6px !important;
+          }
+          .print-avoid-break {
             page-break-inside: avoid !important;
             break-inside: avoid !important;
-            margin-bottom: 12pt !important;
           }
           .print-content {
             display: block !important;
             color: #1f2937 !important;
+            padding: 4pt 6pt !important;
           }
           .print-text-dark {
             color: #000000 !important;
@@ -508,8 +532,9 @@ export default function ProposalPage() {
           .print-accent {
             color: #b45309 !important;
           }
-          .print-[#111318], .print-[#171922], .print-[#141620] {
-            background-color: #f9fafb !important;
+          table th, table td {
+            padding: 3pt 5pt !important;
+            font-size: 8.5pt !important;
           }
           tfoot tr td {
             background-color: #f3f4f6 !important;
@@ -521,7 +546,7 @@ export default function ProposalPage() {
       {/* Background Lighting (Hidden on Print) */}
       <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-96 bg-gradient-to-b from-amber-600/10 via-orange-600/5 to-transparent blur-3xl pointer-events-none z-0 no-print" />
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 pt-8 md:pt-12 space-y-10 print-full-width">
+      <div className="relative z-10 max-w-6xl mx-auto px-4 pt-8 md:pt-12 space-y-8 print-full-width">
         
         {/* Navigation Breadcrumb & Action Bar (Hidden on Print) */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#1C1E24] pb-4 gap-3 no-print">
@@ -562,44 +587,44 @@ export default function ProposalPage() {
         </div>
 
         {/* Official Document Cover Header */}
-        <div className="p-8 md:p-12 rounded-3xl bg-[#111318] border border-[#232733] space-y-6 relative overflow-hidden text-center shadow-2xl print-section">
+        <div className="p-8 md:p-12 rounded-3xl bg-[#111318] border border-[#232733] space-y-6 relative overflow-hidden text-center shadow-2xl print-section print-avoid-break">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-amber-500/30 bg-amber-500/10 text-amber-400 text-xs font-bold font-mono uppercase tracking-widest no-print">
             <Award className="w-4 h-4" />
             <span>Dokumen Resmi Proposal Ginza Project</span>
           </div>
 
           <div className="space-y-3 max-w-4xl mx-auto">
-            <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-white leading-tight print-text-dark">
+            <h1 className="text-2xl md:text-4xl font-extrabold tracking-tight text-white leading-tight print-text-dark print:text-xl">
               PROPOSAL PERMOHONAN DUKUNGAN PENGEMBANGAN PLATFORM DIGITAL & PENDIRIAN YAYASAN BOLAANG MONGONDOW RAYA
             </h1>
-            <p className="text-xs md:text-sm text-gray-400 leading-relaxed font-mono print-text-dark">
+            <p className="text-xs md:text-sm text-gray-400 leading-relaxed font-mono print-text-dark print:text-[9pt]">
               Nomor Dokumen: 001/PROP-GINZA/BMR/2026 • Perspektif System Architecture Developers
             </p>
           </div>
 
           {/* Addressed To Badge Box */}
-          <div className="pt-4 border-t border-[#1D212E] max-w-3xl mx-auto space-y-3 print:border-gray-300">
-            <p className="text-xs font-bold text-amber-400 uppercase tracking-wider print-accent">Ditujukan Kepada Yth:</p>
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              <span className="text-[11px] font-semibold px-3 py-1 rounded-lg bg-[#181B26] border border-[#282D3F] text-gray-200 print:bg-gray-100 print:border-gray-300 print:text-black">1. Pemkab Boltim</span>
-              <span className="text-[11px] font-semibold px-3 py-1 rounded-lg bg-[#181B26] border border-[#282D3F] text-gray-200 print:bg-gray-100 print:border-gray-300 print:text-black">2. Pemkab Bolsel</span>
-              <span className="text-[11px] font-semibold px-3 py-1 rounded-lg bg-[#181B26] border border-[#282D3F] text-gray-200 print:bg-gray-100 print:border-gray-300 print:text-black">3. Pemkab Bolmut</span>
-              <span className="text-[11px] font-semibold px-3 py-1 rounded-lg bg-[#181B26] border border-[#282D3F] text-gray-200 print:bg-gray-100 print:border-gray-300 print:text-black">4. Pemkab Bolmong</span>
-              <span className="text-[11px] font-semibold px-3 py-1 rounded-lg bg-[#181B26] border border-[#282D3F] text-gray-200 print:bg-gray-100 print:border-gray-300 print:text-black">5. Pemkot Kotamobagu</span>
-              <span className="text-[11px] font-semibold px-3 py-1 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-300 print:bg-blue-50 print:border-blue-300 print:text-blue-900">Masyarakat Pemerhati Sejarah BMR</span>
+          <div className="pt-4 border-t border-[#1D212E] max-w-3xl mx-auto space-y-3 print:border-gray-300 print:pt-2">
+            <p className="text-xs font-bold text-amber-400 uppercase tracking-wider print-accent print:text-[8.5pt]">Ditujukan Kepada Yth:</p>
+            <div className="flex flex-wrap items-center justify-center gap-2 print:gap-1">
+              <span className="text-[11px] font-semibold px-3 py-1 rounded-lg bg-[#181B26] border border-[#282D3F] text-gray-200 print:bg-gray-100 print:border-gray-300 print:text-black print:text-[8pt] print:px-2 print:py-0.5">1. Pemkab Boltim</span>
+              <span className="text-[11px] font-semibold px-3 py-1 rounded-lg bg-[#181B26] border border-[#282D3F] text-gray-200 print:bg-gray-100 print:border-gray-300 print:text-black print:text-[8pt] print:px-2 print:py-0.5">2. Pemkab Bolsel</span>
+              <span className="text-[11px] font-semibold px-3 py-1 rounded-lg bg-[#181B26] border border-[#282D3F] text-gray-200 print:bg-gray-100 print:border-gray-300 print:text-black print:text-[8pt] print:px-2 print:py-0.5">3. Pemkab Bolmut</span>
+              <span className="text-[11px] font-semibold px-3 py-1 rounded-lg bg-[#181B26] border border-[#282D3F] text-gray-200 print:bg-gray-100 print:border-gray-300 print:text-black print:text-[8pt] print:px-2 print:py-0.5">4. Pemkab Bolmong</span>
+              <span className="text-[11px] font-semibold px-3 py-1 rounded-lg bg-[#181B26] border border-[#282D3F] text-gray-200 print:bg-gray-100 print:border-gray-300 print:text-black print:text-[8pt] print:px-2 print:py-0.5">5. Pemkot Kotamobagu</span>
+              <span className="text-[11px] font-semibold px-3 py-1 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-300 print:bg-blue-50 print:border-blue-300 print:text-blue-900 print:text-[8pt] print:px-2 print:py-0.5">Masyarakat Pemerhati Sejarah BMR</span>
             </div>
           </div>
         </div>
 
         {/* Interactive RAB Budget Table Filter */}
-        <div className="p-6 md:p-8 rounded-3xl bg-[#111318] border border-[#232733] space-y-6 print-section">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1D212E] pb-4 print:border-gray-300">
+        <div className="p-6 md:p-8 rounded-3xl bg-[#111318] border border-[#232733] space-y-4 print-section print-avoid-break">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1D212E] pb-3 print:border-gray-300 print:pb-2">
             <div className="space-y-1">
-              <div className="flex items-center gap-2 text-amber-400 font-semibold text-xs font-mono print-accent">
+              <div className="flex items-center gap-2 text-amber-400 font-semibold text-xs font-mono print-accent print:text-[8.5pt]">
                 <Calculator className="w-4 h-4" />
                 <span>KALKULATOR RAB INTERAKTIF</span>
               </div>
-              <h2 className="text-xl font-bold text-white tracking-tight print-text-dark">Rincian Anggaran Biaya (RAB) & Matriks Pendanaan</h2>
+              <h2 className="text-xl font-bold text-white tracking-tight print-text-dark print:text-base">Rincian Anggaran Biaya (RAB) & Matriks Pendanaan</h2>
             </div>
 
             {/* Filter Selector (Hidden on Print) */}
@@ -621,40 +646,40 @@ export default function ProposalPage() {
 
           {/* Budget Table */}
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs print:text-[10px]">
+            <table className="w-full text-left border-collapse text-xs print:text-[8.5pt]">
               <thead>
                 <tr className="border-b border-[#232733] bg-[#161822] text-gray-400 font-mono print:bg-gray-100 print:text-black print:border-gray-300">
-                  <th className="p-3">No / Kategori</th>
-                  <th className="p-3">Komponen Kebutuhan Developer</th>
-                  <th className="p-3">Satuan</th>
-                  <th className="p-3 text-right">Total Anggaran (Rp)</th>
-                  <th className="p-3 text-right">Porsi Per Pemda (5 Daerah)</th>
+                  <th className="p-3 print:p-1.5">No / Kategori</th>
+                  <th className="p-3 print:p-1.5">Komponen Kebutuhan Developer</th>
+                  <th className="p-3 print:p-1.5">Satuan</th>
+                  <th className="p-3 print:p-1.5 text-right">Total Anggaran (Rp)</th>
+                  <th className="p-3 print:p-1.5 text-right">Porsi Per Pemda (5 Daerah)</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1D212E] print:divide-gray-300">
                 {budgetItems.map((b, i) => (
                   <tr key={i} className="hover:bg-[#161822] transition-colors print:hover:bg-transparent">
-                    <td className="p-3 font-semibold text-amber-400 print:text-amber-800">{b.category}</td>
-                    <td className="p-3 text-gray-200 font-medium print:text-black">{b.item}</td>
-                    <td className="p-3 text-gray-400 font-mono print:text-gray-700">{b.units}</td>
-                    <td className="p-3 text-right font-mono font-bold text-white print:text-black">
+                    <td className="p-3 print:p-1.5 font-semibold text-amber-400 print:text-amber-900">{b.category}</td>
+                    <td className="p-3 print:p-1.5 text-gray-200 font-medium print:text-black">{b.item}</td>
+                    <td className="p-3 print:p-1.5 text-gray-400 font-mono print:text-gray-700">{b.units}</td>
+                    <td className="p-3 print:p-1.5 text-right font-mono font-bold text-white print:text-black">
                       {b.total > 0 ? `Rp ${b.total.toLocaleString("id-ID")}` : "Non-Financing"}
                     </td>
-                    <td className="p-3 text-right font-mono font-bold text-cyan-400 print:text-blue-900">
+                    <td className="p-3 print:p-1.5 text-right font-mono font-bold text-cyan-400 print:text-blue-900">
                       {b.districtShare > 0 ? `Rp ${b.districtShare.toLocaleString("id-ID")}` : "Gotong Royong"}
                     </td>
                   </tr>
                 ))}
               </tbody>
               <tfoot>
-                <tr className="border-t-2 border-amber-500/40 bg-[#191C28] font-mono text-sm print:bg-gray-100 print:text-black print:border-gray-400">
-                  <td colSpan={3} className="p-4 font-bold text-white print:text-black">
+                <tr className="border-t-2 border-amber-500/40 bg-[#191C28] font-mono text-sm print:bg-gray-100 print:text-black print:border-gray-400 print:text-xs">
+                  <td colSpan={3} className="p-3 print:p-2 font-bold text-white print:text-black">
                     TOTAL KONSORSIUM (18 SECTION)
                   </td>
-                  <td className="p-4 text-right font-extrabold text-amber-400 print:text-black">
+                  <td className="p-3 print:p-2 text-right font-extrabold text-amber-400 print:text-black">
                     Rp {grandTotalCost.toLocaleString("id-ID")}
                   </td>
-                  <td className="p-4 text-right font-extrabold text-cyan-400 print:text-blue-900">
+                  <td className="p-3 print:p-2 text-right font-extrabold text-cyan-400 print:text-blue-900">
                     Rp {totalPerDistrict.toLocaleString("id-ID")}
                   </td>
                 </tr>
@@ -663,17 +688,17 @@ export default function ProposalPage() {
           </div>
         </div>
 
-        {/* 18 Proposal Sections (Always Expanded on Print) */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between border-b border-[#1D212E] pb-3 print:border-gray-300">
-            <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2 print-text-dark">
+        {/* 18 Proposal Sections (Continuous Flow on Print) */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between border-b border-[#1D212E] pb-2 print:border-gray-300">
+            <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2 print-text-dark print:text-base">
               <Layers className="w-5 h-5 text-amber-400 print-accent" />
               <span>18 Section Rincian Detail Proposal Ginza Project</span>
             </h2>
             <span className="text-xs text-gray-400 font-mono no-print">Tampilan PDF A4 Siap Cetak</span>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-2.5 print:space-y-2">
             {sectionsList.map((sec) => {
               const IconComp = sec.icon;
               const isExpanded = expandAll || activeSection === sec.id;
@@ -700,13 +725,13 @@ export default function ProposalPage() {
                   </button>
 
                   {/* Header Title for Print View */}
-                  <div className="hidden print:flex items-center gap-3 p-4 border-b border-gray-200 bg-gray-50">
-                    <IconComp className="w-5 h-5 text-amber-800 shrink-0" />
-                    <h3 className="text-sm font-bold text-black">{sec.title}</h3>
+                  <div className="hidden print:flex items-center gap-2 p-2.5 border-b border-gray-200 bg-gray-50">
+                    <IconComp className="w-4 h-4 text-amber-800 shrink-0" />
+                    <h3 className="text-xs font-bold text-black">{sec.title}</h3>
                   </div>
 
                   {/* Section Text Content (Always Visible on Print View) */}
-                  <div className={`${isExpanded ? "block" : "hidden"} print:block p-5 border-t border-[#1E2230] bg-[#141620] print-content print:border-none`}>
+                  <div className={`${isExpanded ? "block" : "hidden"} print:block p-4 border-t border-[#1E2230] bg-[#141620] print-content print:border-none print:p-2.5`}>
                     {sec.content}
                   </div>
                 </div>
@@ -718,8 +743,8 @@ export default function ProposalPage() {
         {/* ==================================================================== */}
         {/* OUTPUT STRATEGIS & TARGET CAPAIAN UTAMA (OUTPUT PALING BAWAH) */}
         {/* ==================================================================== */}
-        <div className="p-6 md:p-8 rounded-3xl bg-[#111318] border border-[#232733] space-y-6 print-section">
-          <div className="flex items-center gap-2.5 border-b border-[#1D212E] pb-4 print:border-gray-300">
+        <div className="p-6 md:p-8 rounded-3xl bg-[#111318] border border-[#232733] space-y-4 print-section">
+          <div className="flex items-center gap-2.5 border-b border-[#1D212E] pb-3 print:border-gray-300 print:pb-2">
             <div className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 print:bg-emerald-50 print:border-emerald-300">
               <Target className="w-5 h-5" />
             </div>
@@ -727,32 +752,32 @@ export default function ProposalPage() {
               <span className="text-[10px] font-mono font-bold tracking-widest px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 uppercase no-print">
                 Target Realisasi Utama
               </span>
-              <h2 className="text-xl font-bold text-white tracking-tight print-text-dark">
+              <h2 className="text-xl font-bold text-white tracking-tight print-text-dark print:text-base">
                 OUTPUT STRATEGIS & TARGET CAPAIAN GINZA PROJECT & YAYASAN BMR
               </h2>
             </div>
           </div>
 
-          <p className="text-xs md:text-sm text-gray-300 leading-relaxed print-text-dark">
+          <p className="text-xs md:text-sm text-gray-300 leading-relaxed print-text-dark print:text-[9pt]">
             Melalui investasi dukungan pendanaan dari 5 Pemerintah Daerah Kabupaten/Kota serta sumbangsih masyarakat pemerhati sejarah, Ginza Project berkomitmen menyampaikan **8 Output Utama** berikut sebagai bentuk pertanggungjawaban karya:
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 print:gap-2">
             {outputsList.map((out, idx) => (
               <div
                 key={idx}
-                className="p-4 md:p-5 rounded-2xl bg-[#161822] border border-[#232736] space-y-2 relative overflow-hidden hover:border-emerald-500/40 transition-all print:bg-gray-50 print:border-gray-300"
+                className="p-4 rounded-2xl bg-[#161822] border border-[#232736] space-y-1.5 relative overflow-hidden hover:border-emerald-500/40 transition-all print:bg-gray-50 print:border-gray-300 print:p-2.5 print-avoid-break"
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono font-extrabold px-2.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 print:bg-emerald-100 print:text-emerald-900">
+                  <span className="text-xs font-mono font-extrabold px-2.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 print:bg-emerald-100 print:text-emerald-900 print:text-[8pt]">
                     OUTPUT {out.number}
                   </span>
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                 </div>
-                <h3 className="text-sm font-bold text-white print-text-dark">
+                <h3 className="text-sm font-bold text-white print-text-dark print:text-[9.5pt]">
                   {out.title}
                 </h3>
-                <p className="text-xs text-gray-300 leading-relaxed print-text-dark font-normal">
+                <p className="text-xs text-gray-300 leading-relaxed print-text-dark font-normal print:text-[8.5pt]">
                   {out.description}
                 </p>
               </div>
@@ -761,18 +786,18 @@ export default function ProposalPage() {
         </div>
 
         {/* Contact & Proposal Signoff Box */}
-        <div className="p-8 rounded-3xl bg-[#111318] border border-[#232733] space-y-6 text-center print-section">
-          <h3 className="text-lg font-bold text-white print-text-dark">Lembar Komunikasi & Audiensi Tim Pengembang</h3>
-          <p className="text-xs text-gray-400 max-w-xl mx-auto leading-relaxed print-text-dark">
+        <div className="p-6 md:p-8 rounded-3xl bg-[#111318] border border-[#232733] space-y-4 text-center print-section print-avoid-break">
+          <h3 className="text-lg font-bold text-white print-text-dark print:text-base">Lembar Komunikasi & Audiensi Tim Pengembang</h3>
+          <p className="text-xs text-gray-400 max-w-xl mx-auto leading-relaxed print-text-dark print:text-[9pt]">
             Untuk permohonan audiensi resmi, penyerahan berkas proposal cetak fisik, atau diskusi teknis bersama Tim Developers Ginza Project, silakan hubungi:
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-mono">
+          <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-mono">
             <a
               href="mailto:developer@mongondowpedia.com"
-              className="py-2.5 px-4 rounded-xl bg-[#181B26] border border-[#282D3F] text-cyan-400 hover:border-cyan-500 transition-all flex items-center gap-2 print:bg-gray-100 print:border-gray-300 print:text-black"
+              className="py-2 px-3.5 rounded-xl bg-[#181B26] border border-[#282D3F] text-cyan-400 hover:border-cyan-500 transition-all flex items-center gap-2 print:bg-gray-100 print:border-gray-300 print:text-black print:text-[8.5pt]"
             >
-              <Mail className="w-4 h-4" />
+              <Mail className="w-3.5 h-3.5" />
               <span>developer@mongondowpedia.com</span>
             </a>
 
@@ -780,20 +805,20 @@ export default function ProposalPage() {
               href="https://maps.app.goo.gl/Gznpt6NtqFNLxE4F8"
               target="_blank"
               rel="noopener noreferrer"
-              className="py-2.5 px-4 rounded-xl bg-[#181B26] border border-[#282D3F] text-rose-300 hover:border-rose-500 transition-all flex items-center gap-2 print:bg-gray-100 print:border-gray-300 print:text-black"
+              className="py-2 px-3.5 rounded-xl bg-[#181B26] border border-[#282D3F] text-rose-300 hover:border-rose-500 transition-all flex items-center gap-2 print:bg-gray-100 print:border-gray-300 print:text-black print:text-[8.5pt]"
             >
-              <MapPin className="w-4 h-4" />
+              <MapPin className="w-3.5 h-3.5" />
               <span>Kotabunan, Jl. Tangkudegan</span>
             </a>
           </div>
         </div>
 
         {/* Homepage Matching Footer */}
-        <div className="pt-8 border-t border-[#1C1F28] text-center space-y-2 print:border-gray-300">
-          <p className="text-xs text-gray-500 font-sans print:text-black">
+        <div className="pt-6 border-t border-[#1C1F28] text-center space-y-1 print:border-gray-300 print:pt-3">
+          <p className="text-xs text-gray-500 font-sans print:text-black print:text-[8pt]">
             (Ginza Project) MongondowPedia Inc. All rights reserved.
           </p>
-          <p className="font-mono text-[10px] text-gray-600 print:text-gray-700">
+          <p className="font-mono text-[10px] text-gray-600 print:text-gray-700 print:text-[7.5pt]">
             Portal Kebudayaan & Bahasa Bolaang Mongondow Raya • Powered by MyAI OS
           </p>
         </div>
