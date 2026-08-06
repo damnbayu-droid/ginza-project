@@ -1,4 +1,5 @@
-import type { Metadata } from "next";
+'use client';
+
 import Link from "next/link";
 import {
   BookOpen,
@@ -23,14 +24,9 @@ import {
   Globe,
   HeartHandshake,
   Building2,
-  GraduationCap
+  GraduationCap,
+  Mail
 } from "lucide-react";
-
-export const metadata: Metadata = {
-  title: "Pusat Informasi & Direktori Tools — MongondowPedia",
-  description:
-    "Direktori lengkap alat (Tools), basis pengetahuan (Knowledge Base), MyAI OS, Ginza Project, serta standar verifikasi data kebudayaan Bolaang Mongondow di MongondowPedia.",
-};
 
 export default function InfoPage() {
   const tools = [
@@ -523,20 +519,31 @@ export default function InfoPage() {
               </p>
             </div>
 
-            {/* Proposal Request Download CTA Button (Kosong / Placeholder) */}
-            <div className="pt-4 border-t border-[#1D202A] flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+            {/* Proposal Request Download CTA Button & Developer Contact */}
+            <div className="pt-4 border-t border-[#1D202A] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <a
+                  href="#"
+                  onClick={(e) => e.preventDefault()}
+                  className="py-3 px-5 rounded-2xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold text-xs transition-all shadow-lg shadow-amber-600/20 flex items-center justify-center gap-2 cursor-not-allowed opacity-90"
+                  title="Proposal Bantuan Dana Pengembangan (Segera Hadir)"
+                >
+                  <HeartHandshake className="w-4 h-4" />
+                  <span>Permintaan Bantuan Dana Pengembangan (Proposal)</span>
+                </a>
+                <span className="text-[11px] text-gray-500 font-mono text-center sm:text-left">
+                  (Link proposal pendanaan akan segera diunggah)
+                </span>
+              </div>
+
               <a
-                href="#"
-                onClick={(e) => e.preventDefault()}
-                className="py-3 px-5 rounded-2xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold text-xs transition-all shadow-lg shadow-amber-600/20 flex items-center justify-center gap-2 cursor-not-allowed opacity-90"
-                title="Proposal Bantuan Dana Pengembangan (Segera Hadir)"
+                href="mailto:developer@mongondowpedia.com"
+                className="py-2.5 px-4 rounded-xl bg-[#181A24] hover:bg-[#202330] border border-[#2B2F40] text-gray-300 hover:text-cyan-400 text-xs font-semibold font-mono transition-all flex items-center justify-center gap-2 shrink-0"
+                title="Hubungi Pengembang"
               >
-                <HeartHandshake className="w-4 h-4" />
-                <span>Permintaan Bantuan Dana Pengembangan (Proposal)</span>
+                <Mail className="w-4 h-4 text-cyan-400" />
+                <span>developer@mongondowpedia.com</span>
               </a>
-              <span className="text-[11px] text-gray-500 font-mono text-center sm:text-left">
-                (Link proposal pendanaan pengembangan akan segera diunggah)
-              </span>
             </div>
           </div>
         </div>
@@ -545,6 +552,13 @@ export default function InfoPage() {
         {/* HOMEPAGE MATCHING FOOTER */}
         {/* ==================================================================== */}
         <div className="pt-8 border-t border-[#1C1F28] text-center space-y-2">
+          <div className="flex items-center justify-center gap-2 text-xs font-mono text-gray-400">
+            <Mail className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Kontak Pengembang:</span>
+            <a href="mailto:developer@mongondowpedia.com" className="text-cyan-400 hover:underline">
+              developer@mongondowpedia.com
+            </a>
+          </div>
           <p className="text-xs text-gray-500 font-sans">
             (Ginza Project) MongondowPedia Inc. All rights reserved.
           </p>
