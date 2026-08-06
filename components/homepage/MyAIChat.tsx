@@ -240,13 +240,14 @@ export default function MyAIChat({
 
         {/* Right Action Items */}
         <div className="flex items-center gap-2">
-          <button
-            onClick={onOpenVoiceOverlay}
-            className="flex items-center gap-2 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-500/30 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shadow-sm group"
+          <Link
+            href="/info"
+            className="flex items-center gap-2 bg-[#21232B] hover:bg-[#2A2D37] text-gray-300 hover:text-white border border-[#2E313D] px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shadow-sm group"
+            title="Informasi & Direktori Tools MongondowPedia"
           >
-            <Volume2 className="w-4 h-4 text-blue-400 animate-pulse group-hover:scale-110 transition-transform" />
-            <span>{lang === 'id' ? 'Suara Langsung' : 'Voice Mode'}</span>
-          </button>
+            <Info className="w-4 h-4 text-[#5B8DEF] group-hover:scale-110 transition-transform" />
+            <span>Info</span>
+          </Link>
         </div>
       </header>
 
