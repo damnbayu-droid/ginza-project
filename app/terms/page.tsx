@@ -3,8 +3,8 @@ import Link from "next/link";
 import { Code, Shield } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Syarat Penggunaan — MyAI OS Console",
-  description: "Syarat dan ketentuan penggunaan MyAI OS Console, infrastruktur internal MyBusiness.",
+  title: "Syarat Penggunaan — MongondowPedia",
+  description: "Syarat dan ketentuan penggunaan platform MongondowPedia (Ginza Project).",
 };
 
 export default function TermsPage() {
@@ -18,15 +18,14 @@ export default function TermsPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Syarat Penggunaan</h1>
-            <p className="text-xs text-gray-400">MyAI OS Console — Infrastruktur Internal MyBusiness</p>
+            <p className="text-xs text-gray-400">MongondowPedia — Ginza Project</p>
           </div>
         </div>
 
         <div className="p-4 rounded-2xl border border-amber-500/20 bg-amber-500/5 mb-8 flex items-start gap-3">
           <Shield className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
           <p className="text-sm text-amber-200">
-            <strong>Penggunaan Internal Saja.</strong> MyAI OS Console adalah sistem infrastruktur <em>internal</em> untuk ekosistem MyBusiness.
-            Sistem ini <strong>bukan produk publik</strong> dan tidak dimaksudkan untuk diakses oleh pihak luar tanpa otorisasi eksplisit dari pemilik ekosistem.
+            <strong>Ketentuan Penggunaan Platform.</strong> MongondowPedia adalah portal ensiklopedia digital, kamus, aksara, dan basis pengetahuan kebudayaan Bolaang Mongondow Raya.
           </p>
         </div>
 

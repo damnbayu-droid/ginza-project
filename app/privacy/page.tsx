@@ -3,8 +3,8 @@ import Link from "next/link";
 import { Code, Eye } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Kebijakan Privasi — MyAI OS Console",
-  description: "Kebijakan privasi dan perlindungan data MyAI OS Console, infrastruktur internal MyBusiness.",
+  title: "Kebijakan Privasi — MongondowPedia",
+  description: "Kebijakan privasi dan perlindungan data pengguna di platform MongondowPedia (Ginza Project).",
 };
 
 export default function PrivacyPage() {
@@ -18,15 +18,14 @@ export default function PrivacyPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Kebijakan Privasi</h1>
-            <p className="text-xs text-gray-400">MyAI OS Console — Infrastruktur Internal MyBusiness</p>
+            <p className="text-xs text-gray-400">MongondowPedia — Ginza Project</p>
           </div>
         </div>
 
         <div className="p-4 rounded-2xl border border-blue-500/20 bg-blue-500/5 mb-8 flex items-start gap-3">
           <Eye className="h-5 w-5 text-blue-400 shrink-0 mt-0.5" />
           <p className="text-sm text-blue-200">
-            Dokumen ini menjelaskan jenis data yang dikumpulkan, cara penggunaannya, dan komitmen perlindungan data
-            dalam operasional <strong>internal</strong> MyAI OS Console.
+            Dokumen ini menjelaskan jenis data yang dikumpulkan, cara pengelolaannya, dan komitmen perlindungan data pribadi serta otentikasi di <strong>MongondowPedia</strong>.
           </p>
         </div>
 
