@@ -22,11 +22,21 @@ const PUBLIC_PATHS = [
   "/api/kamus",
   "/api/health",
   "/_next",
-  "/favicon.ico"
+  "/favicon.ico",
+  "/favicon.png",
+  "/logo.webp",
+  "/logo.png",
+  "/Logo.png",
+  "/icon.png"
 ];
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
+
+  // Allow static images and media directly
+  if (/\.(png|jpg|jpeg|webp|svg|ico|gif)$/i.test(pathname)) {
+    return NextResponse.next();
+  }
 
   // Public MyAI OS chat homepage (consumer-facing, no login required)
   if (pathname === "/") {
@@ -54,6 +64,6 @@ export async function proxy(req: NextRequest) {
 export const config = {
   matcher: [
     // Match all routes except static files and _next internals
-    "/((?!_next/static|_next/image|favicon.ico|assets).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|webp|svg|ico|gif)$).*)",
   ],
 };
