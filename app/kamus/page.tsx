@@ -19,7 +19,8 @@ import {
   Cpu,
   Feather,
   ScrollText,
-  MessageSquareQuote
+  MessageSquareQuote,
+  Lock
 } from "lucide-react";
 import { transliterateToAksara } from "@/lib/aksara-transliterate";
 import { speakMongondow, stopSpeakingMongondow } from "@/lib/mongondow-voice";
@@ -99,6 +100,9 @@ export default function KamusPage() {
   const [activeWordData, setActiveWordData] = useState<SiderWordCard | null>(null);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  // Diisi dari respons 403 quotaExceeded ASLI server (lib/ai-usage-quota.ts) --
+  // pool kuota ini SAMA dgn chat Bogani AI di homepage.
+  const [quotaError, setQuotaError] = useState<{ message: string; requiresAuth: boolean } | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   // Suggestions Dropdown
@@ -173,6 +177,8 @@ export default function KamusPage() {
     if (!wordToSearch) return;
 
     setShowSuggestions(false);
+    setActiveWordData(null);
+    setQuotaError(null);
     setIsAiLoading(true);
     setShowDetailModal(true);
 
@@ -187,6 +193,13 @@ export default function KamusPage() {
         const result = await res.json();
         if (result.success && result.data) {
           setActiveWordData(result.data);
+        }
+      } else {
+        const errBody = await res.json().catch(() => ({}));
+        if (res.status === 403 && errBody.quotaExceeded) {
+          setQuotaError({ message: errBody.error || "Batas pemakaian AI tercapai.", requiresAuth: !!errBody.requiresAuth });
+        } else {
+          console.error("AI definition request failed:", errBody.error);
         }
       }
     } catch (err) {
@@ -687,6 +700,24 @@ export default function KamusPage() {
                   <Sparkles className="w-5 h-5 text-emerald-400 shrink-0" />
                   <span>&ldquo;{activeWordData.quote}&rdquo;</span>
                 </div>
+              </div>
+            ) : quotaError ? (
+              <div className="py-16 text-center space-y-4 max-w-sm mx-auto">
+                <div className="inline-flex p-3 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30">
+                  <Lock className="w-6 h-6" />
+                </div>
+                <h3 className="text-sm font-semibold text-white">
+                  {quotaError.requiresAuth ? "Batas Pertanyaan Gratis Tercapai" : "Batas Pemakaian AI Harian Tercapai"}
+                </h3>
+                <p className="text-xs text-gray-400">{quotaError.message}</p>
+                {quotaError.requiresAuth && (
+                  <a
+                    href="/login"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-all shadow-lg"
+                  >
+                    Masuk / Login Sekarang
+                  </a>
+                )}
               </div>
             ) : null}
           </div>

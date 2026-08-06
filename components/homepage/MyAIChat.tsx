@@ -43,6 +43,8 @@ interface MyAIChatProps {
   isLoading: boolean;
   user: { name: string; email: string; role: string } | null;
   guestCount: number;
+  /** Diisi server (bukan tebakan klien) lewat respons 403 quotaExceeded -- lihat lib/ai-usage-quota.ts. */
+  quotaBlock: { message: string; requiresAuth: boolean } | null;
 }
 
 interface AttachedFile {
@@ -61,7 +63,8 @@ export default function MyAIChat({
   lang,
   isLoading,
   user,
-  guestCount
+  guestCount,
+  quotaBlock
 }: MyAIChatProps) {
   const [inputText, setInputText] = useState("");
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
@@ -79,7 +82,11 @@ export default function MyAIChat({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<any>(null);
 
-  const isGuestLocked = !user && guestCount >= 2;
+  // Sumber kebenaran gembok chat: respons 403 quotaExceeded ASLI dari server
+  // (lib/ai-usage-quota.ts), bukan tebakan localStorage -- kuota kini
+  // dibagi jg dgn tombol AI definisi Kamus, jadi hitungan lokal murni chat
+  // saja tidak lagi akurat sbg penentu gembok.
+  const isGuestLocked = !!quotaBlock;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -481,7 +488,7 @@ export default function MyAIChat({
                     onChange={(e) => setInputText(e.target.value)}
                     onKeyDown={handleKeyDown}
                     disabled={isGuestLocked}
-                    placeholder={isGuestLocked ? "Batas 2 obrolan gratis tercapai. Harap login admin." : (lang === 'id' ? "Tanyakan apa saja ke Bogani AI..." : "Ask anything to Bogani AI...")}
+                    placeholder={isGuestLocked ? (quotaBlock?.message || "Batas pemakaian AI tercapai.") : (lang === 'id' ? "Tanyakan apa saja ke Bogani AI..." : "Ask anything to Bogani AI...")}
                     className="flex-1 bg-transparent text-sm text-white placeholder-gray-500 focus:outline-none resize-none py-2 max-h-36 custom-scrollbar disabled:opacity-50"
                   />
 
@@ -633,24 +640,28 @@ export default function MyAIChat({
         )}
       </div>
 
-      {/* Guest Locked Banner */}
+      {/* Guest/User Quota Locked Banner (diisi dari respons 403 asli server) */}
       {isGuestLocked && (
         <div className="w-full max-w-3xl mx-auto px-4 pb-4 pt-2 z-30">
           <div className="bg-[#241a1a] border border-rose-500/50 rounded-2xl p-4 text-center space-y-3 shadow-2xl backdrop-blur-md">
             <div className="inline-flex p-2.5 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 mb-1">
               <Lock className="w-5 h-5" />
             </div>
-            <h3 className="text-sm font-semibold text-white">Batas Obrolan Gratis Tercapai (2/2)</h3>
+            <h3 className="text-sm font-semibold text-white">
+              {quotaBlock?.requiresAuth ? "Batas Pertanyaan Gratis Tercapai" : "Batas Pemakaian AI Harian Tercapai"}
+            </h3>
             <p className="text-xs text-gray-300 max-w-md mx-auto">
-              Anda telah menggunakan 2 pertanyaan gratis sebagai Tamu. Silakan **Masuk / Login** untuk melanjutkan percakapan tanpa batas dengan Bogani AI di MongondowPedia.
+              {quotaBlock?.message || "Batas pemakaian AI tercapai."}
             </p>
-            <button
-              onClick={() => setShowLoginModal(true)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-all shadow-lg cursor-pointer"
-            >
-              <LogIn className="w-4 h-4" />
-              <span>Masuk / Login Sekarang</span>
-            </button>
+            {quotaBlock?.requiresAuth && (
+              <button
+                onClick={() => setShowLoginModal(true)}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-all shadow-lg cursor-pointer"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>Masuk / Login Sekarang</span>
+              </button>
+            )}
           </div>
         </div>
       )}

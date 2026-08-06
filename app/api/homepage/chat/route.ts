@@ -10,6 +10,13 @@ import { AI_NAME, WEBSITE_NAME, PROJECT_NAME, BOGANI_PERSONA_ID, BOGANI_PERSONA_
 import { getKnowledgeContext } from "@/lib/knowledge-retrieval";
 import { getCurrentUserProfile } from "@/lib/supabase-auth-server";
 import { saveConversation, logMetricEvent, type Profile } from "@/lib/ginza-db";
+import {
+  checkGuestQuota,
+  checkUserQuota,
+  incrementGuestQuota,
+  getOrCreateGuestId,
+  setGuestCookieHeader,
+} from "@/lib/ai-usage-quota";
 
 const SYSTEM_PROMPT_ID = BOGANI_PERSONA_ID;
 const SYSTEM_PROMPT_EN = BOGANI_PERSONA_EN;
@@ -289,8 +296,10 @@ async function logChatTurn(opts: {
   history: HomeChatMessage[];
   promptTokens?: number;
   completionTokens?: number;
+  guestId?: string | null;
+  ip?: string;
 }) {
-  const { profile, prompt, responseText, provider, history, promptTokens, completionTokens } = opts;
+  const { profile, prompt, responseText, provider, history, promptTokens, completionTokens, guestId, ip } = opts;
 
   try {
     await logMetricEvent({ type: "ai_question", targetText: prompt, userId: profile?.id });
@@ -298,7 +307,12 @@ async function logChatTurn(opts: {
     console.warn("[homepage-chat] Failed logging ai_question metric:", e);
   }
 
-  if (!profile) return; // chat anonim: tidak ada riwayat/token usage utk disimpan
+  // Chat anonim (belum login): tidak ada riwayat/token_usage buat disimpan,
+  // tapi giliran ini TETAP dihitung ke jatah kuota tamu (lihat lib/ai-usage-quota.ts).
+  if (!profile) {
+    if (guestId) await incrementGuestQuota(guestId, ip ?? "unknown");
+    return;
+  }
 
   try {
     const now = new Date().toISOString();
@@ -421,16 +435,38 @@ export async function POST(req: NextRequest) {
   const fullPrompt = buildPromptWithHistory(history, prompt);
   const profile = await profilePromise;
 
+  // Kontrol pemakaian AI (lihat lib/ai-usage-quota.ts): tamu dapat jatah
+  // kecil sekali-pakai (wajib login/daftar sesudahnya), User biasa dapat
+  // jatah harian, verifikator & admin tanpa batas. Dicek SEBELUM memanggil
+  // provider AI manapun supaya yg sudah habis jatah tidak membebani biaya.
+  const guestId = profile ? null : getOrCreateGuestId(req.headers.get("cookie")).guestId;
+  const quota = profile
+    ? await checkUserQuota(profile.id, profile.role)
+    : await checkGuestQuota(guestId!);
+
+  if (!quota.allowed) {
+    const blocked = NextResponse.json(
+      { error: quota.message, quotaExceeded: true, requiresAuth: !profile },
+      { status: 403 }
+    );
+    if (guestId) setGuestCookieHeader(blocked, guestId);
+    return blocked;
+  }
+
   const isVoiceMode = body.isVoiceMode || body.isVoiceInput || prompt.includes("[voice]");
 
   // 1. Preferred: route through the AI Gateway (myai.nexus or local) as a registered client app.
   const gatewayResult = await callGateway(req, fullPrompt, fileInput, isVoiceMode);
   if (gatewayResult && gatewayResult.text) {
-    void logChatTurn({ profile, prompt, responseText: gatewayResult.text, provider: gatewayResult.provider, history });
+    void logChatTurn({ profile, prompt, responseText: gatewayResult.text, provider: gatewayResult.provider, history, guestId, ip });
     if (wantStream) {
-      return createTextStreamResponse(gatewayResult.text, gatewayResult.provider);
+      const res = createTextStreamResponse(gatewayResult.text, gatewayResult.provider);
+      if (guestId) setGuestCookieHeader(res, guestId);
+      return res;
     }
-    return NextResponse.json({ text: gatewayResult.text, provider_used: gatewayResult.provider }, { headers: { "X-Provider-Used": gatewayResult.provider } });
+    const res = NextResponse.json({ text: gatewayResult.text, provider_used: gatewayResult.provider }, { headers: { "X-Provider-Used": gatewayResult.provider } });
+    if (guestId) setGuestCookieHeader(res, guestId);
+    return res;
   }
 
   let systemPrompt = lang === 'en' ? SYSTEM_PROMPT_EN : SYSTEM_PROMPT_ID;
@@ -455,16 +491,22 @@ Jawab secara lisan dengan hangat, natural, dan ringkas (maksimal 2–3 kalimat).
       history,
       promptTokens: direct.promptTokens,
       completionTokens: direct.completionTokens,
+      guestId,
+      ip,
     });
     if (wantStream) {
-      return createTextStreamResponse(direct.text, provider);
+      const res = createTextStreamResponse(direct.text, provider);
+      if (guestId) setGuestCookieHeader(res, guestId);
+      return res;
     }
-    return NextResponse.json({ text: direct.text, provider_used: provider }, { headers: { "X-Provider-Used": provider } });
+    const res = NextResponse.json({ text: direct.text, provider_used: provider }, { headers: { "X-Provider-Used": provider } });
+    if (guestId) setGuestCookieHeader(res, guestId);
+    return res;
   }
 
   // 3. Fallback simulation if no API key is set
   const simulatedText = simulateReply(prompt, lang);
-  void logChatTurn({ profile, prompt, responseText: simulatedText, provider: "simulated", history });
+  void logChatTurn({ profile, prompt, responseText: simulatedText, provider: "simulated", history, guestId, ip });
   // Non-blocking sync to MyAI OS Master Data Center
   (async () => {
     try {
@@ -505,8 +547,12 @@ Jawab secara lisan dengan hangat, natural, dan ringkas (maksimal 2–3 kalimat).
   })();
 
   if (wantStream) {
-    return createTextStreamResponse(simulatedText, "gemini");
+    const res = createTextStreamResponse(simulatedText, "gemini");
+    if (guestId) setGuestCookieHeader(res, guestId);
+    return res;
   }
-  return NextResponse.json({ text: simulatedText, provider_used: "gemini" }, { headers: { "X-Provider-Used": "gemini" } });
+  const res = NextResponse.json({ text: simulatedText, provider_used: "gemini" }, { headers: { "X-Provider-Used": "gemini" } });
+  if (guestId) setGuestCookieHeader(res, guestId);
+  return res;
 }
 

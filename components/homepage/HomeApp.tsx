@@ -17,6 +17,12 @@ export default function HomeApp() {
 
   const [user, setUser] = useState<{ name: string; email: string; role: string } | null>(null);
   const [guestQuestionCount, setGuestQuestionCount] = useState<number>(0);
+  // Sumber kebenaran BENAR utk batas pemakaian AI adalah server (lihat
+  // lib/ai-usage-quota.ts) -- guestQuestionCount di atas cuma indikator
+  // tampilan lokal (localStorage), gampang "disiasati" & tidak tahu kalau
+  // jatah sudah kepakai lewat fitur lain (mis. AI-define Kamus, sebab
+  // pool-nya SAMA). quotaBlock diisi hanya dari respons 403 asli server.
+  const [quotaBlock, setQuotaBlock] = useState<{ message: string; requiresAuth: boolean } | null>(null);
 
   useEffect(() => {
     // Fetch auth status
@@ -96,8 +102,9 @@ export default function HomeApp() {
   };
 
   const handleSendMessage = async (text: string, isVoiceInput: boolean = false, fileData?: string): Promise<string> => {
-    // If not logged in and reached limit of 2 free questions, block
-    if (!user && guestQuestionCount >= 2) {
+    // Jatah AI (tamu maupun User) sudah habis sesuai server -- lihat
+    // penanganan status 403 quotaExceeded di bawah, tempat quotaBlock diisi.
+    if (quotaBlock) {
       return "";
     }
 
@@ -166,6 +173,19 @@ export default function HomeApp() {
 
       if (!response.ok) {
         const errBody = await response.json().catch(() => ({}));
+        if (response.status === 403 && errBody.quotaExceeded) {
+          const quotaMsg: string = errBody.error || "Batas pemakaian AI tercapai.";
+          setQuotaBlock({ message: quotaMsg, requiresAuth: !!errBody.requiresAuth });
+          setChatSessions(prev =>
+            prev.map(s => {
+              if (s.id === currentId) {
+                return { ...s, messages: s.messages.map(m => (m.id === aiMsgId ? { ...m, content: quotaMsg } : m)) };
+              }
+              return s;
+            })
+          );
+          return quotaMsg;
+        }
         throw new Error(errBody.error || "Gagal menerima balasan dari Bogani AI");
       }
 
@@ -275,6 +295,7 @@ export default function HomeApp() {
         isLoading={isAiResponding}
         user={user}
         guestCount={guestQuestionCount}
+        quotaBlock={quotaBlock}
       />
 
       <VoiceModeOverlay

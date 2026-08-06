@@ -6,9 +6,17 @@ import { getKnowledgeContext } from "@/lib/knowledge-retrieval";
 import { listKamusEntries, getVerificatorsForEntry, logMetricEvent } from "@/lib/ginza-db";
 import { isSupabaseReady, supabaseAdmin } from "@/lib/supabase";
 import { getCurrentUserProfile } from "@/lib/supabase-auth-server";
+import {
+  checkGuestQuota,
+  checkUserQuota,
+  incrementGuestQuota,
+  getOrCreateGuestId,
+  setGuestCookieHeader,
+} from "@/lib/ai-usage-quota";
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
     const body = await req.json().catch(() => ({}));
     const word: string = (body.word || "").trim();
 
@@ -77,6 +85,26 @@ export async function POST(req: NextRequest) {
       console.warn("[kamus-ai-define] Failed retrieving knowledge context:", e);
     }
 
+    // Kontrol pemakaian AI (lihat lib/ai-usage-quota.ts): kartu unggulan &
+    // entri kamus terverifikasi di atas GRATIS (bukan panggilan AI, sudah
+    // return lebih dulu), tapi definisi hasil AI/simulasi di bawah ini
+    // menarik dari pool kuota yg SAMA dgn chat Bogani AI (homepage/chat) --
+    // dicek SEBELUM memanggil provider AI apa pun.
+    const quotaProfile = await getCurrentUserProfile().catch(() => null);
+    const guestId = quotaProfile ? null : getOrCreateGuestId(req.headers.get("cookie")).guestId;
+    const quota = quotaProfile
+      ? await checkUserQuota(quotaProfile.id, quotaProfile.role)
+      : await checkGuestQuota(guestId!);
+
+    if (!quota.allowed) {
+      const blocked = NextResponse.json(
+        { error: quota.message, quotaExceeded: true, requiresAuth: !quotaProfile },
+        { status: 403 }
+      );
+      if (guestId) setGuestCookieHeader(blocked, guestId);
+      return blocked;
+    }
+
     // 2. Call Gemini / Bogani AI provider to generate detailed Sider-style dictionary definition JSON
     const apiKey = (process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY1 || "").trim();
     const adapter = PROVIDER_REGISTRY["gemini"];
@@ -115,18 +143,17 @@ Kalau kata ini tidak ada di KONTEKS KNOWLEDGE BASE maupun referensi kata terinde
           console.warn("[kamus-ai-define] Failed parsing JSON from AI, falling back to structured layout.");
         }
 
-        if (isSupabaseReady && supabaseAdmin) {
-          getCurrentUserProfile()
-            .then((profile) => {
-              if (!profile) return;
-              return supabaseAdmin!.from("token_usage").insert({
-                user_id: profile.id,
-                provider: "gemini",
-                endpoint: "kamus_ai_define",
-                tokens_used: (res.promptTokens ?? 0) + (res.completionTokens ?? 0),
-              });
+        if (isSupabaseReady && supabaseAdmin && quotaProfile) {
+          supabaseAdmin
+            .from("token_usage")
+            .insert({
+              user_id: quotaProfile.id,
+              provider: "gemini",
+              endpoint: "kamus_ai_define",
+              tokens_used: (res.promptTokens ?? 0) + (res.completionTokens ?? 0),
             })
-            .catch((e) => console.warn("[kamus-ai-define] Failed logging token_usage:", e));
+            .then(() => {})
+            .catch((e: unknown) => console.warn("[kamus-ai-define] Failed logging token_usage:", e));
         }
       }
     }
@@ -170,13 +197,28 @@ Kalau kata ini tidak ada di KONTEKS KNOWLEDGE BASE maupun referensi kata terinde
         quote,
         emoji,
       };
+
+      // Jalur fallback (tanpa API key AI, atau parsing gagal) tetap memberi
+      // definisi ke pengguna, jadi tetap dihitung ke kuota -- kalau tidak,
+      // celah ini bisa "dimanfaatkan" utk melewati batas dgn memicu fallback.
+      if (isSupabaseReady && supabaseAdmin && quotaProfile) {
+        supabaseAdmin
+          .from("token_usage")
+          .insert({ user_id: quotaProfile.id, provider: "fallback", endpoint: "kamus_ai_define", tokens_used: 0 })
+          .then(() => {})
+          .catch((e: unknown) => console.warn("[kamus-ai-define] Failed logging fallback token_usage:", e));
+      }
     }
 
-    return NextResponse.json({
+    if (guestId) await incrementGuestQuota(guestId, ip);
+
+    const response = NextResponse.json({
       success: true,
       data: aiResultData,
       isIndexed,
     });
+    if (guestId) setGuestCookieHeader(response, guestId);
+    return response;
   } catch (err: any) {
     return NextResponse.json({ error: err.message || "Gagal memproses definisi kata" }, { status: 500 });
   }
