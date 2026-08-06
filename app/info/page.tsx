@@ -590,18 +590,15 @@ export default function InfoPage() {
             {/* Proposal Request Download CTA Button & Developer Contact */}
             <div className="pt-4 border-t border-[#1D202A] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                <a
-                  href="#"
-                  onClick={(e) => e.preventDefault()}
-                  className="py-3 px-5 rounded-2xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold text-xs transition-all shadow-lg shadow-amber-600/20 flex items-center justify-center gap-2 cursor-not-allowed opacity-90"
-                  title="Proposal Bantuan Dana Pengembangan (Segera Hadir)"
+                <Link
+                  href="/proposal"
+                  className="py-3 px-5 rounded-2xl bg-gradient-to-r from-amber-600 via-orange-600 to-rose-600 hover:from-amber-500 hover:to-rose-500 text-white font-bold text-xs transition-all shadow-lg shadow-amber-600/20 flex items-center justify-center gap-2"
+                  title="Lihat Proposal Lengkap Pengembangan Ginza Project & Yayasan BMR"
                 >
                   <HeartHandshake className="w-4 h-4" />
-                  <span>Permintaan Bantuan Dana Pengembangan (Proposal)</span>
-                </a>
-                <span className="text-[11px] text-gray-500 font-mono text-center sm:text-left">
-                  (Link proposal pendanaan akan segera diunggah)
-                </span>
+                  <span>Buka Proposal Bantuan Dana Pengembangan</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
               </div>
 
               <a

@@ -9,6 +9,7 @@ const PUBLIC_PATHS = [
   "/aksara",
   "/ecosystem",
   "/info",
+  "/proposal",
   "/dokumentasi",
   "/panduan",
   "/terms",
