@@ -25,7 +25,8 @@ import {
   Type,
   ScrollText,
   PenTool,
-  Gamepad2
+  Gamepad2,
+  FileText
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -165,17 +166,17 @@ export default function ChatSidebar({
           </button>
 
           <button
+            type="button"
             onClick={() => {
-              onOpenVoiceOverlay();
               onCloseMobile();
             }}
-            className="w-full py-2 px-3 rounded-xl bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-500/30 font-medium text-xs flex items-center justify-between transition-all duration-200"
+            className="w-full py-2 px-3 rounded-xl bg-purple-600/10 hover:bg-purple-600/20 text-purple-400 border border-purple-500/30 font-medium text-xs flex items-center justify-between transition-all duration-200"
           >
             <div className="flex items-center gap-2">
-              <Volume2 className="w-4 h-4 text-blue-400 animate-pulse" />
-              <span>{lang === 'id' ? 'Mode Suara Langsung' : 'Live Voice Mode'}</span>
+              <FileText className="w-4 h-4 text-purple-400" />
+              <span>{lang === 'id' ? 'Artikel Pengguna' : 'User Articles'}</span>
             </div>
-            <span className="text-[9px] font-semibold bg-blue-500 text-white px-1.5 py-0.5 rounded-full">Aktif</span>
+            <span className="text-[9px] font-semibold bg-purple-500 text-white px-1.5 py-0.5 rounded-full">Baru</span>
           </button>
 
           {/* Navigation Items: Kamus & Knowledge */}
