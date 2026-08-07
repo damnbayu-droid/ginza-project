@@ -299,22 +299,22 @@ function ProfilTab({ profile }: { profile: Profile }) {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono text-xs">
           <div className="bg-bento-surface border border-bento-border p-4 rounded-2xl space-y-1 text-center shadow-md">
             <p className="text-[10px] text-bento-text-secondary uppercase font-semibold">Total Artikel</p>
-            <p className="text-xl font-extrabold text-purple-400">📝 {overview.totalArticles}</p>
+            <p className="text-xl font-extrabold text-purple-400">{overview.totalArticles}</p>
           </div>
 
           <div className="bg-bento-surface border border-bento-border p-4 rounded-2xl space-y-1 text-center shadow-md">
             <p className="text-[10px] text-bento-text-secondary uppercase font-semibold">Knowledge Ditambahkan</p>
-            <p className="text-xl font-extrabold text-blue-400">📚 {overview.totalKnowledgeSubmitted}</p>
+            <p className="text-xl font-extrabold text-blue-400">{overview.totalKnowledgeSubmitted}</p>
           </div>
 
           <div className="bg-bento-surface border border-bento-border p-4 rounded-2xl space-y-1 text-center shadow-md">
             <p className="text-[10px] text-bento-text-secondary uppercase font-semibold">Percakapan Abo AI</p>
-            <p className="text-xl font-extrabold text-emerald-400">💬 {overview.totalAiConversations}</p>
+            <p className="text-xl font-extrabold text-emerald-400">{overview.totalAiConversations}</p>
           </div>
 
           <div className="bg-bento-surface border border-bento-border p-4 rounded-2xl space-y-1 text-center shadow-md col-span-2 sm:col-span-1">
             <p className="text-[10px] text-bento-text-secondary uppercase font-semibold">Peringkat Global</p>
-            <p className="text-sm font-bold text-amber-400">🏆 #{overview.globalRank} <span className="text-[10px] text-bento-text-secondary">/ {overview.totalUsers} User</span></p>
+            <p className="text-sm font-bold text-amber-400">#{overview.globalRank} <span className="text-[10px] text-bento-text-secondary">/ {overview.totalUsers} User</span></p>
           </div>
         </div>
       )}
