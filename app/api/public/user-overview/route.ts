@@ -12,27 +12,27 @@ export async function GET(req: NextRequest) {
 
   try {
     const [
-      { data: userArticles },
-      { data: knowledgeItems },
-      { data: conversations },
-      { data: allProfiles }
+      resArticles,
+      resKnowledge,
+      resConversations,
+      resProfiles
     ] = await Promise.all([
-      supabaseAdmin.from("user_articles").select("id").eq("author_id", profile.id).catch(() => ({ data: [] })),
-      supabaseAdmin.from("knowledge_articles").select("id").eq("author_id", profile.id).catch(() => ({ data: [] })),
-      supabaseAdmin.from("gw_conversations").select("id").eq("user_id", profile.id).catch(() => ({ data: [] })),
+      supabaseAdmin.from("user_articles").select("id").eq("author_id", profile.id),
+      supabaseAdmin.from("knowledge_articles").select("id").eq("author_id", profile.id),
+      supabaseAdmin.from("gw_conversations").select("id").eq("user_id", profile.id),
       supabaseAdmin.from("profiles").select("id, mongondow_score").order("mongondow_score", { ascending: false }),
     ]);
 
-    const totalArticles = (userArticles as any[])?.length ?? 0;
-    const totalKnowledgeSubmitted = (knowledgeItems as any[])?.length ?? 0;
-    const totalAiConversations = (conversations as any[])?.length ?? 0;
+    const totalArticles = resArticles.data?.length ?? 0;
+    const totalKnowledgeSubmitted = resKnowledge.data?.length ?? 0;
+    const totalAiConversations = resConversations.data?.length ?? 0;
 
-    const sortedProfiles = allProfiles ?? [];
+    const sortedProfiles = resProfiles.data ?? [];
     const totalUsers = sortedProfiles.length;
 
     // Find rank position of this profile
     const rankIndex = sortedProfiles.findIndex((p) => p.id === profile.id);
-    const globalRank = rankIndex !== -1 ? rankIndex + 1 : totalUsers;
+    const globalRank = rankIndex !== -1 ? rankIndex + 1 : totalUsers || 1;
 
     return NextResponse.json({
       totalArticles,

@@ -16,30 +16,30 @@ export async function GET(req: NextRequest) {
 
   try {
     const [
-      { data: knwArticles },
-      { data: kamusEntries },
-      { data: aksaraEntries },
-      { data: vActions }
+      resKnw,
+      resKamus,
+      resAksara,
+      resActions
     ] = await Promise.all([
       supabaseAdmin.from("knowledge_articles").select("id, verification_status, status"),
       supabaseAdmin.from("kamus_entries").select("id, verification_status, status"),
-      supabaseAdmin.from("aksara_submissions").select("id, verification_status, status").catch(() => ({ data: [] })),
-      supabaseAdmin.from("verificator_actions").select("id, action").eq("verificator_id", profile.id).catch(() => ({ data: [] })),
+      supabaseAdmin.from("aksara_submissions").select("id, verification_status, status"),
+      supabaseAdmin.from("verificator_actions").select("id, action").eq("verificator_id", profile.id),
     ]);
 
-    const knw = knwArticles ?? [];
+    const knw = resKnw.data ?? [];
     const knwVerified = knw.filter((i) => i.verification_status === "verified" || i.status === "published").length;
     const knwPending = knw.length - knwVerified;
 
-    const kamus = kamusEntries ?? [];
+    const kamus = resKamus.data ?? [];
     const kamusVerified = kamus.filter((i) => i.verification_status === "verified" || i.status === "approved").length;
     const kamusPending = kamus.length - kamusVerified;
 
-    const aksara = (aksaraEntries as any[]) ?? [];
+    const aksara = resAksara.data ?? [];
     const aksaraVerified = aksara.filter((i) => i.verification_status === "verified" || i.status === "approved").length;
     const aksaraPending = aksara.length - aksaraVerified;
 
-    const actions = (vActions as any[]) ?? [];
+    const actions = resActions.data ?? [];
     const verifiedActionsCount = actions.filter((a) => a.action === "verify").length;
     const commentedActionsCount = actions.filter((a) => a.action === "comment").length;
     const rejectedActionsCount = actions.filter((a) => a.action === "reject").length;
