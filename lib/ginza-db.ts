@@ -734,9 +734,8 @@ export async function getOverviewStats() {
     db.from("contributions").select("*", { count: "exact", head: true }).in("status", ["pending", "quorum_reached"]),
     db.from("contributions").select("*", { count: "exact", head: true }),
     db.from("contact_messages").select("*", { count: "exact", head: true }).eq("status", "unread"),
-    db.from("contact_messages").select("*", { count: "exact", head: true }),
-    db.from("user_articles").select("*", { count: "exact", head: true }).catch(() => ({ count: 0 })),
-    db.from("aksara_submissions").select("*", { count: "exact", head: true }).catch(() => ({ count: 0 })),
+    db.from("user_articles").select("*", { count: "exact", head: true }),
+    db.from("aksara_submissions").select("*", { count: "exact", head: true }),
   ]);
 
   return {
