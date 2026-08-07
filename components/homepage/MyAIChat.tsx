@@ -479,9 +479,6 @@ export default function MyAIChat({
                     {!isUser && (
                       <div className="flex items-center gap-2">
                         <span className="text-[11px] font-semibold text-white">Bogani AI</span>
-                        <span className="text-[9px] font-mono px-1.5 py-0.5 rounded border font-semibold text-emerald-400 bg-emerald-500/10 border-emerald-500/30">
-                          MyAI OS
-                        </span>
                       </div>
                     )}
 
