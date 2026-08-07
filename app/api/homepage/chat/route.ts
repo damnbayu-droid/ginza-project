@@ -141,6 +141,7 @@ async function callGateway(req: NextRequest, fullPrompt: string, fileData?: stri
           messages: [{ role: "user", content: fullPrompt }],
           file: fileData || undefined,
         }),
+        signal: AbortSignal.timeout(2000), // Fast 2.0s timeout to prevent hanging on unreachable gateways
       });
 
       if (res.ok) {

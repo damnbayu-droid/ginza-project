@@ -202,6 +202,15 @@ function ProfilTab({ profile }: { profile: Profile }) {
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
+  // User Overview Metrics
+  const [overview, setOverview] = useState<any | null>(null);
+  useEffect(() => {
+    fetch("/api/public/user-overview")
+      .then((r) => r.json())
+      .then((d) => setOverview(d))
+      .catch(() => setOverview(null));
+  }, []);
+
   async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -278,12 +287,37 @@ function ProfilTab({ profile }: { profile: Profile }) {
       <div>
         <h2 className="text-xl font-bold text-bento-text-primary flex items-center gap-2">
           <User className="h-5 w-5 text-bento-accent" />
-          <span>Profil Pengguna</span>
+          <span>Profil Pengguna & Overview</span>
         </h2>
         <p className="text-xs text-bento-text-secondary mt-1">
-          Kelola informasi nama tampilan, biodata, dan foto profil Anda di MongondowPedia.
+          Ringkasan aktivitas kontribusi, artikel, percakapan Abo AI, serta kelola informasi profil Anda.
         </p>
       </div>
+
+      {/* User Overview Metrics Grid */}
+      {overview && (
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 font-mono text-xs">
+          <div className="bg-bento-surface border border-bento-border p-4 rounded-2xl space-y-1 text-center shadow-md">
+            <p className="text-[10px] text-bento-text-secondary uppercase font-semibold">Total Artikel</p>
+            <p className="text-xl font-extrabold text-purple-400">📝 {overview.totalArticles}</p>
+          </div>
+
+          <div className="bg-bento-surface border border-bento-border p-4 rounded-2xl space-y-1 text-center shadow-md">
+            <p className="text-[10px] text-bento-text-secondary uppercase font-semibold">Knowledge Ditambahkan</p>
+            <p className="text-xl font-extrabold text-blue-400">📚 {overview.totalKnowledgeSubmitted}</p>
+          </div>
+
+          <div className="bg-bento-surface border border-bento-border p-4 rounded-2xl space-y-1 text-center shadow-md">
+            <p className="text-[10px] text-bento-text-secondary uppercase font-semibold">Percakapan Abo AI</p>
+            <p className="text-xl font-extrabold text-emerald-400">💬 {overview.totalAiConversations}</p>
+          </div>
+
+          <div className="bg-bento-surface border border-bento-border p-4 rounded-2xl space-y-1 text-center shadow-md col-span-2 sm:col-span-1">
+            <p className="text-[10px] text-bento-text-secondary uppercase font-semibold">Peringkat Global</p>
+            <p className="text-sm font-bold text-amber-400">🏆 #{overview.globalRank} <span className="text-[10px] text-bento-text-secondary">/ {overview.totalUsers} User</span></p>
+          </div>
+        </div>
+      )}
 
       <div className="bg-bento-surface border border-bento-border rounded-2xl p-6 space-y-6 max-w-xl">
         {/* Avatar Upload Container */}

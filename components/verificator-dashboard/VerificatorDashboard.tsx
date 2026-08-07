@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
+  LayoutDashboard,
   ShieldCheck,
   Vote,
   Mic,
@@ -386,12 +387,13 @@ function KtpApplicationScreen({ profile }: { profile: Profile }) {
 
 // ── Tools Lengkap Verifikator (role 'verificator' / 'admin') ─────────────
 
-type VerificatorTab = "knowledge_verif" | "kamus_verif" | "aksara_verif" | "voting" | "voice" | "usage" | "artikel" | "logs" | "pengaturan" | "privasi";
+type VerificatorTab = "overview" | "knowledge_verif" | "kamus_verif" | "aksara_verif" | "voting" | "voice" | "usage" | "artikel" | "logs" | "pengaturan" | "privasi";
 
 function VerificatorTools({ profile }: { profile: Profile }) {
-  const [tab, setTab] = useState<VerificatorTab>("knowledge_verif");
+  const [tab, setTab] = useState<VerificatorTab>("overview");
 
   const NAV: { key: VerificatorTab; label: string; icon: typeof Vote }[] = [
+    { key: "overview", label: "Overview Verifikator", icon: LayoutDashboard },
     { key: "knowledge_verif", label: "Verifikasi Knowledge", icon: BookOpen },
     { key: "kamus_verif", label: "Verifikasi Kamus", icon: BookMarked },
     { key: "aksara_verif", label: "Verifikasi Aksara", icon: Type },
@@ -459,6 +461,7 @@ function VerificatorTools({ profile }: { profile: Profile }) {
       </aside>
 
       <main className="flex-1 p-5 md:p-8 max-w-4xl overflow-y-auto">
+        {tab === "overview" && <VerificatorOverviewTab />}
         {tab === "knowledge_verif" && <KnowledgeVerifTab />}
         {tab === "kamus_verif" && <KamusVerifTab />}
         {tab === "aksara_verif" && <AksaraVerifTab />}
@@ -470,6 +473,126 @@ function VerificatorTools({ profile }: { profile: Profile }) {
         {tab === "pengaturan" && <VerificatorSettingsTab />}
         {tab === "privasi" && <VerificatorPrivacyTab profile={profile} />}
       </main>
+    </div>
+  );
+}
+
+// ── Modul 0: Overview Verifikator ──────────────────────────────────────────────
+function VerificatorOverviewTab() {
+  const [data, setData] = useState<any | null>(null);
+
+  useEffect(() => {
+    fetch("/api/public/verificator/overview")
+      .then((r) => r.json())
+      .then((d) => setData(d))
+      .catch(() => setData(null));
+  }, []);
+
+  if (!data) return <div className="p-8 text-center text-xs text-bento-text-secondary">Memuat data Overview Verifikator...</div>;
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-bold text-bento-text-primary flex items-center gap-2">
+          <LayoutDashboard className="h-5 w-5 text-purple-400" />
+          <span>Overview Portal Verifikator</span>
+        </h2>
+        <p className="text-xs text-bento-text-secondary mt-1">
+          Ringkasan status verifikasi publikasi Knowledge, Kamus, Aksara, dan total kontribusi tindakan Anda.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Knowledge Overview Card */}
+        <div className="bg-bento-surface border border-bento-border rounded-2xl p-5 space-y-3 shadow-md">
+          <div className="flex items-center justify-between border-b border-bento-border pb-2.5">
+            <span className="text-xs font-bold text-bento-text-primary flex items-center gap-1.5">
+              <BookOpen className="w-4 h-4 text-purple-400" /> Total Knowledge
+            </span>
+            <span className="text-lg font-extrabold text-purple-400 font-mono">{data.knowledge?.total ?? 0}</span>
+          </div>
+          <div className="space-y-1.5 text-xs font-mono">
+            <div className="flex justify-between text-emerald-400">
+              <span>✓ Terverifikasi:</span>
+              <span className="font-bold">{data.knowledge?.verified ?? 0}</span>
+            </div>
+            <div className="flex justify-between text-amber-400">
+              <span>⌛ Belum Diverifikasi:</span>
+              <span className="font-bold">{data.knowledge?.pending ?? 0}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Kamus Overview Card */}
+        <div className="bg-bento-surface border border-bento-border rounded-2xl p-5 space-y-3 shadow-md">
+          <div className="flex items-center justify-between border-b border-bento-border pb-2.5">
+            <span className="text-xs font-bold text-bento-text-primary flex items-center gap-1.5">
+              <BookMarked className="w-4 h-4 text-blue-400" /> Total Kata Kamus
+            </span>
+            <span className="text-lg font-extrabold text-blue-400 font-mono">{data.kamus?.total ?? 0}</span>
+          </div>
+          <div className="space-y-1.5 text-xs font-mono">
+            <div className="flex justify-between text-emerald-400">
+              <span>✓ Terverifikasi:</span>
+              <span className="font-bold">{data.kamus?.verified ?? 0}</span>
+            </div>
+            <div className="flex justify-between text-amber-400">
+              <span>⌛ Belum Diverifikasi:</span>
+              <span className="font-bold">{data.kamus?.pending ?? 0}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Aksara Overview Card */}
+        <div className="bg-bento-surface border border-bento-border rounded-2xl p-5 space-y-3 shadow-md">
+          <div className="flex items-center justify-between border-b border-bento-border pb-2.5">
+            <span className="text-xs font-bold text-bento-text-primary flex items-center gap-1.5">
+              <Type className="w-4 h-4 text-amber-400" /> Total Aksara
+            </span>
+            <span className="text-lg font-extrabold text-amber-400 font-mono">{data.aksara?.total ?? 0}</span>
+          </div>
+          <div className="space-y-1.5 text-xs font-mono">
+            <div className="flex justify-between text-emerald-400">
+              <span>✓ Terverifikasi:</span>
+              <span className="font-bold">{data.aksara?.verified ?? 0}</span>
+            </div>
+            <div className="flex justify-between text-amber-400">
+              <span>⌛ Belum Diverifikasi:</span>
+              <span className="font-bold">{data.aksara?.pending ?? 0}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Verificator Actions Summary */}
+      <div className="bg-bento-surface border border-bento-border rounded-2xl p-6 space-y-4 shadow-lg">
+        <h3 className="text-sm font-bold text-bento-text-primary flex items-center gap-2">
+          <ShieldCheck className="w-4 h-4 text-emerald-400" />
+          <span>Total Kontribusi Tindakan Verifikator Anda</span>
+        </h3>
+
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs font-mono">
+          <div className="bg-bento-bg p-3.5 rounded-xl border border-bento-border text-center space-y-1">
+            <p className="text-[10px] text-bento-text-secondary uppercase">Total Tindakan</p>
+            <p className="text-lg font-bold text-purple-400">{data.actions?.total ?? 0}</p>
+          </div>
+
+          <div className="bg-bento-bg p-3.5 rounded-xl border border-bento-border text-center space-y-1">
+            <p className="text-[10px] text-bento-text-secondary uppercase">✅ Disahkan (Verify)</p>
+            <p className="text-lg font-bold text-emerald-400">{data.actions?.verified ?? 0}</p>
+          </div>
+
+          <div className="bg-bento-bg p-3.5 rounded-xl border border-bento-border text-center space-y-1">
+            <p className="text-[10px] text-bento-text-secondary uppercase">💬 Catatan Pakar (Comment)</p>
+            <p className="text-lg font-bold text-blue-400">{data.actions?.commented ?? 0}</p>
+          </div>
+
+          <div className="bg-bento-bg p-3.5 rounded-xl border border-bento-border text-center space-y-1">
+            <p className="text-[10px] text-bento-text-secondary uppercase">❌ Ditolak (Reject)</p>
+            <p className="text-lg font-bold text-red-400">{data.actions?.rejected ?? 0}</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -722,6 +722,8 @@ export async function getOverviewStats() {
     { count: totalContributions },
     { count: unreadMessages },
     { count: totalMessages },
+    { count: totalUserArticles },
+    { count: totalAksara },
   ] = await Promise.all([
     db.from("profiles").select("*", { count: "exact", head: true }).eq("role", "user"),
     db.from("profiles").select("*", { count: "exact", head: true }).eq("role", "verificator"),
@@ -733,6 +735,8 @@ export async function getOverviewStats() {
     db.from("contributions").select("*", { count: "exact", head: true }),
     db.from("contact_messages").select("*", { count: "exact", head: true }).eq("status", "unread"),
     db.from("contact_messages").select("*", { count: "exact", head: true }),
+    db.from("user_articles").select("*", { count: "exact", head: true }).catch(() => ({ count: 0 })),
+    db.from("aksara_submissions").select("*", { count: "exact", head: true }).catch(() => ({ count: 0 })),
   ]);
 
   return {
@@ -746,6 +750,8 @@ export async function getOverviewStats() {
     totalContributions: totalContributions ?? 0,
     unreadMessages: unreadMessages ?? 0,
     totalMessages: totalMessages ?? 0,
+    totalUserArticles: totalUserArticles ?? 0,
+    totalAksara: totalAksara ?? 0,
   };
 }
 
