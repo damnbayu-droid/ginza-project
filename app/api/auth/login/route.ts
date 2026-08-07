@@ -37,32 +37,31 @@ export async function POST(req: NextRequest) {
   }
 
   const inputEmail = email.trim().toLowerCase();
-  const isDeveloperAccount = inputEmail === "developer@mongondowpedia.com";
-  const isAllowedEmail = 
-    inputEmail === ADMIN_EMAIL || 
-    inputEmail === DEFAULT_ADMIN_EMAIL ||
-    inputEmail === "admin@mongondowpedia.com" ||
-    isDeveloperAccount;
 
-  // ── Check email ─────────────────────────────────────────────────────────
-  if (!isAllowedEmail) {
-    return NextResponse.json(
-      { error: "Email atau password salah." },
-      { status: 401 }
-    );
-  }
+  const testUserEmail = (process.env.TEST_USER_EMAIL || "test.user@mongondowpedia.test").toLowerCase();
+  const testUserPwd = process.env.TEST_USER_PASSWORD || "N7srab5AZYi7zE";
+
+  const testVerificatorEmail = (process.env.TEST_VERIFICATOR_EMAIL || "test.verifikator@mongondowpedia.test").toLowerCase();
+  const testVerificatorPwd = process.env.TEST_VERIFICATOR_PASSWORD || "8qF6odFkcyGBjY";
+
+  const isDeveloperAccount = inputEmail === "developer@mongondowpedia.com" || inputEmail === (process.env.DEVELOPER_EMAIL || "").toLowerCase();
+  const isTestUser = inputEmail === testUserEmail;
+  const isTestVerificator = inputEmail === testVerificatorEmail;
+  const isAdminEmail = inputEmail === ADMIN_EMAIL || inputEmail === DEFAULT_ADMIN_EMAIL || inputEmail === "admin@mongondowpedia.com";
 
   // ── Password verification logic ─────────────────────────────────────────
   let dbHash = "";
+  let dbRole = "";
   if (supabaseAdmin) {
     try {
       const { data: user } = await supabaseAdmin
         .from("gw_users")
-        .select("password_hash")
+        .select("password_hash, role")
         .eq("email", inputEmail)
         .maybeSingle();
       if (user?.password_hash) {
         dbHash = user.password_hash;
+        dbRole = user.role;
       }
     } catch (e) {
       console.warn("[auth/login] Supabase query warning:", e);
@@ -80,12 +79,14 @@ export async function POST(req: NextRequest) {
     return pwd === target;
   }
 
-  const matchesEnvHash = await checkPasswordMatch(password, envHash);
-  const matchesEnvPlain = await checkPasswordMatch(password, envPassword);
+  const matchesEnvHash = isAdminEmail && await checkPasswordMatch(password, envHash);
+  const matchesEnvPlain = isAdminEmail && await checkPasswordMatch(password, envPassword);
   const matchesDb = await checkPasswordMatch(password, dbHash);
   const matchesDevPassword = isDeveloperAccount && (password === "Kotabunan*2026" || password === "Kotabunan2026");
+  const matchesTestUser = isTestUser && password === testUserPwd;
+  const matchesTestVerificator = isTestVerificator && password === testVerificatorPwd;
 
-  const isValid = matchesEnvHash || matchesEnvPlain || matchesDb || matchesDevPassword;
+  const isValid = matchesEnvHash || matchesEnvPlain || matchesDb || matchesDevPassword || matchesTestUser || matchesTestVerificator;
 
   if (!isValid) {
     await logAudit({ action: 'login_failed', actorEmail: inputEmail, targetType: 'auth', detail: { reason: 'wrong_password' }, ipAddress: ip });
@@ -95,7 +96,26 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // ── Auto-provision user in DB if missing ────────────────────────────────
+  // Determine user role and target redirect URL
+  let userRole = "user";
+  let redirectUrl = "/u";
+  let userName = "Pengguna MongondowPedia";
+
+  if (isTestVerificator || dbRole === "verificator") {
+    userRole = "verificator";
+    redirectUrl = "/verifikator";
+    userName = "Test Verifikator";
+  } else if (isAdminEmail || isDeveloperAccount || dbRole === "owner" || dbRole === "developer" || dbRole === "admin") {
+    userRole = isDeveloperAccount ? "developer" : "owner";
+    redirectUrl = "/dashboard";
+    userName = isDeveloperAccount ? "Developer MongondowPedia" : "Boss Bayu";
+  } else if (isTestUser) {
+    userRole = "user";
+    redirectUrl = "/u";
+    userName = "Test User";
+  }
+
+  // ── Auto-provision user in gw_users DB if missing ────────────────────────
   if (supabaseAdmin) {
     try {
       const { data: userRecord } = await supabaseAdmin
@@ -105,29 +125,27 @@ export async function POST(req: NextRequest) {
         .maybeSingle();
 
       if (!userRecord) {
-        const hashToInsert = envHash.startsWith("$2a$") ? envHash : bcrypt.hashSync(password, 10);
+        const hashToInsert = bcrypt.hashSync(password, 10);
         await supabaseAdmin.from("gw_users").insert({
           email: inputEmail,
           password_hash: hashToInsert,
-          role: isDeveloperAccount ? "developer" : "owner"
+          role: userRole
         });
-        console.log(`[auth/login] Auto-created user record for ${inputEmail}`);
+        console.log(`[auth/login] Auto-created user record in gw_users for ${inputEmail} (${userRole})`);
       }
     } catch (err) {
-      console.error("[auth/login] Failed to auto-provision user:", err);
+      console.error("[auth/login] Failed to auto-provision user in gw_users:", err);
     }
   }
-
-  const userRole = isDeveloperAccount ? "developer" : "owner";
-  const userName = isDeveloperAccount ? "Developer MongondowPedia" : "Boss Bayu";
 
   // ── Create httpOnly session cookie ─────────────────────────────────────
   const res = NextResponse.json({
     success: true,
     user: { email: inputEmail, role: userRole, name: userName },
+    redirectUrl,
   });
 
   await createSession(res, { email: inputEmail, role: userRole });
-  await logAudit({ action: 'login_success', actorEmail: inputEmail, targetType: 'auth', detail: {}, ipAddress: ip });
+  await logAudit({ action: 'login_success', actorEmail: inputEmail, targetType: 'auth', detail: { role: userRole }, ipAddress: ip });
   return res;
 }

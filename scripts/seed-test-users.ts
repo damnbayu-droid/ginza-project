@@ -2,6 +2,7 @@ import { loadEnvLocal } from "./_load-env";
 loadEnvLocal();
 
 import { createClient } from "@supabase/supabase-js";
+import bcrypt from "bcryptjs";
 
 async function main() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -30,16 +31,15 @@ async function main() {
   ];
 
   for (const acc of testAccounts) {
-    console.log(`⏳ Memproses akun: ${acc.email} (${acc.role})...`);
+    console.log(`\n⏳ Memproses akun: ${acc.email} (${acc.role})...`);
 
-    // 1. Check if user already exists in auth.users
+    // 1. Check & Create/Update in auth.users
     const { data: existingUsers } = await supabase.auth.admin.listUsers();
     const existingUser = existingUsers?.users?.find(u => u.email === acc.email);
 
     let userId = existingUser?.id;
 
     if (!existingUser) {
-      // Create in auth.users
       const { data: created, error: createErr } = await supabase.auth.admin.createUser({
         email: acc.email,
         password: acc.password,
@@ -48,13 +48,13 @@ async function main() {
       });
 
       if (createErr) {
-        console.error(`❌ Gagal membuat auth user ${acc.email}:`, createErr.message);
-        continue;
+        console.error(`   ❌ Gagal membuat auth user ${acc.email}:`, createErr.message);
+      } else {
+        userId = created.user.id;
+        console.log(`   ✅ Supabase Auth user dibuat: ${userId}`);
       }
-      userId = created.user.id;
-      console.log(`   ✅ Supabase Auth user dibuat: ${userId}`);
     } else {
-      console.log(`   ℹ️ User ${acc.email} sudah ada di Auth, memperbarui password & metadata...`);
+      console.log(`   ℹ️ User ${acc.email} sudah ada di Supabase Auth, memperbarui password...`);
       const { error: updateErr } = await supabase.auth.admin.updateUserById(userId!, {
         password: acc.password,
         email_confirm: true,
@@ -65,7 +65,7 @@ async function main() {
       }
     }
 
-    // 2. Update profiles table with display_name and role
+    // 2. Insert/Upsert directly into public.profiles
     if (userId) {
       const { error: profileErr } = await supabase.from("profiles").upsert(
         {
@@ -81,12 +81,29 @@ async function main() {
       if (profileErr) {
         console.warn(`   ⚠️ Gagal update profiles:`, profileErr.message);
       } else {
-        console.log(`   ✅ Profil & role (${acc.role}) berhasil disimpan di tabel profiles!`);
+        console.log(`   ✅ Record profil & role (${acc.role}) berhasil disimpan di tabel profiles!`);
       }
+    }
+
+    // 3. Insert/Upsert directly into public.gw_users (tabel Supabase yang terlihat di Dashboard Table Editor!)
+    const pwdHash = bcrypt.hashSync(acc.password, 10);
+    const { error: gwErr } = await supabase.from("gw_users").upsert(
+      {
+        email: acc.email,
+        password_hash: pwdHash,
+        role: acc.role,
+      },
+      { onConflict: "email" }
+    );
+
+    if (gwErr) {
+      console.warn(`   ⚠️ Gagal update gw_users:`, gwErr.message);
+    } else {
+      console.log(`   ✅ Record user (${acc.email}) berhasil disimpan di tabel gw_users!`);
     }
   }
 
-  console.log("\n🎉 Selesai! Kedua akun test kini 100% Siap untuk Login di /login atau /akun/masuk!");
+  console.log("\n🎉 Selesai! Akun test.user dan test.verifikator kini 100% Terdaftar di Supabase Auth & Tabel gw_users!");
 }
 
 main().catch(err => {
