@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import {
   Gamepad2,
@@ -10,15 +10,12 @@ import {
   Sparkles,
   Trophy,
   Flame,
-  Award,
   RotateCcw,
   CheckCircle2,
   XCircle,
   Zap,
-  Play,
   Star,
   ChevronRight,
-  ShieldAlert,
   Brain
 } from "lucide-react";
 
@@ -28,6 +25,7 @@ interface Question {
   id: string;
   question: string;
   subtext?: string;
+  svgPath?: string;
   options: string[];
   correctIndex: number;
   explanation: string;
@@ -43,87 +41,97 @@ interface GamePack {
   questions: Record<Level, Question[]>;
 }
 
-// ── Bank Soal 3 Paket Cerdas Cermat (Authentic & Verified References) ────
+// ── Bank Soal 3 Paket Cerdas Cermat (Real SVG Vektor & Authentic Database References) ────
 const GAME_PACKS: GamePack[] = [
   {
     id: 1,
     title: "Paket 1: Dasar Aksara & Budaya",
     subtitle: "Mengenal Aksara, Kata Pendek & Ungkapan Adat Utama",
     badge: "Paket Utama",
-    description: "Latihan dasar 10 huruf konsonan Aksara Mongondow, 10 kata pendek populer, dan 10 falsafah ungkapan adat.",
+    description: "Latihan 10 simbol konsonan Aksara Mongondow (SVG Vektor), 10 kata pendek populer, dan 10 falsafah ungkapan adat.",
     iconColor: "text-emerald-400 border-emerald-500/30 bg-emerald-500/10",
     questions: {
       easy: [
         {
           id: "p1_e1",
-          question: "Aksara  𑻠  melambangkan konsonan...",
-          subtext: "Pilih bunyi transliterasi yang tepat",
+          question: "Simbol Aksara Mongondow berikut melambangkan konsonan...",
+          subtext: "Perhatikan bentuk goresan Aksara Mongondow di atas",
+          svgPath: "/aksara-svg/row1_ka.svg",
           options: ["Ka", "Ga", "Nga", "Ta"],
           correctIndex: 0,
-          explanation: "𑻠 adalah bentuk huruf Aksara Mongondow untuk konsonan 'Ka'."
+          explanation: "Gambar SVG vektor di atas adalah bentuk resmi Aksara Mongondow untuk konsonan 'Ka'."
         },
         {
           id: "p1_e2",
-          question: "Aksara  𑻡  melambangkan konsonan...",
+          question: "Simbol Aksara Mongondow berikut melambangkan konsonan...",
+          svgPath: "/aksara-svg/row1_ga.svg",
           options: ["Ga", "Ka", "Da", "Na"],
           correctIndex: 0,
-          explanation: "𑻡 melambangkan konsonan 'Ga' dalam ejaan Aksara Mongondow."
+          explanation: "Gambar SVG di atas melambangkan konsonan 'Ga' dalam ejaan Aksara Mongondow."
         },
         {
           id: "p1_e3",
-          question: "Aksara  𑻢  melambangkan konsonan...",
+          question: "Simbol Aksara Mongondow berikut melambangkan konsonan...",
+          svgPath: "/aksara-svg/row1_nga.svg",
           options: ["Nga", "Ma", "Ba", "Pa"],
           correctIndex: 0,
-          explanation: "𑻢 melambangkan konsonan nasal velar 'Nga'."
+          explanation: "Simbol di atas melambangkan konsonan nasal velar 'Nga'."
         },
         {
           id: "p1_e4",
-          question: "Aksara  𑻣  melambangkan konsonan...",
+          question: "Simbol Aksara Mongondow berikut melambangkan konsonan...",
+          svgPath: "/aksara-svg/row1_ta.svg",
           options: ["Ta", "Da", "Sa", "Ya"],
           correctIndex: 0,
-          explanation: "𑻣 melambangkan konsonan 'Ta'."
+          explanation: "Simbol di atas melambangkan konsonan 'Ta'."
         },
         {
           id: "p1_e5",
-          question: "Aksara  𑻤  melambangkan konsonan...",
+          question: "Simbol Aksara Mongondow berikut melambangkan konsonan...",
+          svgPath: "/aksara-svg/row1_da.svg",
           options: ["Da", "Ta", "Na", "Ra"],
           correctIndex: 0,
-          explanation: "𑻤 melambangkan konsonan 'Da'."
+          explanation: "Simbol di atas melambangkan konsonan 'Da'."
         },
         {
           id: "p1_e6",
-          question: "Aksara  𑻥  melambangkan konsonan...",
+          question: "Simbol Aksara Mongondow berikut melambangkan konsonan...",
+          svgPath: "/aksara-svg/row1_na.svg",
           options: ["Na", "Ma", "Nga", "La"],
           correctIndex: 0,
-          explanation: "𑻥 melambangkan konsonan nasal 'Na'."
+          explanation: "Simbol di atas melambangkan konsonan nasal 'Na'."
         },
         {
           id: "p1_e7",
-          question: "Aksara  𑻦  melambangkan konsonan...",
+          question: "Simbol Aksara Mongondow berikut melambangkan konsonan...",
+          svgPath: "/aksara-svg/row1_pa.svg",
           options: ["Pa", "Ba", "Wa", "Ha"],
           correctIndex: 0,
-          explanation: "𑻦 melambangkan konsonan bilabial 'Pa'."
+          explanation: "Simbol di atas melambangkan konsonan bilabial 'Pa'."
         },
         {
           id: "p1_e8",
-          question: "Aksara  𑻧  melambangkan konsonan...",
+          question: "Simbol Aksara Mongondow berikut melambangkan konsonan...",
+          svgPath: "/aksara-svg/row1_ba.svg",
           options: ["Ba", "Pa", "Ma", "Ga"],
           correctIndex: 0,
-          explanation: "𑻧 melambangkan konsonan 'Ba'."
+          explanation: "Simbol di atas melambangkan konsonan 'Ba'."
         },
         {
           id: "p1_e9",
-          question: "Aksara  𑻨  melambangkan konsonan...",
+          question: "Simbol Aksara Mongondow berikut melambangkan konsonan...",
+          svgPath: "/aksara-svg/row1_ma.svg",
           options: ["Ma", "Na", "Nga", "Ya"],
           correctIndex: 0,
-          explanation: "𑻨 melambangkan konsonan nasal 'Ma'."
+          explanation: "Simbol di atas melambangkan konsonan nasal 'Ma'."
         },
         {
           id: "p1_e10",
-          question: "Aksara  𑻩  melambangkan konsonan...",
+          question: "Simbol Aksara Mongondow berikut melambangkan konsonan...",
+          svgPath: "/aksara-svg/row1_ya.svg",
           options: ["Ya", "Ra", "La", "Wa"],
           correctIndex: 0,
-          explanation: "𑻩 melambangkan semivokal 'Ya'."
+          explanation: "Simbol di atas melambangkan semivokal 'Ya'."
         }
       ],
       challenge: [
@@ -328,84 +336,89 @@ const GAME_PACKS: GamePack[] = [
     title: "Paket 2: Alam, Keseharian & Tradisi",
     subtitle: "Mengenal Diakritik Aksara, Kosakata Alam & Falsafah Hidup",
     badge: "Paket Eksplorasi",
-    description: "Latihan aksara konsonan lanjutan & vokal, 10 kosa kata alam & keseharian, serta 10 ungkapan keakraban tradisi.",
+    description: "Latihan aksara konsonan lanjutan & vokal (SVG Vektor), 10 kosa kata alam & keseharian, serta 10 ungkapan keakraban tradisi.",
     iconColor: "text-purple-400 border-purple-500/30 bg-purple-500/10",
     questions: {
       easy: [
         {
           id: "p2_e1",
-          question: "Aksara  𑻪  melambangkan konsonan...",
+          question: "Simbol Aksara Mongondow berikut melambangkan konsonan...",
+          svgPath: "/aksara-svg/row1_ra.svg",
           options: ["Ra", "La", "Wa", "Sa"],
           correctIndex: 0,
-          explanation: "𑻪 melambangkan konsonan 'Ra'."
+          explanation: "Gambar SVG di atas melambangkan konsonan 'Ra'."
         },
         {
           id: "p2_e2",
-          question: "Aksara  𑻫  melambangkan konsonan...",
+          question: "Simbol Aksara Mongondow berikut melambangkan konsonan...",
+          svgPath: "/aksara-svg/row1_la.svg",
           options: ["La", "Ra", "Wa", "Ha"],
           correctIndex: 0,
-          explanation: "𑻫 melambangkan konsonan 'La'."
+          explanation: "Gambar SVG di atas melambangkan konsonan 'La'."
         },
         {
           id: "p2_e3",
-          question: "Aksara  𑻬  melambangkan konsonan...",
+          question: "Simbol Aksara Mongondow berikut melambangkan konsonan...",
+          svgPath: "/aksara-svg/row1_wa.svg",
           options: ["Wa", "Ya", "Ra", "Sa"],
           correctIndex: 0,
-          explanation: "𑻬 melambangkan konsonan 'Wa'."
+          explanation: "Gambar SVG di atas melambangkan konsonan 'Wa'."
         },
         {
           id: "p2_e4",
-          question: "Aksara  𑻭  melambangkan konsonan...",
+          question: "Simbol Aksara Mongondow berikut melambangkan konsonan...",
+          svgPath: "/aksara-svg/row1_sa.svg",
           options: ["Sa", "Ha", "Ta", "Da"],
           correctIndex: 0,
-          explanation: "𑻭 melambangkan konsonan 'Sa'."
+          explanation: "Gambar SVG di atas melambangkan konsonan 'Sa'."
         },
         {
           id: "p2_e5",
-          question: "Aksara  𑻮  melambangkan konsonan...",
+          question: "Simbol Aksara Mongondow berikut melambangkan konsonan...",
+          svgPath: "/aksara-svg/row1_ha.svg",
           options: ["Ha", "Sa", "Wa", "La"],
           correctIndex: 0,
-          explanation: "𑻮 melambangkan konsonan 'Ha'."
+          explanation: "Gambar SVG di atas melambangkan konsonan 'Ha'."
         },
         {
           id: "p2_e6",
-          question: "Diakritik  𑻳  pada Aksara Mongondow mengubah bunyi vokal menjadi...",
-          options: ["i", "u", "e", "o"],
+          question: "Simbol suku kata Aksara Mongondow berikut dibaca...",
+          svgPath: "/aksara-svg/row2_ke_ki.svg",
+          options: ["Ki / Ke", "Ku / Ko", "Ka", "K-mati"],
           correctIndex: 0,
-          explanation: "Diakritik di atas huruf mengubah bunyi dasar 'A' menjadi vokal 'i'."
+          explanation: "Diakritik atas pada huruf Ka di atas mengubah bunyi vokal menjadi 'Ki' atau 'Ke'."
         },
         {
           id: "p2_e7",
-          question: "Diakritik  𑻴  pada Aksara Mongondow mengubah bunyi vokal menjadi...",
-          options: ["u", "i", "e", "o"],
+          question: "Simbol suku kata Aksara Mongondow berikut dibaca...",
+          svgPath: "/aksara-svg/row2_be_bi.svg",
+          options: ["Bi / Be", "Bu / Bo", "Ba", "B-mati"],
           correctIndex: 0,
-          explanation: "Diakritik di bawah huruf mengubah bunyi vokal menjadi 'u'."
+          explanation: "Huruf Ba dengan diakritik atas dibaca 'Bi' atau 'Be'."
         },
         {
           id: "p2_e8",
-          question: "Diakritik  𑻵  mengubah bunyi vokal dasar menjadi...",
-          options: ["e", "o", "i", "u"],
+          question: "Simbol suku kata Aksara Mongondow berikut dibaca...",
+          svgPath: "/aksara-svg/row3_ko_ku.svg",
+          options: ["Ku / Ko", "Ki / Ke", "Ka", "K-mati"],
           correctIndex: 0,
-          explanation: "Diakritik sisi kiri mengubah bunyi vokal menjadi 'e'."
+          explanation: "Diakritik bawah pada huruf Ka di atas mengubah bunyi vokal menjadi 'Ku' atau 'Ko'."
         },
         {
           id: "p2_e9",
-          question: "Diakritik  𑻶  mengubah bunyi vokal dasar menjadi...",
-          options: ["o", "e", "u", "i"],
+          question: "Simbol suku kata Aksara Mongondow berikut dibaca...",
+          svgPath: "/aksara-svg/row3_bo_bu.svg",
+          options: ["Bu / Bo", "Bi / Be", "Ba", "B-mati"],
           correctIndex: 0,
-          explanation: "Diakritik sisi kanan mengubah bunyi vokal menjadi 'o'."
+          explanation: "Huruf Ba dengan diakritik bawah dibaca 'Bu' atau 'Bo'."
         },
         {
           id: "p2_e10",
-          question: "Tanda  𑻷  (Pamudpod) berfungsi untuk...",
-          options: [
-            "Mematikan vokal hidup (menjadi konsonan mati)",
-            "Menambah bunyi nasal NG",
-            "Mengulang pembacaan kata",
-            "Menandai tanda baca titik"
-          ],
+          question: "Simbol konsonan mati (Pamudpod) berikut dibaca...",
+          svgPath: "/aksara-svg/row4_final_k.svg",
+          options: ["K (Konsonan Mati)", "Ka", "Ki", "Ku"],
           correctIndex: 0,
-          explanation: "Pamudpod 𑻷 mematikan vokal bawaan sehingga menghasilkan konsonan mati akhir."
+          explanation: "Tanda Pamudpod (silang) mematikan bunyi vokal sehingga dibaca konsonan akhir mati 'K'."
         }
       ],
       challenge: [
@@ -610,79 +623,89 @@ const GAME_PACKS: GamePack[] = [
     title: "Paket 3: Falsafah, Silsilah & Sastra",
     subtitle: "Membaca Suku Kata Kompleks, Istilah Sastra & Falsafah Bogani",
     badge: "Paket Master",
-    description: "Kuis baca gabungan aksara, 10 kata istilah sastra & tutur adat, serta 10 falsafah luhur para Bogani.",
+    description: "Kuis baca gabungan aksara (SVG Vektor), 10 kata istilah sastra & tutur adat, serta 10 falsafah luhur para Bogani.",
     iconColor: "text-amber-400 border-amber-500/30 bg-amber-500/10",
     questions: {
       easy: [
         {
           id: "p3_e1",
-          question: "Gabungan Aksara  𑻠  + diakritik  𑻳  dibaca...",
-          options: ["Ki", "Ku", "Ke", "Ko"],
+          question: "Simbol Aksara Mongondow berikut dibaca...",
+          svgPath: "/aksara-svg/row2_ke_ki.svg",
+          options: ["Ki / Ke", "Ku / Ko", "Ka", "K-mati"],
           correctIndex: 0,
-          explanation: "Konsonan Ka (𑻠) ditambah diakritik i (𑻳) dibaca 'Ki'."
+          explanation: "Aksara Ka dengan diakritik atas dibaca 'Ki' atau 'Ke'."
         },
         {
           id: "p3_e2",
-          question: "Gabungan Aksara  𑻧  + diakritik  𑻴  dibaca...",
-          options: ["Bu", "Bi", "Be", "Bo"],
+          question: "Simbol Aksara Mongondow berikut dibaca...",
+          svgPath: "/aksara-svg/row3_bo_bu.svg",
+          options: ["Bu / Bo", "Bi / Be", "Ba", "B-mati"],
           correctIndex: 0,
-          explanation: "Konsonan Ba (𑻧) ditambah diakritik u (𑻴) dibaca 'Bu'."
+          explanation: "Aksara Ba dengan diakritik bawah dibaca 'Bu' atau 'Bo'."
         },
         {
           id: "p3_e3",
-          question: "Gabungan Aksara  𑻤  + diakritik  𑻵  dibaca...",
-          options: ["De", "Do", "Di", "Du"],
+          question: "Simbol Aksara Mongondow berikut dibaca...",
+          svgPath: "/aksara-svg/row2_de_di.svg",
+          options: ["De / Di", "Do / Du", "Da", "D-mati"],
           correctIndex: 0,
-          explanation: "Konsonan Da (𑻤) ditambah diakritik e (𑻵) dibaca 'De'."
+          explanation: "Aksara Da dengan diakritik atas dibaca 'De' atau 'Di'."
         },
         {
           id: "p3_e4",
-          question: "Gabungan Aksara  𑻦  + diakritik  𑻶  dibaca...",
-          options: ["Po", "Pe", "Pi", "Pu"],
+          question: "Simbol Aksara Mongondow berikut dibaca...",
+          svgPath: "/aksara-svg/row3_po_pu.svg",
+          options: ["Po / Pu", "Pe / Pi", "Pa", "P-mati"],
           correctIndex: 0,
-          explanation: "Konsonan Pa (𑻦) ditambah diakritik o (𑻶) dibaca 'Po'."
+          explanation: "Aksara Pa dengan diakritik bawah dibaca 'Po' atau 'Pu'."
         },
         {
           id: "p3_e5",
-          question: "Aksara Na  𑻥  + Pamudpod  𑻷  dibaca...",
+          question: "Simbol Aksara Mongondow berikut dibaca...",
+          svgPath: "/aksara-svg/row4_final_n.svg",
           options: ["N (Konsonan Mati)", "Na", "Ni", "Nu"],
           correctIndex: 0,
-          explanation: "Pamudpod mematikan vokal bawaan 'a' sehingga dibaca konsonan mati 'N'."
+          explanation: "Aksara Na dengan tanda Pamudpod dibaca konsonan mati akhir 'N'."
         },
         {
           id: "p3_e6",
-          question: "Aksara Ka  𑻠  + Pamudpod  𑻷  dibaca...",
+          question: "Simbol Aksara Mongondow berikut dibaca...",
+          svgPath: "/aksara-svg/row4_final_k.svg",
           options: ["K (Konsonan Mati)", "Ka", "Ki", "Ku"],
           correctIndex: 0,
           explanation: "Dibaca bunyi mati 'K'."
         },
         {
           id: "p3_e7",
-          question: "Gabungan Aksara  𑻨  + diakritik  𑻳  dibaca...",
-          options: ["Mi", "Mu", "Me", "Mo"],
+          question: "Simbol Aksara Mongondow berikut dibaca...",
+          svgPath: "/aksara-svg/row2_me_mi.svg",
+          options: ["Mi / Me", "Mu / Mo", "Ma", "M-mati"],
           correctIndex: 0,
-          explanation: "Ma (𑻨) + i (𑻳) dibaca 'Mi'."
+          explanation: "Ma dengan diakritik atas dibaca 'Mi' atau 'Me'."
         },
         {
           id: "p3_e8",
-          question: "Gabungan Aksara  𑻩  + diakritik  𑻴  dibaca...",
-          options: ["Yu", "Yi", "Ye", "Yo"],
+          question: "Simbol Aksara Mongondow berikut dibaca...",
+          svgPath: "/aksara-svg/row3_yo_yu.svg",
+          options: ["Yu / Yo", "Yi / Ye", "Ya", "Y-mati"],
           correctIndex: 0,
-          explanation: "Ya (𑻩) + u (𑻴) dibaca 'Yu'."
+          explanation: "Ya dengan diakritik bawah dibaca 'Yu' atau 'Yo'."
         },
         {
           id: "p3_e9",
-          question: "Gabungan Aksara  𑻪  + diakritik  𑻶  dibaca...",
-          options: ["Ro", "Re", "Ri", "Ru"],
+          question: "Simbol Aksara Mongondow berikut dibaca...",
+          svgPath: "/aksara-svg/row3_ro_ru.svg",
+          options: ["Ro / Ru", "Re / Ri", "Ra", "R-mati"],
           correctIndex: 0,
-          explanation: "Ra (𑻪) + o (𑻶) dibaca 'Ro'."
+          explanation: "Ra dengan diakritik bawah dibaca 'Ro' atau 'Ru'."
         },
         {
           id: "p3_e10",
-          question: "Gabungan Aksara  𑻭  + diakritik  𑻵  dibaca...",
-          options: ["Se", "So", "Si", "Su"],
+          question: "Simbol Aksara Mongondow berikut dibaca...",
+          svgPath: "/aksara-svg/row2_se_si.svg",
+          options: ["Se / Si", "So / Su", "Sa", "S-mati"],
           correctIndex: 0,
-          explanation: "Sa (𑻭) + e (𑻵) dibaca 'Se'."
+          explanation: "Sa dengan diakritik atas dibaca 'Se' atau 'Si'."
         }
       ],
       challenge: [
@@ -894,7 +917,7 @@ const GAME_PACKS: GamePack[] = [
 ];
 
 export default function GamePage() {
-  const [gameState, setGameState] = useState<"menu" | "pack_select" | "playing" | "results">("menu");
+  const [gameState, setGameState] = useState<"menu" | "playing" | "results">("menu");
   const [selectedPackId, setSelectedPackId] = useState<number>(1);
   const [selectedLevel, setSelectedLevel] = useState<Level>("easy");
 
@@ -902,9 +925,6 @@ export default function GamePage() {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
-  const [userAnswers, setUserAnswers] = useState<
-    { question: string; isCorrect: boolean; selected: string; correct: string; explanation: string }[]
-  >([]);
 
   const activePack = GAME_PACKS.find((p) => p.id === selectedPackId) || GAME_PACKS[0];
   const activeQuestions = activePack.questions[selectedLevel];
@@ -917,12 +937,11 @@ export default function GamePage() {
     setScore(0);
     setStreak(0);
     setSelectedOption(null);
-    setUserAnswers([]);
     setGameState("playing");
   }
 
   function handleAnswer(optIdx: number) {
-    if (selectedOption !== null) return; // Prevent double click
+    if (selectedOption !== null) return;
     setSelectedOption(optIdx);
 
     const isCorrect = optIdx === currentQ.correctIndex;
@@ -934,17 +953,6 @@ export default function GamePage() {
     } else {
       setStreak(0);
     }
-
-    setUserAnswers((prev) => [
-      ...prev,
-      {
-        question: currentQ.question,
-        isCorrect,
-        selected: currentQ.options[optIdx],
-        correct: currentQ.options[currentQ.correctIndex],
-        explanation: currentQ.explanation,
-      },
-    ]);
   }
 
   function handleNextQuestion() {
@@ -965,16 +973,28 @@ export default function GamePage() {
     <main className="min-h-screen bg-[#0a0a0f] text-white p-4 md:p-10 font-sans selection:bg-purple-500 selection:text-white">
       <div className="max-w-5xl mx-auto space-y-8">
 
-        {/* ── TOP NAVIGATION HEADER ── */}
+        {/* ── TOP NAVIGATION HEADER (CTA Back Context Sensitive) ── */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b border-[#1f2130]">
           <div className="space-y-1">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#14151f] hover:bg-[#1f2130] text-gray-300 hover:text-white border border-[#262838] text-xs font-semibold transition-all mb-2 shadow-sm"
-            >
-              <ArrowLeft className="w-4 h-4 text-purple-400" />
-              <span>Kembali ke Beranda</span>
-            </Link>
+            {gameState === "menu" ? (
+              <Link
+                href="/"
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#14151f] hover:bg-[#1f2130] text-gray-300 hover:text-white border border-[#262838] text-xs font-semibold transition-all mb-2 shadow-sm"
+              >
+                <ArrowLeft className="w-4 h-4 text-purple-400" />
+                <span>Kembali ke Beranda</span>
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setGameState("menu")}
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs font-semibold transition-all mb-2 shadow-sm"
+              >
+                <ArrowLeft className="w-4 h-4 text-purple-400" />
+                <span>Kembali ke Menu Game</span>
+              </button>
+            )}
+
             <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
               <Gamepad2 className="w-8 h-8 text-purple-400 animate-pulse" />
               <span>Arena Game & Kuis Edukatif</span>
@@ -1097,7 +1117,7 @@ export default function GamePage() {
                   Game Cerdas Cermat Tebak Kata & Aksara Mongondow
                 </h2>
                 <p className="text-xs md:text-sm text-gray-300 max-w-2xl leading-relaxed">
-                  Uji kecerdasan bahasa Mongondow dengan 3 Paket Soal Unik: <strong>Mudah</strong> (10 Jenis Aksara/Konsonan), <strong>Challenge</strong> (10 Kata Pendek), dan <strong>Sulit</strong> (1 Ungkapan Kalimat / Falsafah Adat).
+                  Uji kecerdasan bahasa Mongondow dengan 3 Paket Soal Unik: <strong>Mudah</strong> (10 Simbol Aksara Vektor SVG), <strong>Challenge</strong> (10 Kata Pendek), dan <strong>Sulit</strong> (1 Ungkapan Kalimat / Falsafah Adat).
                 </p>
               </div>
 
@@ -1153,9 +1173,14 @@ export default function GamePage() {
             {/* Top Bar: Progress & Stats */}
             <div className="flex items-center justify-between text-xs border-b border-[#232536] pb-4">
               <div className="flex items-center gap-2">
-                <span className="px-3 py-1 rounded-full font-bold bg-purple-500/10 text-purple-300 border border-purple-500/20">
-                  {activePack.title}
-                </span>
+                <button
+                  type="button"
+                  onClick={() => setGameState("menu")}
+                  className="px-3 py-1 rounded-full font-bold bg-purple-500/10 text-purple-300 border border-purple-500/20 hover:bg-purple-500/20 transition-all flex items-center gap-1"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Menu Game</span>
+                </button>
                 <span className="px-2.5 py-1 rounded-full font-semibold uppercase text-[10px] bg-bento-surface border border-bento-border text-gray-300">
                   Level: {selectedLevel}
                 </span>
@@ -1187,12 +1212,26 @@ export default function GamePage() {
               </div>
             </div>
 
-            {/* Question Card Box */}
-            <div className="bg-[#1a1c2b] border border-[#2a2c40] rounded-2xl p-6 text-center space-y-3 shadow-inner">
+            {/* Question Card Box with SVG Vector Image Rendering */}
+            <div className="bg-[#1a1c2b] border border-[#2a2c40] rounded-2xl p-6 text-center space-y-4 shadow-inner">
               <span className="text-[10px] font-bold uppercase tracking-wider text-purple-400">
                 {selectedLevel === "easy" ? "🟢 Tebak Huruf Aksara" : selectedLevel === "challenge" ? "🟡 Tebak Kata Pendek" : "🔴 Tebak Ungkapan Falsafah"}
               </span>
-              <h2 className="text-xl md:text-2xl font-black text-white leading-relaxed tracking-wide">
+
+              {/* RENDER SIMBOL VEKTOR SVG DENGAN KONTRAST TINGGI & JERNIIH */}
+              {currentQ.svgPath && (
+                <div className="flex justify-center py-2">
+                  <div className="p-4 rounded-2xl bg-white/10 border border-white/20 shadow-2xl flex items-center justify-center backdrop-blur-md">
+                    <img
+                      src={currentQ.svgPath}
+                      alt="Simbol Aksara Mongondow"
+                      className="h-20 md:h-24 object-contain filter invert drop-shadow-[0_0_10px_rgba(168,85,247,0.6)] hover:scale-105 transition-all"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <h2 className="text-lg md:text-2xl font-black text-white leading-relaxed tracking-wide">
                 {currentQ.question}
               </h2>
               {currentQ.subtext && (
