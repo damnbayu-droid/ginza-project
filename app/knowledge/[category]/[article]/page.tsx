@@ -9,13 +9,61 @@ import ContributeCTA from "@/components/knowledge/ContributeCTA";
 interface Props { params: Promise<{ category: string; article: string }> }
 
 export async function generateMetadata({ params }: Props) {
-  const { article: slug } = await params;
+  const { category: categorySlug, article: slug } = await params;
   if (!supabaseAdmin) return { title: "MongondowPedia" };
-  const { data } = await supabaseAdmin.from("knowledge_articles").select("title, meta_description, summary").eq("slug", slug).maybeSingle();
-  if (!data) return { title: "MongondowPedia" };
+  const { data } = await supabaseAdmin
+    .from("knowledge_articles")
+    .select("title, meta_description, summary, content")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  if (!data) return { title: "Artikel Pengetahuan — MongondowPedia" };
+
+  const title = `${data.title} — MongondowPedia`;
+  const description = data.meta_description ?? data.summary ?? "Ensiklopedia Digital & Knowledge Base Budaya, Aksara, dan Sejarah Bolaang Mongondow.";
+  const url = `${SITE_URL}/knowledge/${categorySlug}/${slug}`;
+
+  // Ekstrak keyword otomatis dari judul dan topik utama
+  const keywords = [
+    "Bolaang Mongondow",
+    "MongondowPedia",
+    "Kotabunan",
+    "Boltim",
+    "Sejarah Mongondow",
+    "Adat Mongondow",
+    "Aksara Mongondow",
+    ...data.title.split(" ").filter((w: string) => w.length > 3),
+  ];
+
   return {
-    title: `${data.title} — MongondowPedia`,
-    description: data.meta_description ?? data.summary ?? undefined,
+    title,
+    description,
+    keywords,
+    alternates: {
+      canonical: url,
+    },
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: "MongondowPedia",
+      locale: "id_ID",
+      type: "article",
+      images: [
+        {
+          url: `${SITE_URL}/icon.png`,
+          width: 1200,
+          height: 630,
+          alt: data.title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [`${SITE_URL}/icon.png`],
+    },
   };
 }
 
