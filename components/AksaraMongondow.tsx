@@ -18,6 +18,7 @@ import {
   RefreshCw,
   Layers,
   Volume2,
+  Trash2,
 } from "lucide-react";
 import aksaraData from "@/data/aksara/aksara_mongondow.json";
 import { transliterateToAksara, AksaraSyllable } from "@/lib/aksara-transliterate";
@@ -127,7 +128,7 @@ export default function AksaraMongondow({ statusMap = {} }: AksaraMongondowProps
   };
 
   // ── 1. Sandbox Transliterasi Real-Time ───────────────────────────────
-  const [sandboxInput, setSandboxInput] = useState("Mokodompis Bolaang Mongondow");
+  const [sandboxInput, setSandboxInput] = useState("");
   const sandboxResult = useMemo(() => {
     return transliterateToAksara(sandboxInput);
   }, [sandboxInput]);
@@ -585,16 +586,18 @@ export default function AksaraMongondow({ statusMap = {} }: AksaraMongondowProps
               <textarea
                 value={sandboxInput}
                 onChange={(e) => setSandboxInput(e.target.value)}
-                placeholder="Ketik teks di sini (misal: Mokodompis Bolaang Mongondow Totabuan)..."
+                placeholder="Tulis Disini..."
                 rows={3}
-                className="w-full bg-[#181a27] border border-[#2b2e42] focus:border-blue-500 rounded-xl p-4 text-sm text-white outline-none font-medium placeholder-gray-500 transition-all"
+                className="w-full bg-[#181a27] border border-[#2b2e42] focus:border-blue-500 rounded-xl p-4 pr-12 text-sm text-white outline-none font-medium placeholder-gray-500 transition-all"
               />
               {sandboxInput && (
                 <button
+                  type="button"
                   onClick={() => setSandboxInput("")}
-                  className="absolute top-3 right-3 text-xs text-gray-400 hover:text-white"
+                  className="absolute top-3.5 right-3.5 p-2 rounded-xl bg-[#202334] hover:bg-red-500/20 text-gray-400 hover:text-red-400 border border-[#2d3148] hover:border-red-500/30 transition-all shadow-sm active:scale-95 flex items-center justify-center"
+                  title="Bersihkan Teks"
                 >
-                  Bersihkan
+                  <Trash2 className="w-4 h-4" />
                 </button>
               )}
             </div>
