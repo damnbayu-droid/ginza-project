@@ -21,7 +21,12 @@ import {
   Sparkles,
   Award,
   Layers,
-  Globe
+  Globe,
+  Gamepad2,
+  Trophy,
+  Crown,
+  Flame,
+  Star
 } from "lucide-react";
 import type { Profile } from "@/lib/ginza-db";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser-auth";
@@ -29,6 +34,7 @@ import TrendingUsersWidget from "@/components/TrendingUsersWidget";
 
 type Tab =
   | "profil"
+  | "game"
   | "percakapan"
   | "kontribusi"
   | "ajukan"
@@ -52,6 +58,7 @@ export default function UserDashboard({ profile }: { profile: Profile }) {
 
   const NAV: { key: Tab; label: string; icon: typeof User }[] = [
     { key: "profil", label: "Profil Saya", icon: User },
+    { key: "game", label: "Arena & Riwayat Game", icon: Gamepad2 },
     { key: "percakapan", label: "Riwayat Percakapan AI", icon: MessageSquare },
     { key: "kontribusi", label: "Kontribusi Saya", icon: FileCheck2 },
     { key: "ajukan", label: "Ajukan Kata / Pengetahuan", icon: PlusCircle },
@@ -158,6 +165,7 @@ export default function UserDashboard({ profile }: { profile: Profile }) {
       {/* Main Content Area */}
       <main className="flex-1 p-5 md:p-8 max-w-4xl overflow-y-auto">
         {tab === "profil" && <ProfilTab profile={profile} />}
+        {tab === "game" && <GameTab profile={profile} />}
         {tab === "percakapan" && <PercakapanTab />}
         {tab === "kontribusi" && <KontribusiTab />}
         {tab === "ajukan" && <AjukanTab />}
@@ -375,6 +383,114 @@ function ProfilTab({ profile }: { profile: Profile }) {
             </button>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Tab Baru: Arena & Riwayat Game ─────────────────────────────────────
+function GameTab({ profile }: { profile: Profile }) {
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-bold text-bento-text-primary flex items-center gap-2">
+          <Gamepad2 className="h-5 w-5 text-purple-400" />
+          <span>Arena & Stat Permainan Game</span>
+        </h2>
+        <p className="text-xs text-bento-text-secondary mt-1">
+          Rekap skor permainan, lencana prestasi kebudayaan, dan total poin reward yang telah Anda kumpulkan.
+        </p>
+      </div>
+
+      {/* Ringkasan Skor & Stat Card Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="bg-bento-surface border border-bento-border rounded-2xl p-5 space-y-2">
+          <div className="flex items-center justify-between text-amber-400">
+            <Trophy className="w-5 h-5" />
+            <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+              Total Skor
+            </span>
+          </div>
+          <p className="text-2xl font-black text-bento-text-primary">{profile.mongondow_score || 120} Pts</p>
+          <p className="text-[11px] text-bento-text-secondary">Poin reward akumulasi bermain game</p>
+        </div>
+
+        <div className="bg-bento-surface border border-bento-border rounded-2xl p-5 space-y-2">
+          <div className="flex items-center justify-between text-purple-400">
+            <Crown className="w-5 h-5" />
+            <span className="text-[10px] font-bold uppercase tracking-wider bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-500/20">
+              Peringkat Pro
+            </span>
+          </div>
+          <p className="text-2xl font-black text-bento-text-primary">Top 5 Pro</p>
+          <p className="text-[11px] text-bento-text-secondary">Papan peringkat pemain budaya Mongondow</p>
+        </div>
+
+        <div className="bg-bento-surface border border-bento-border rounded-2xl p-5 space-y-2">
+          <div className="flex items-center justify-between text-emerald-400">
+            <Flame className="w-5 h-5" />
+            <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+              Lencana Aktif
+            </span>
+          </div>
+          <p className="text-2xl font-black text-bento-text-primary">3 Lencana</p>
+          <p className="text-[11px] text-bento-text-secondary">Gelar kehormatan ksatria & pemelajar</p>
+        </div>
+      </div>
+
+      {/* Lencana Pencapaian Badges */}
+      <div className="bg-bento-surface border border-bento-border rounded-2xl p-6 space-y-4">
+        <h3 className="text-sm font-bold text-bento-text-primary flex items-center gap-2">
+          <Award className="w-4 h-4 text-amber-400" />
+          <span>Lencana Pencapaian Kebudayaan</span>
+        </h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="bg-bento-bg p-3.5 rounded-xl border border-bento-border flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
+              <Star className="w-5 h-5 fill-amber-400" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-bento-text-primary">Master Aksara</p>
+              <p className="text-[10px] text-bento-text-secondary">Lulus kuis membaca Aksara Mongondow</p>
+            </div>
+          </div>
+
+          <div className="bg-bento-bg p-3.5 rounded-xl border border-bento-border flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 shrink-0">
+              <Crown className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-bento-text-primary">Cerdas Cermat Pro</p>
+              <p className="text-[10px] text-bento-text-secondary">Menyelesaikan 3 Paket Cerdas Cermat</p>
+            </div>
+          </div>
+
+          <div className="bg-bento-bg p-3.5 rounded-xl border border-bento-border flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-bento-text-primary">Penjaga Adat</p>
+              <p className="text-[10px] text-bento-text-secondary">Menjelajah falsafah tutur Mongondow</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* CTA Buka Arena Game */}
+      <div className="p-6 rounded-2xl bg-gradient-to-r from-[#171929] via-[#1f2238] to-[#171929] border border-purple-500/30 flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl">
+        <div className="space-y-1 text-center md:text-left">
+          <h3 className="text-base font-bold text-white">Ingin Menambah Poin & Memanjat Leaderboard?</h3>
+          <p className="text-xs text-gray-300">Mainkan paket Cerdas Cermat, Pencocokan Kartu, dan Susun Kalimat Adat sekarang.</p>
+        </div>
+        <a
+          href="/game"
+          className="px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition-all shadow-lg shadow-purple-600/25 shrink-0 flex items-center gap-2"
+        >
+          <Gamepad2 className="w-4 h-4" />
+          <span>Buka Arena Game</span>
+        </a>
       </div>
     </div>
   );

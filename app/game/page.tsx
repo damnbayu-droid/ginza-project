@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Gamepad2,
@@ -16,7 +16,12 @@ import {
   Zap,
   Star,
   ChevronRight,
-  Brain
+  Brain,
+  Crown,
+  Medal,
+  UserCheck,
+  Layers,
+  Puzzle
 } from "lucide-react";
 
 type Level = "easy" | "challenge" | "hard";
@@ -39,6 +44,15 @@ interface GamePack {
   description: string;
   iconColor: string;
   questions: Record<Level, Question[]>;
+}
+
+// ── Leaderboard User Pro ──
+interface TopUser {
+  id: string;
+  display_name: string;
+  role: string;
+  mongondow_score: number;
+  avatar_url?: string;
 }
 
 // ── Bank Soal 3 Paket Cerdas Cermat (Real SVG Vektor & Authentic Database References) ────
@@ -697,7 +711,7 @@ const GAME_PACKS: GamePack[] = [
           svgPath: "/aksara-svg/row3_ro_ru.svg",
           options: ["Ro / Ru", "Re / Ri", "Ra", "R-mati"],
           correctIndex: 0,
-          explanation: "Ra dengan diakritik bawah dibaca 'Ro' atau 'Ru'."
+          explanation: "Ra dengan diakritik bawah dibaca 'Ro' or 'Ru'."
         },
         {
           id: "p3_e10",
@@ -926,6 +940,21 @@ export default function GamePage() {
   const [score, setScore] = useState(0);
   const [streak, setStreak] = useState(0);
 
+  // Leaderboard State
+  const [topUsers, setTopUsers] = useState<TopUser[]>([]);
+
+  useEffect(() => {
+    // Fetch Top 5 Users dari API Trending
+    fetch("/api/public/trending")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.users && Array.isArray(data.users)) {
+          setTopUsers(data.users.slice(0, 5));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const activePack = GAME_PACKS.find((p) => p.id === selectedPackId) || GAME_PACKS[0];
   const activeQuestions = activePack.questions[selectedLevel];
   const currentQ = activeQuestions[currentIdx];
@@ -961,6 +990,19 @@ export default function GamePage() {
       setSelectedOption(null);
     } else {
       setGameState("results");
+      // Simpan poin ke database Supabase jika user sedang login
+      if (score > 0) {
+        fetch("/api/public/contribute", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            type: "game_score",
+            score_earned: score,
+            pack_title: activePack.title,
+            level: selectedLevel,
+          }),
+        }).catch(() => {});
+      }
     }
   }
 
@@ -971,9 +1013,9 @@ export default function GamePage() {
 
   return (
     <main className="min-h-screen bg-[#0a0a0f] text-white p-4 md:p-10 font-sans selection:bg-purple-500 selection:text-white">
-      <div className="max-w-5xl mx-auto space-y-8">
+      <div className="max-w-6xl mx-auto space-y-8">
 
-        {/* ── TOP NAVIGATION HEADER (CTA Back Context Sensitive) ── */}
+        {/* ── TOP NAVIGATION HEADER ── */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b border-[#1f2130]">
           <div className="space-y-1">
             {gameState === "menu" ? (
@@ -1016,6 +1058,7 @@ export default function GamePage() {
         {/* ── STATE 1: MENU UTAMA GAME ── */}
         {gameState === "menu" && (
           <div className="space-y-8">
+            {/* GRID DUA BARIS KARTU GAME RESMI */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
               {/* CARD 1: Kuis Latihan Aksara */}
@@ -1164,6 +1207,115 @@ export default function GamePage() {
               </div>
 
             </div>
+
+            {/* WIDGET LEADERBOARD REALTIME TOP 5 USER PRO GAME */}
+            <div className="bg-[#14151f] border border-[#262838] rounded-3xl p-6 space-y-4 shadow-xl">
+              <div className="flex items-center justify-between border-b border-[#232536] pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
+                    <Crown className="w-5 h-5 animate-pulse" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-white">Leaderboard Top 5 User Pro Game</h3>
+                    <p className="text-xs text-gray-400">Peringkat kontributor & pemain game budaya teratas (Realtime Data)</p>
+                  </div>
+                </div>
+                <span className="text-[11px] font-bold text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
+                  🏆 Top 5 Pro
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                {topUsers.map((u, i) => (
+                  <div
+                    key={u.id || i}
+                    className="bg-[#191b28] border border-[#2a2c40] rounded-2xl p-4 flex flex-col items-center text-center space-y-2 relative overflow-hidden"
+                  >
+                    {/* Badge Rank */}
+                    <div className="absolute top-2 left-2">
+                      {i === 0 ? (
+                        <Crown className="w-4 h-4 text-amber-400" />
+                      ) : i === 1 ? (
+                        <Medal className="w-4 h-4 text-slate-300" />
+                      ) : i === 2 ? (
+                        <Medal className="w-4 h-4 text-amber-600" />
+                      ) : (
+                        <span className="text-[10px] font-bold text-gray-400">#{i + 1}</span>
+                      )}
+                    </div>
+
+                    <div className="w-12 h-12 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center font-bold text-purple-300 text-sm overflow-hidden mt-1">
+                      {u.avatar_url ? (
+                        <img src={u.avatar_url} alt={u.display_name} className="w-full h-full object-cover" />
+                      ) : (
+                        u.display_name?.slice(0, 2).toUpperCase() || "US"
+                      )}
+                    </div>
+
+                    <div className="w-full">
+                      <p className="text-xs font-bold text-white truncate">{u.display_name || "Pengguna Mongondow"}</p>
+                      <p className="text-[10px] text-amber-400 font-mono font-bold mt-0.5">
+                        {u.mongondow_score || 100} Pts
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* BARIS PERMAINAN EDUKATIF HIBURAN TAMBAHAN */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+              {/* GAME HASIL KARTU MEMORI */}
+              <div className="bg-[#14151f] border border-[#262838] rounded-3xl p-6 space-y-4 shadow-xl">
+                <div className="flex items-center justify-between">
+                  <div className="p-3 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400">
+                    <Layers className="w-6 h-6" />
+                  </div>
+                  <span className="text-[10px] font-bold px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/30 uppercase">
+                    Game Memori
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-base font-bold text-white">Mongondow Word Match (Pencocokan Kartu)</h3>
+                  <p className="text-xs text-gray-400 leading-relaxed">
+                    Game memori interaktif mencocokkan pasangan kata Mongondow (*Tubig*, *Boluya*, *Sina*) dengan arti Indonesianya.
+                  </p>
+                </div>
+                <Link
+                  href="/aksara-mongondow?tab=quiz"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-all shadow-md shadow-blue-600/20 w-full justify-center"
+                >
+                  <span>Mainkan Pencocokan Kartu</span>
+                  <Sparkles className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+
+              {/* GAME SUSUN KALIMAT ADAT */}
+              <div className="bg-[#14151f] border border-[#262838] rounded-3xl p-6 space-y-4 shadow-xl">
+                <div className="flex items-center justify-between">
+                  <div className="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                    <Puzzle className="w-6 h-6" />
+                  </div>
+                  <span className="text-[10px] font-bold px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 uppercase">
+                    Susun Kalimat
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  <h3 className="text-base font-bold text-white">Sentence Builder (Susun Kalimat Adat)</h3>
+                  <p className="text-xs text-gray-400 leading-relaxed">
+                    Game menyusun balok kata acak menjadi struktur 1 kalimat falsafah adat Mongondow yang utuh dan benar.
+                  </p>
+                </div>
+                <button
+                  onClick={() => startQuiz(1, "hard")}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs transition-all shadow-md shadow-amber-600/20 w-full justify-center"
+                >
+                  <span>Mainkan Susun Kalimat Adat</span>
+                  <Sparkles className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
           </div>
         )}
 
