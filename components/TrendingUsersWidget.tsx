@@ -30,7 +30,11 @@ export default function TrendingUsersWidget() {
           <li key={u.id} className="flex items-center gap-2 text-sm">
             <span className="text-xs font-mono text-bento-text-secondary w-4 shrink-0">{i + 1}</span>
             {u.avatar_url ? (
-              <img src={u.avatar_url} alt="" className="h-6 w-6 rounded-full object-cover shrink-0" />
+              <img
+                src={u.avatar_url.includes("googleusercontent.com") && u.avatar_url.includes("=s96-c") ? u.avatar_url.replace("=s96-c", "=s400-c") : u.avatar_url}
+                alt=""
+                className="h-6 w-6 rounded-full object-cover shrink-0 border border-purple-500/20"
+              />
             ) : (
               <div className="h-6 w-6 rounded-full bg-bento-accent-muted text-bento-accent flex items-center justify-center text-[10px] font-semibold shrink-0">
                 {(u.display_name ?? "?").substring(0, 1).toUpperCase()}

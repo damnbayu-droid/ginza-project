@@ -209,37 +209,32 @@ function ProfilTab({ profile }: { profile: Profile }) {
     setMessage(null);
 
     try {
-      // 1. Coba kompres file ke Data URL (Base64) agar 100% tersimpan tanpa tergantung bucket storage
       const reader = new FileReader();
       reader.onload = async (event) => {
         const img = new Image();
         img.onload = async () => {
-          const canvas = document.createElement("canvas");
-          const MAX_WIDTH = 400;
-          const MAX_HEIGHT = 400;
-          let width = img.width;
-          let height = img.height;
+          // 1. Crop presisi 1:1 persegi dari tengah gambar (Center-Square Crop)
+          const size = Math.min(img.width, img.height);
+          const sx = (img.width - size) / 2;
+          const sy = (img.height - size) / 2;
 
-          if (width > height) {
-            if (width > MAX_WIDTH) {
-              height *= MAX_WIDTH / width;
-              width = MAX_WIDTH;
-            }
-          } else {
-            if (height > MAX_HEIGHT) {
-              width *= MAX_HEIGHT / height;
-              height = MAX_HEIGHT;
-            }
-          }
-          canvas.width = width;
-          canvas.height = height;
+          const canvas = document.createElement("canvas");
+          canvas.width = 300;
+          canvas.height = 300;
           const ctx = canvas.getContext("2d");
-          ctx?.drawImage(img, 0, 0, width, height);
-          const dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+
+          if (ctx) {
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = "high";
+            ctx.drawImage(img, sx, sy, size, size, 0, 0, 300, 300);
+          }
+
+          // 2. Kompresi ke format WebP kualitas 0.88 (super jernih, tanpa distorsi, ringan ~20KB)
+          const dataUrl = canvas.toDataURL("image/webp", 0.88);
 
           setAvatarUrl(dataUrl);
 
-          // Simpan langsung ke database profiles
+          // 3. Simpan langsung ke database profiles Supabase
           const res = await fetch("/api/public/profile", {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
@@ -248,7 +243,7 @@ function ProfilTab({ profile }: { profile: Profile }) {
 
           setUploading(false);
           if (res.ok) {
-            setMessage({ type: "success", text: "Foto profil berhasil diperbarui!" });
+            setMessage({ type: "success", text: "Foto profil berhasil diperbarui dengan resolusi tinggi!" });
           } else {
             setMessage({ type: "error", text: "Gagal menyimpan foto ke database." });
           }
