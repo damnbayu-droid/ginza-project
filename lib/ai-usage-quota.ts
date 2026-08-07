@@ -1,25 +1,15 @@
 import { supabaseAdmin } from "@/lib/supabase";
+import crypto from "crypto";
 
 /**
  * Kontrol pemakaian AI: batas kecil utk tamu (belum login), batas harian utk
  * User biasa, tanpa batas utk verifikator & admin. Dipakai bersama oleh
  * app/api/homepage/chat/route.ts (chat Bogani AI) dan
- * app/api/kamus/ai-define/route.ts (tombol AI definisi Kamus) -- KEDUANYA
- * menarik dari jatah yg SAMA (satu pool per tamu/user, bukan per-fitur),
- * supaya kontrolnya benar-benar mencerminkan total pemakaian AI, bukan
- * cuma satu fitur.
+ * app/api/kamus/ai-define/route.ts (tombol AI definisi Kamus).
  *
- * Kenapa dua mekanisme count berbeda:
- * - Tamu: belum ada user_id, jadi dilacak lewat cookie anonim (guest_id)
- *   + disimpan di tabel public.guest_usage. TIDAK PERNAH reset otomatis --
- *   sekali GUEST_LIMIT habis, wajib login/daftar (sesuai keputusan Boss
- *   Bayu: bukan jatah harian, tapi jatah "uji coba" sekali per browser).
- * - User biasa: sudah punya user_id & sudah tercatat di public.token_usage
- *   tiap kali AI benar-benar dipanggil (lihat logChatTurn di homepage/chat
- *   & insert token_usage di kamus/ai-define) -- jadi TIDAK perlu tabel
- *   counter terpisah, tinggal hitung baris token_usage user itu dalam 24
- *   jam terakhir (rolling window, bukan reset jam 00:00 supaya tidak bisa
- *   "disiasati" dgn menunggu tengah malam).
+ * Kebal Refresh, Kebal Incognito, & Kebal Hapus Storage:
+ * Identitas tamu diikat pada kombinasi Cookie HttpOnly (mp_guest_id) + SHA256 Hash IP Address.
+ * Sekali jatah 5 pertanyaan habis, user TIDAK BISA mereset walau buka Incognito / hapus cookie.
  */
 
 export const GUEST_QUESTION_LIMIT = 5;
@@ -30,16 +20,16 @@ const UNLIMITED_ROLES = new Set(["admin", "verificator", "developer", "vip", "ow
 export interface QuotaCheckResult {
   allowed: boolean;
   remaining: number;
-  /** Pesan siap-tampil kalau allowed=false. */
   message?: string;
 }
 
-/**
- * Ambil guest_id dari cookie request kalau ada, atau buat baru (UUID) kalau
- * belum ada. TIDAK menyentuh database -- murni baca/generate id saja.
- * Pemanggil wajib memasang cookie ini ke response lewat setGuestCookieHeader()
- * supaya id yg sama dipakai lagi di request berikutnya.
- */
+/** Hash IP address dengan SHA256 untuk privasi & konsistensi pengikatan server-side */
+export function hashIpAddress(ip: string): string {
+  const cleanIp = ip.split(",")[0].trim() || "127.0.0.1";
+  return crypto.createHash("sha256").update(`mongondow_salt_${cleanIp}`).digest("hex").slice(0, 32);
+}
+
+/** Ambil atau generate guest_id dari cookie. */
 export function getOrCreateGuestId(cookieHeader: string | null): { guestId: string; isNew: boolean } {
   if (cookieHeader) {
     const match = cookieHeader.match(new RegExp(`${GUEST_COOKIE_NAME}=([0-9a-fA-F-]{36})`));
@@ -48,7 +38,7 @@ export function getOrCreateGuestId(cookieHeader: string | null): { guestId: stri
   return { guestId: crypto.randomUUID(), isNew: true };
 }
 
-/** Tempel/refresh cookie guest_id (1 tahun) ke response apa pun (Response/NextResponse). */
+/** Tempel/refresh cookie guest_id (1 tahun) ke response (Response/NextResponse). */
 export function setGuestCookieHeader(res: Response, guestId: string): void {
   const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
   res.headers.append(
@@ -58,50 +48,79 @@ export function setGuestCookieHeader(res: Response, guestId: string): void {
 }
 
 /**
- * Cek (read-only, TIDAK menambah hitungan) apakah tamu ini masih boleh
- * bertanya ke AI. Panggil SEBELUM memanggil provider AI supaya tamu yg
- * sudah habis jatah tidak membebani biaya provider sama sekali.
+ * Cek kuota tamu berdasarkan guest_id DAN IP Hash (server-side).
+ * Kebal Incognito & Hapus Cookie karena jika cookie hilang, server tetap mengenali IP Hash-nya!
  */
-export async function checkGuestQuota(guestId: string): Promise<QuotaCheckResult> {
+export async function checkGuestQuota(guestId: string, rawIp: string = "127.0.0.1"): Promise<QuotaCheckResult> {
   if (!supabaseAdmin) return { allowed: true, remaining: GUEST_QUESTION_LIMIT };
-  const { data } = await supabaseAdmin
-    .from("guest_usage")
-    .select("question_count")
-    .eq("guest_id", guestId)
-    .maybeSingle();
+  const ipHash = hashIpAddress(rawIp);
 
-  const used = data?.question_count ?? 0;
-  if (used >= GUEST_QUESTION_LIMIT) {
-    return {
-      allowed: false,
-      remaining: 0,
-      message: `Anda sudah memakai ${GUEST_QUESTION_LIMIT} pertanyaan gratis sbg tamu. Silakan masuk atau buat akun gratis utk terus memakai Bogani AI.`,
-    };
-  }
-  return { allowed: true, remaining: GUEST_QUESTION_LIMIT - used };
-}
-
-/**
- * Tambah hitungan tamu +1. Panggil HANYA SETELAH AI benar-benar berhasil
- * menjawab (bukan sebelum, & bukan kalau provider error) -- supaya tamu
- * tidak kehilangan jatah gara-gara kegagalan yg bukan salah mereka.
- */
-export async function incrementGuestQuota(guestId: string, ip: string): Promise<void> {
-  if (!supabaseAdmin) return;
   try {
-    const { data: existing } = await supabaseAdmin
+    // 1. Cek berdasarkan guest_id terlebih dahulu
+    const { data: byGuestId } = await supabaseAdmin
       .from("guest_usage")
       .select("question_count")
       .eq("guest_id", guestId)
       .maybeSingle();
 
+    let used = byGuestId?.question_count ?? 0;
+
+    // 2. Jika cookie baru/hilang (misal di Incognito), cek fallback berdasarkan ip_address
+    if (used === 0) {
+      const { data: byIp } = await supabaseAdmin
+        .from("guest_usage")
+        .select("question_count")
+        .eq("ip_address", ipHash)
+        .maybeSingle();
+      if (byIp) {
+        used = byIp.question_count ?? 0;
+      }
+    }
+
+    if (used >= GUEST_QUESTION_LIMIT) {
+      return {
+        allowed: false,
+        remaining: 0,
+        message: `Anda sudah menggunakan jatah ${GUEST_QUESTION_LIMIT} pertanyaan gratis sebagai tamu. Silakan masuk atau buat akun gratis untuk terus menggunakan Bogani AI.`,
+      };
+    }
+    return { allowed: true, remaining: GUEST_QUESTION_LIMIT - used };
+  } catch (err) {
+    console.warn("[ai-usage-quota] Gagal memeriksa kuota tamu:", err);
+    return { allowed: true, remaining: GUEST_QUESTION_LIMIT };
+  }
+}
+
+/**
+ * Tambah hitungan tamu +1 setelah AI berhasil menjawab.
+ * Diikat pada guest_id DAN IP Hash agar tidak bisa disiasati.
+ */
+export async function incrementGuestQuota(guestId: string, rawIp: string): Promise<void> {
+  if (!supabaseAdmin) return;
+  const ipHash = hashIpAddress(rawIp);
+
+  try {
+    const { data: existing } = await supabaseAdmin
+      .from("guest_usage")
+      .select("question_count, guest_id")
+      .or(`guest_id.eq.${guestId},ip_address.eq.${ipHash}`)
+      .maybeSingle();
+
     if (!existing) {
-      await supabaseAdmin.from("guest_usage").insert({ guest_id: guestId, ip_address: ip, question_count: 1 });
+      await supabaseAdmin.from("guest_usage").insert({
+        guest_id: guestId,
+        ip_address: ipHash,
+        question_count: 1
+      });
     } else {
       await supabaseAdmin
         .from("guest_usage")
-        .update({ question_count: existing.question_count + 1, ip_address: ip, last_seen_at: new Date().toISOString() })
-        .eq("guest_id", guestId);
+        .update({
+          question_count: existing.question_count + 1,
+          ip_address: ipHash,
+          last_seen_at: new Date().toISOString()
+        })
+        .eq("guest_id", existing.guest_id);
     }
   } catch (e) {
     console.warn("[ai-usage-quota] Gagal mencatat pemakaian tamu:", e);
@@ -109,10 +128,7 @@ export async function incrementGuestQuota(guestId: string, ip: string): Promise<
 }
 
 /**
- * Cek (read-only) apakah User (sudah login) masih di bawah batas harian.
- * Verifikator & admin selalu allowed (unlimited). Tidak perlu fungsi
- * "increment" terpisah -- baris token_usage yg sudah dicatat tiap giliran
- * AI (lihat logChatTurn & kamus/ai-define) SUDAH berfungsi sbg hitungannya.
+ * Cek kuota User (sudah login) berdasarkan 24 jam rolling window.
  */
 export async function checkUserQuota(userId: string, role: string, userEmail?: string): Promise<QuotaCheckResult> {
   if (UNLIMITED_ROLES.has(role) || userEmail === "developer@mongondowpedia.com" || userId === "developer@mongondowpedia.com") {
@@ -132,7 +148,7 @@ export async function checkUserQuota(userId: string, role: string, userEmail?: s
     return {
       allowed: false,
       remaining: 0,
-      message: `Anda sudah memakai jatah ${USER_DAILY_QUESTION_LIMIT} pertanyaan AI utk 24 jam terakhir. Jatah akan kembali bertahap seiring waktu -- coba lagi nanti.`,
+      message: `Anda sudah memakai jatah ${USER_DAILY_QUESTION_LIMIT} pertanyaan AI untuk 24 jam terakhir. Jatah akan kembali bertahap seiring waktu.`,
     };
   }
   return { allowed: true, remaining: USER_DAILY_QUESTION_LIMIT - used };

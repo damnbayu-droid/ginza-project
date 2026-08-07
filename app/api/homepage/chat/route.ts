@@ -442,7 +442,7 @@ export async function POST(req: NextRequest) {
   const guestId = profile ? null : getOrCreateGuestId(req.headers.get("cookie")).guestId;
   const quota = profile
     ? await checkUserQuota(profile.id, profile.role)
-    : await checkGuestQuota(guestId!);
+    : await checkGuestQuota(guestId!, ip);
 
   if (!quota.allowed) {
     const blocked = NextResponse.json(
