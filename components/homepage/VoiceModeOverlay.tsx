@@ -32,6 +32,11 @@ export default function VoiceModeOverlay({
   const analyserRef = useRef<AnalyserNode | null>(null);
   const micStreamRef = useRef<MediaStream | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  // transcriptRef: menyimpan nilai transcript terbaru secara sinkron.
+  // Dibutuhkan karena di Android, recognition.onend bisa dipanggil SEBELUM
+  // React state transcript selesai di-update, sehingga membaca state di onend
+  // selalu dapat string kosong dan AI tidak pernah dipanggil.
+  const transcriptRef = useRef("");
   // updateVolume() hidup lintas render di dalam requestAnimationFrame loop,
   // jadi butuh ref (bukan langsung baca state `status`) supaya nilainya
   // selalu yang terbaru, tidak stale-closure ke status saat loop dibuat.
@@ -267,6 +272,10 @@ export default function VoiceModeOverlay({
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         currentText += event.results[i][0].transcript;
       }
+      // Update ref TERLEBIH DAHULU (sinkron) supaya onend selalu dapat nilai terbaru.
+      // State update (setTranscript) bersifat async di React, jadi tidak bisa
+      // diandalkan di callback onend terutama di Android Chrome.
+      transcriptRef.current = currentText;
       setTranscript(currentText);
     };
 
@@ -286,18 +295,20 @@ export default function VoiceModeOverlay({
             : "Speech recognition error, please try again."
         );
       }
+      transcriptRef.current = "";
       setStatus('idle');
     };
 
-    recognition.onend = async () => {
-      setTranscript((current) => {
-        if (current && current.trim().length > 0) {
-          handleProcessVoiceInput(current);
-        } else {
-          setStatus('idle');
-        }
-        return current;
-      });
+    recognition.onend = () => {
+      // Baca dari ref (bukan state) -- ref selalu sinkron bahkan di Android
+      // di mana onend bisa menyalip antrian update state React.
+      const captured = transcriptRef.current.trim();
+      transcriptRef.current = "";
+      if (captured.length > 0) {
+        handleProcessVoiceInput(captured);
+      } else {
+        setStatus('idle');
+      }
     };
 
     try {
