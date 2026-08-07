@@ -23,7 +23,9 @@ import {
   BookOpen,
   Database,
   Type,
-  ScrollText
+  ScrollText,
+  PenTool,
+  Gamepad2
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -215,6 +217,29 @@ export default function ChatSidebar({
             >
               <ScrollText className="w-4 h-4 text-amber-400 shrink-0" />
               <span className="truncate">Aksara</span>
+            </Link>
+          </div>
+
+          {/* Navigation Items: Latihan & Game */}
+          <div className="grid grid-cols-2 gap-2">
+            <Link
+              href="/aksara-mongondow?tab=tracing"
+              onClick={onCloseMobile}
+              className="py-2 px-2.5 rounded-xl bg-[#212121] hover:bg-[#2b2b2b] text-gray-300 hover:text-white border border-[#333] text-xs font-semibold flex items-center gap-2 transition-all group"
+              title="Buka Studio Latihan Menulis Aksara Mongondow"
+            >
+              <PenTool className="w-4 h-4 text-emerald-400 shrink-0 group-hover:scale-110 transition-transform" />
+              <span className="truncate">Latihan</span>
+            </Link>
+
+            <Link
+              href="/game"
+              onClick={onCloseMobile}
+              className="py-2 px-2.5 rounded-xl bg-[#212121] hover:bg-[#2b2b2b] text-gray-300 hover:text-white border border-[#333] text-xs font-semibold flex items-center gap-2 transition-all group"
+              title="Buka Arena Game & Kuis MongondowPedia"
+            >
+              <Gamepad2 className="w-4 h-4 text-purple-400 shrink-0 group-hover:scale-110 transition-transform" />
+              <span className="truncate">Game</span>
             </Link>
           </div>
         </div>
