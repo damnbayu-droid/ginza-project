@@ -29,7 +29,12 @@ import {
   Star,
   FileText,
   Upload,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Eye,
+  ThumbsUp,
+  ThumbsDown,
+  ExternalLink,
+  BarChart2
 } from "lucide-react";
 import type { Profile } from "@/lib/ginza-db";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser-auth";
@@ -1261,8 +1266,11 @@ function PrivasiTab({ profile }: { profile: Profile }) {
   );
 }
 
-// ── Tab 9: Tulis & Kelola Artikel Publik (WebP Image Compressor) ──────
+// ── Tab 9: Tulis & Kelola Artikel Publik (WebP Image Compressor & Statistik) ──────
 function ArtikelTab() {
+  const [subTab, setSubTab] = useState<"write" | "my_articles">("write");
+
+  // Form State
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("Pengetahuan & Sejarah");
   const [region, setRegion] = useState("Umum");
@@ -1270,9 +1278,31 @@ function ArtikelTab() {
   const [content, setContent] = useState("");
   const [coverImage, setCoverImage] = useState("");
   const [compressing, setCompressing] = useState(false);
-
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string; slug?: string } | null>(null);
+
+  // My Articles Statistics List State
+  const [myArticles, setMyArticles] = useState<any[]>([]);
+  const [loadingArticles, setLoadingArticles] = useState(false);
+
+  useEffect(() => {
+    if (subTab === "my_articles") {
+      fetchMyArticles();
+    }
+  }, [subTab]);
+
+  async function fetchMyArticles() {
+    setLoadingArticles(true);
+    try {
+      const res = await fetch("/api/public/user-articles");
+      const data = await res.json();
+      setMyArticles(data.articles || []);
+    } catch {
+      setMyArticles([]);
+    } finally {
+      setLoadingArticles(false);
+    }
+  }
 
   // Kompresi Gambar Otomatis ke Format WebP (Canvas API)
   function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -1300,7 +1330,6 @@ function ArtikelTab() {
         const ctx = canvas.getContext("2d");
         ctx?.drawImage(img, 0, 0, width, height);
 
-        // Kompresi ke format image/webp dengan kualitas 0.82 (size jauh lebih kecil & jernih)
         const webpBase64 = canvas.toDataURL("image/webp", 0.82);
         setCoverImage(webpBase64);
         setCompressing(false);
@@ -1357,136 +1386,257 @@ function ArtikelTab() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-bold text-bento-text-primary flex items-center gap-2">
-          <FileText className="h-5 w-5 text-purple-400" />
-          <span>Tulis Artikel & Publikasi Pengguna</span>
-        </h2>
-        <p className="text-xs text-bento-text-secondary mt-1">
-          Bagikan artikel pengetahuan, opini, sejarah, budaya, atau naskah kajian Anda. Artikel akan langsung terpublikasi secara publik di portal <code className="text-purple-400">/artikel</code>.
-        </p>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-bento-border pb-4">
+        <div>
+          <h2 className="text-xl font-bold text-bento-text-primary flex items-center gap-2">
+            <FileText className="h-5 w-5 text-purple-400" />
+            <span>Tulis & Kelola Artikel Publik</span>
+          </h2>
+          <p className="text-xs text-bento-text-secondary mt-0.5">
+            Publikasikan wawasan Anda dan pantau statistik serta peringkat FYP artikel Anda secara realtime.
+          </p>
+        </div>
+
+        {/* Sub-Tab Navigation */}
+        <div className="flex items-center gap-2 bg-bento-surface p-1 rounded-xl border border-bento-border">
+          <button
+            onClick={() => setSubTab("write")}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              subTab === "write" ? "bg-purple-600 text-white shadow-md" : "text-bento-text-secondary hover:text-white"
+            }`}
+          >
+            ✍️ Tulis Artikel Baru
+          </button>
+          <button
+            onClick={() => setSubTab("my_articles")}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              subTab === "my_articles" ? "bg-purple-600 text-white shadow-md" : "text-bento-text-secondary hover:text-white"
+            }`}
+          >
+            📊 Artikel Saya & Statistik
+          </button>
+        </div>
       </div>
 
-      {message && (
-        <div
-          className={`p-4 rounded-2xl border text-xs font-semibold flex items-center justify-between gap-3 ${
-            message.type === "success"
-              ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
-              : "bg-red-500/10 border-red-500/20 text-red-400"
-          }`}
-        >
-          <span>{message.text}</span>
-          {message.slug && (
-            <a
-              href={`/artikel/${message.slug}`}
-              target="_blank"
-              rel="noreferrer"
-              className="px-3 py-1.5 bg-purple-600 text-white font-bold text-xs rounded-xl shadow-md"
+      {subTab === "write" ? (
+        <>
+          {message && (
+            <div
+              className={`p-4 rounded-2xl border text-xs font-semibold flex items-center justify-between gap-3 ${
+                message.type === "success"
+                  ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+                  : "bg-red-500/10 border-red-500/20 text-red-400"
+              }`}
             >
-              Lihat Artikel ➔
-            </a>
+              <span>{message.text}</span>
+              {message.slug && (
+                <a
+                  href={`/artikel/${message.slug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3 py-1.5 bg-purple-600 text-white font-bold text-xs rounded-xl shadow-md"
+                >
+                  Lihat Artikel ➔
+                </a>
+              )}
+            </div>
           )}
-        </div>
-      )}
 
-      <form onSubmit={handleSubmit} className="bg-bento-surface border border-bento-border rounded-2xl p-6 space-y-5">
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold text-bento-text-primary">Judul Artikel *</label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Contoh: Sejarah Singkat Kerajaan Bolaang Mongondow Abad 18"
-            className="w-full bg-bento-bg border border-bento-border text-xs text-bento-text-primary placeholder-bento-text-secondary p-3 rounded-xl focus:outline-none focus:border-purple-500"
-            required
-          />
-        </div>
+          <form onSubmit={handleSubmit} className="bg-bento-surface border border-bento-border rounded-2xl p-6 space-y-5">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-bento-text-primary">Judul Artikel *</label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Contoh: Sejarah Singkat Kerajaan Bolaang Mongondow Abad 18"
+                className="w-full bg-bento-bg border border-bento-border text-xs text-bento-text-primary placeholder-bento-text-secondary p-3 rounded-xl focus:outline-none focus:border-purple-500"
+                required
+              />
+            </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-bento-text-primary">Kategori Artikel</label>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full bg-bento-bg border border-bento-border text-xs text-bento-text-primary p-3 rounded-xl focus:outline-none focus:border-purple-500"
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-bento-text-primary">Kategori Artikel</label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full bg-bento-bg border border-bento-border text-xs text-bento-text-primary p-3 rounded-xl focus:outline-none focus:border-purple-500"
+                >
+                  <option value="Pengetahuan & Sejarah">📚 Pengetahuan & Sejarah</option>
+                  <option value="Musik, Seni & Budaya">🎵 Musik, Seni & Budaya</option>
+                  <option value="Teori & Tesis">🎓 Teori & Tesis</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-bento-text-primary">Wilayah Daerah</label>
+                <select
+                  value={region}
+                  onChange={(e) => setRegion(e.target.value)}
+                  className="w-full bg-bento-bg border border-bento-border text-xs text-bento-text-primary p-3 rounded-xl focus:outline-none focus:border-purple-500"
+                >
+                  <option value="Umum">📍 Umum / Lintas Daerah</option>
+                  <option value="Boltim">📍 Bolaang Mongondow Timur (Boltim)</option>
+                  <option value="Bolsel">📍 Bolaang Mongondow Selatan (Bolsel)</option>
+                  <option value="Bolmut">📍 Bolaang Mongondow Utara (Bolmut)</option>
+                  <option value="Bolmong">📍 Bolaang Mongondow (Bolmong)</option>
+                  <option value="Kotamobagu">📍 Kota Kotamobagu</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-bento-text-primary">Gambar Sampul (Otomatis Kompresi WebP)</label>
+              <div className="flex items-center gap-3">
+                <label className="cursor-pointer px-4 py-2.5 bg-bento-bg border border-bento-border hover:border-purple-500 rounded-xl text-xs font-bold text-purple-300 flex items-center gap-2 transition-all">
+                  <Upload className="h-4 w-4" />
+                  <span>{compressing ? "Mengompresi Gambar..." : "Pilih File Gambar..."}</span>
+                  <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                </label>
+                {coverImage && <span className="text-[11px] text-emerald-400 font-semibold">✓ Gambar terkompresi ke WebP</span>}
+              </div>
+
+              {coverImage && (
+                <div className="mt-2 h-32 w-48 rounded-xl overflow-hidden border border-bento-border bg-bento-bg">
+                  <img src={coverImage} alt="Cover Preview" className="h-full w-full object-cover" />
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-bento-text-primary">Ringkasan Singkat (Excerpt)</label>
+              <input
+                type="text"
+                value={excerpt}
+                onChange={(e) => setExcerpt(e.target.value)}
+                placeholder="Ringkasan 1-2 kalimat gambaran umum artikel..."
+                className="w-full bg-bento-bg border border-bento-border text-xs text-bento-text-primary placeholder-bento-text-secondary p-3 rounded-xl focus:outline-none focus:border-purple-500"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-bento-text-primary">Isi Konten Artikel * (Mendukung Markdown)</label>
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                rows={10}
+                placeholder="Tuliskan isi artikel Anda secara lengkap di sini..."
+                className="w-full bg-bento-bg border border-bento-border text-xs text-bento-text-primary placeholder-bento-text-secondary p-3 rounded-xl focus:outline-none focus:border-purple-500 font-mono leading-relaxed"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={submitting || compressing}
+              className="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-lg shadow-purple-600/25 transition-all disabled:opacity-50"
             >
-              <option value="Pengetahuan & Sejarah">📚 Pengetahuan & Sejarah</option>
-              <option value="Musik, Seni & Budaya">🎵 Musik, Seni & Budaya</option>
-              <option value="Teori & Tesis">🎓 Teori & Tesis</option>
-            </select>
-          </div>
+              {submitting ? "Mempublikasikan Artikel..." : "🚀 Publikasikan Artikel Sekarang"}
+            </button>
+          </form>
+        </>
+      ) : (
+        /* Listed Articles & Statistics View */
+        <div className="space-y-4">
+          {loadingArticles ? (
+            <div className="p-8 text-center text-xs text-bento-text-secondary">Memuat daftar artikel Anda...</div>
+          ) : myArticles.length === 0 ? (
+            <div className="p-8 text-center text-xs text-bento-text-secondary bg-bento-surface rounded-2xl border border-bento-border space-y-2">
+              <FileText className="w-8 h-8 text-gray-500 mx-auto" />
+              <p className="font-bold text-bento-text-primary">Anda Belum Punya Artikel Dipublikasikan</p>
+              <button
+                onClick={() => setSubTab("write")}
+                className="px-4 py-2 bg-purple-600 text-white font-bold text-xs rounded-xl shadow-md mt-2"
+              >
+                ✍️ Tulis Artikel Pertama Anda
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4">
+              {myArticles.map((art) => (
+                <div
+                  key={art.id}
+                  className="bg-bento-surface border border-bento-border rounded-2xl p-5 space-y-4 hover:border-purple-500/40 transition-all shadow-md"
+                >
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-bento-border pb-3">
+                    <div className="space-y-1 min-w-0">
+                      <a
+                        href={`/artikel/${art.slug}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-bold text-sm text-bento-text-primary hover:text-purple-400 flex items-center gap-1.5 truncate"
+                      >
+                        <span>{art.title}</span>
+                        <ExternalLink className="w-3.5 h-3.5 shrink-0 text-bento-text-secondary" />
+                      </a>
+                      <p className="text-[11px] text-bento-text-secondary">
+                        📍 {art.region} · 📚 {art.category} · Diposting:{" "}
+                        {new Date(art.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+                      </p>
+                    </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-bento-text-primary">Wilayah Daerah</label>
-            <select
-              value={region}
-              onChange={(e) => setRegion(e.target.value)}
-              className="w-full bg-bento-bg border border-bento-border text-xs text-bento-text-primary p-3 rounded-xl focus:outline-none focus:border-purple-500"
-            >
-              <option value="Umum">📍 Umum / Lintas Daerah</option>
-              <option value="Boltim">📍 Bolaang Mongondow Timur (Boltim)</option>
-              <option value="Bolsel">📍 Bolaang Mongondow Selatan (Bolsel)</option>
-              <option value="Bolmut">📍 Bolaang Mongondow Utara (Bolmut)</option>
-              <option value="Bolmong">📍 Bolaang Mongondow (Bolmong)</option>
-              <option value="Kotamobagu">📍 Kota Kotamobagu</option>
-            </select>
-          </div>
-        </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 text-xs font-bold">
+                        🏆 #{art.fyp_rank} FYP
+                      </span>
+                      <span
+                        className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
+                          art.status === "published"
+                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                            : art.status === "warning"
+                            ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                            : "bg-red-500/10 text-red-400 border border-red-500/20"
+                        }`}
+                      >
+                        {art.status}
+                      </span>
+                    </div>
+                  </div>
 
-        {/* Gambar Sampul (Auto WebP Compressor) */}
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold text-bento-text-primary">Gambar Sampul (Otomatis Kompresi WebP)</label>
-          <div className="flex items-center gap-3">
-            <label className="cursor-pointer px-4 py-2.5 bg-bento-bg border border-bento-border hover:border-purple-500 rounded-xl text-xs font-bold text-purple-300 flex items-center gap-2 transition-all">
-              <Upload className="h-4 w-4" />
-              <span>{compressing ? "Mengompresi Gambar..." : "Pilih File Gambar..."}</span>
-              <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-            </label>
-            {coverImage && (
-              <span className="text-[11px] text-emerald-400 font-semibold flex items-center gap-1">
-                ✓ Gambar terkompresi ke WebP
-              </span>
-            )}
-          </div>
+                  {/* Complete Statistics Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 text-xs font-mono">
+                    <div className="bg-bento-bg p-3 rounded-xl border border-bento-border text-center space-y-1">
+                      <p className="text-[10px] text-bento-text-secondary uppercase">Views</p>
+                      <p className="text-sm font-bold text-blue-400 flex items-center justify-center gap-1">
+                        <Eye className="w-3.5 h-3.5" /> {art.views_count}
+                      </p>
+                    </div>
 
-          {coverImage && (
-            <div className="mt-2 h-32 w-48 rounded-xl overflow-hidden border border-bento-border bg-bento-bg">
-              <img src={coverImage} alt="Cover Preview" className="h-full w-full object-cover" />
+                    <div className="bg-bento-bg p-3 rounded-xl border border-bento-border text-center space-y-1">
+                      <p className="text-[10px] text-bento-text-secondary uppercase">Likes</p>
+                      <p className="text-sm font-bold text-emerald-400 flex items-center justify-center gap-1">
+                        <ThumbsUp className="w-3.5 h-3.5" /> {art.likes_count}
+                      </p>
+                    </div>
+
+                    <div className="bg-bento-bg p-3 rounded-xl border border-bento-border text-center space-y-1">
+                      <p className="text-[10px] text-bento-text-secondary uppercase">Dislikes</p>
+                      <p className="text-sm font-bold text-red-400 flex items-center justify-center gap-1">
+                        <ThumbsDown className="w-3.5 h-3.5" /> {art.dislikes_count}
+                      </p>
+                    </div>
+
+                    <div className="bg-bento-bg p-3 rounded-xl border border-bento-border text-center space-y-1">
+                      <p className="text-[10px] text-bento-text-secondary uppercase">Komentar</p>
+                      <p className="text-sm font-bold text-amber-400 flex items-center justify-center gap-1">
+                        💬 {art.comments_count}
+                      </p>
+                    </div>
+
+                    <div className="bg-bento-bg p-3 rounded-xl border border-bento-border text-center space-y-1 col-span-2 sm:col-span-1">
+                      <p className="text-[10px] text-bento-text-secondary uppercase">Skor FYP</p>
+                      <p className="text-sm font-bold text-purple-400 flex items-center justify-center gap-1">
+                        🔥 {art.fyp_score}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>
-
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold text-bento-text-primary">Ringkasan Singkat (Excerpt)</label>
-          <input
-            type="text"
-            value={excerpt}
-            onChange={(e) => setExcerpt(e.target.value)}
-            placeholder="Ringkasan 1-2 kalimat gambaran umum artikel..."
-            className="w-full bg-bento-bg border border-bento-border text-xs text-bento-text-primary placeholder-bento-text-secondary p-3 rounded-xl focus:outline-none focus:border-purple-500"
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold text-bento-text-primary">Isi Konten Artikel * (Mendukung Markdown)</label>
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows={10}
-            placeholder="Tuliskan isi artikel Anda secara lengkap di sini. Anda dapat menggunakan format teks tebal, poin-poin, dan paragraf..."
-            className="w-full bg-bento-bg border border-bento-border text-xs text-bento-text-primary placeholder-bento-text-secondary p-3 rounded-xl focus:outline-none focus:border-purple-500 font-mono leading-relaxed"
-            required
-          />
-        </div>
-
-        <button
-          type="submit"
-          disabled={submitting || compressing}
-          className="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-lg shadow-purple-600/25 transition-all disabled:opacity-50"
-        >
-          {submitting ? "Mempublikasikan Artikel..." : "🚀 Publikasikan Artikel Sekarang"}
-        </button>
-      </form>
+      )}
     </div>
   );
 }
