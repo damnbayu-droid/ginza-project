@@ -22,10 +22,10 @@ import { supabaseAdmin } from "@/lib/supabase";
  *   "disiasati" dgn menunggu tengah malam).
  */
 
-export const GUEST_QUESTION_LIMIT = 3;
-export const USER_DAILY_QUESTION_LIMIT = 12;
+export const GUEST_QUESTION_LIMIT = 5;
+export const USER_DAILY_QUESTION_LIMIT = 15;
 export const GUEST_COOKIE_NAME = "mp_guest_id";
-const UNLIMITED_ROLES = new Set(["admin", "verificator"]);
+const UNLIMITED_ROLES = new Set(["admin", "verificator", "developer", "vip", "owner"]);
 
 export interface QuotaCheckResult {
   allowed: boolean;
@@ -114,8 +114,10 @@ export async function incrementGuestQuota(guestId: string, ip: string): Promise<
  * "increment" terpisah -- baris token_usage yg sudah dicatat tiap giliran
  * AI (lihat logChatTurn & kamus/ai-define) SUDAH berfungsi sbg hitungannya.
  */
-export async function checkUserQuota(userId: string, role: string): Promise<QuotaCheckResult> {
-  if (UNLIMITED_ROLES.has(role)) return { allowed: true, remaining: Infinity };
+export async function checkUserQuota(userId: string, role: string, userEmail?: string): Promise<QuotaCheckResult> {
+  if (UNLIMITED_ROLES.has(role) || userEmail === "developer@mongondowpedia.com" || userId === "developer@mongondowpedia.com") {
+    return { allowed: true, remaining: Infinity };
+  }
   if (!supabaseAdmin) return { allowed: true, remaining: USER_DAILY_QUESTION_LIMIT };
 
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();

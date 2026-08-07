@@ -720,6 +720,8 @@ export async function getOverviewStats() {
     { count: totalKnowledge },
     { count: pendingContributions },
     { count: totalContributions },
+    { count: unreadMessages },
+    { count: totalMessages },
   ] = await Promise.all([
     db.from("profiles").select("*", { count: "exact", head: true }).eq("role", "user"),
     db.from("profiles").select("*", { count: "exact", head: true }).eq("role", "verificator"),
@@ -729,6 +731,8 @@ export async function getOverviewStats() {
     db.from("knowledge_articles").select("*", { count: "exact", head: true }).eq("status", "published"),
     db.from("contributions").select("*", { count: "exact", head: true }).in("status", ["pending", "quorum_reached"]),
     db.from("contributions").select("*", { count: "exact", head: true }),
+    db.from("contact_messages").select("*", { count: "exact", head: true }).eq("status", "unread"),
+    db.from("contact_messages").select("*", { count: "exact", head: true }),
   ]);
 
   return {
@@ -740,6 +744,8 @@ export async function getOverviewStats() {
     totalKnowledge: totalKnowledge ?? 0,
     pendingContributions: pendingContributions ?? 0,
     totalContributions: totalContributions ?? 0,
+    unreadMessages: unreadMessages ?? 0,
+    totalMessages: totalMessages ?? 0,
   };
 }
 
@@ -766,4 +772,66 @@ export async function saveConversation(userId: string, conversationId: string | 
   const { data, error } = await db.from("conversations").insert({ user_id: userId, title, messages }).select("id").single();
   if (error) throw error;
   return data.id as string;
+}
+
+// ── Contact Messages (Pesan Masuk & Email Forwarding) ───────────────────
+
+export interface ContactMessageRow {
+  id: string;
+  name: string;
+  email: string;
+  whatsapp: string | null;
+  message: string;
+  status: "unread" | "read" | "replied" | "archived";
+  resend_id: string | null;
+  forwarded_to: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function listContactMessages(opts: { status?: string } = {}) {
+  const db = assertDb();
+  let q = db.from("contact_messages").select("*").order("created_at", { ascending: false });
+  if (opts.status) q = q.eq("status", opts.status);
+  const { data, error } = await q;
+  if (error) throw error;
+  return (data ?? []) as ContactMessageRow[];
+}
+
+export async function createContactMessage(input: {
+  name: string;
+  email: string;
+  whatsapp?: string;
+  message: string;
+  resendId?: string;
+  forwardedTo?: string;
+}) {
+  const db = assertDb();
+  const { data, error } = await db
+    .from("contact_messages")
+    .insert({
+      name: input.name,
+      email: input.email,
+      whatsapp: input.whatsapp || null,
+      message: input.message,
+      resend_id: input.resendId || null,
+      forwarded_to: input.forwardedTo || null,
+      status: "unread"
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data as ContactMessageRow;
+}
+
+export async function updateContactMessageStatus(id: string, status: ContactMessageRow["status"]) {
+  const db = assertDb();
+  const { data, error } = await db
+    .from("contact_messages")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as ContactMessageRow;
 }

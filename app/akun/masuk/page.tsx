@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser-auth";
+import { getHumanErrorMessage } from "@/lib/auth-utils";
 
 export default function MasukPage() {
   const router = useRouter();
@@ -18,12 +19,37 @@ export default function MasukPage() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+
+    // 1. Coba login via Supabase Auth
     const supabase = getSupabaseBrowserClient();
     const { error: signErr } = await supabase.auth.signInWithPassword({ email, password });
+    if (!signErr) {
+      setLoading(false);
+      router.push("/u");
+      router.refresh();
+      return;
+    }
+
+    // 2. Fallback ke sistem login internal (untuk akun Developer / Admin)
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      setLoading(false);
+      if (res.ok && data.success) {
+        router.push("/dashboard");
+        router.refresh();
+        return;
+      }
+    } catch {
+      // ignore
+    }
+
     setLoading(false);
-    if (signErr) { setError(signErr.message); return; }
-    router.push("/u");
-    router.refresh();
+    setError(getHumanErrorMessage(signErr));
   }
 
   async function handleGoogleLogin() {
@@ -33,7 +59,7 @@ export default function MasukPage() {
       provider: "google",
       options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
-    if (oauthError) setError(oauthError.message);
+    if (oauthError) setError(getHumanErrorMessage(oauthError));
   }
 
   return (
@@ -50,7 +76,12 @@ export default function MasukPage() {
             className="w-full mt-1 rounded-lg border border-bento-border bg-bento-bg px-3 py-2 text-sm outline-none focus:border-bento-accent" />
         </div>
         <div>
-          <label className="text-xs font-medium text-bento-text-secondary">Kata Sandi</label>
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-medium text-bento-text-secondary">Kata Sandi</label>
+            <Link href="/login?mode=forgot" className="text-[11px] text-blue-400 hover:underline">
+              Lupa kata sandi?
+            </Link>
+          </div>
           <div className="relative mt-1">
             <input
               type={showPassword ? "text" : "password"}

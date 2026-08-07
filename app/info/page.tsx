@@ -1,6 +1,8 @@
 'use client';
 
+import { useState } from "react";
 import Link from "next/link";
+import ContactModal from "@/components/ContactModal";
 import {
   BookOpen,
   Languages,
@@ -29,6 +31,8 @@ import {
 } from "lucide-react";
 
 export default function InfoPage() {
+  const [isContactOpen, setIsContactOpen] = useState(false);
+
   const tools = [
     {
       id: "kamus",
@@ -397,13 +401,14 @@ export default function InfoPage() {
                 </p>
               </div>
 
-              <a
-                href="mailto:developer@mongondowpedia.com?subject=Pendaftaran%20Verifikator%20MongondowPedia"
-                className="py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 shrink-0 self-start md:self-auto"
+              <button
+                type="button"
+                onClick={() => setIsContactOpen(true)}
+                className="py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-all shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 shrink-0 self-start md:self-auto cursor-pointer"
               >
                 <UserCheck className="w-4 h-4" />
                 <span>Daftar Verifikator Online</span>
-              </a>
+              </button>
             </div>
 
             <div className="space-y-3">
@@ -601,14 +606,15 @@ export default function InfoPage() {
                 </Link>
               </div>
 
-              <a
-                href="mailto:developer@mongondowpedia.com"
-                className="py-2.5 px-4 rounded-xl bg-[#181A24] hover:bg-[#202330] border border-[#2B2F40] text-gray-300 hover:text-cyan-400 text-xs font-semibold font-mono transition-all flex items-center justify-center gap-2 shrink-0"
+              <button
+                type="button"
+                onClick={() => setIsContactOpen(true)}
+                className="py-2.5 px-4 rounded-xl bg-[#181A24] hover:bg-[#202330] border border-[#2B2F40] text-gray-300 hover:text-cyan-400 text-xs font-semibold font-mono transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
                 title="Hubungi Pengembang"
               >
                 <Mail className="w-4 h-4 text-cyan-400" />
                 <span>developer@mongondowpedia.com</span>
-              </a>
+              </button>
             </div>
           </div>
         </div>
@@ -620,9 +626,9 @@ export default function InfoPage() {
           <div className="flex items-center justify-center gap-2 text-xs font-mono text-gray-400">
             <Mail className="w-3.5 h-3.5 text-cyan-400" />
             <span>Kontak Pengembang:</span>
-            <a href="mailto:developer@mongondowpedia.com" className="text-cyan-400 hover:underline">
+            <button onClick={() => setIsContactOpen(true)} className="text-cyan-400 hover:underline cursor-pointer">
               developer@mongondowpedia.com
-            </a>
+            </button>
           </div>
           <p className="text-xs text-gray-500 font-sans">
             (Ginza Project) MongondowPedia Inc. All rights reserved.
@@ -633,6 +639,8 @@ export default function InfoPage() {
         </div>
 
       </div>
+
+      <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
     </div>
   );
 }

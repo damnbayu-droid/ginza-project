@@ -1,15 +1,17 @@
 'use client';
 
-import { useState, FormEvent } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import { Code, Mail, Lock, Globe, Eye, EyeOff, BookOpen, Code2, Layers, FileText, Info, X, ArrowLeft } from "lucide-react";
 import { Language } from "@/lib/types";
 import { translations } from "@/lib/i18n";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabaseClient } from "@/lib/supabase-client";
+import { getHumanErrorMessage } from "@/lib/auth-utils";
 
 export default function LoginScreen() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [lang, setLang] = useState<Language>('id');
   const t = translations[lang];
 
@@ -22,6 +24,13 @@ export default function LoginScreen() {
   const [mode, setMode] = useState<'login' | 'register' | 'forgot'>('login');
   const [showPassword, setShowPassword] = useState(false);
 
+  useEffect(() => {
+    const qMode = searchParams.get("mode");
+    if (qMode === "forgot" || qMode === "register" || qMode === "login") {
+      setMode(qMode);
+    }
+  }, [searchParams]);
+
   // Submit Handler for all modes
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -31,6 +40,21 @@ export default function LoginScreen() {
 
     try {
       if (mode === 'login') {
+        // 1. Coba login Supabase Auth terlebih dahulu
+        if (supabaseClient) {
+          const { data: suData, error: suErr } = await supabaseClient.auth.signInWithPassword({
+            email,
+            password,
+          });
+
+          if (!suErr && suData.session) {
+            router.push("/u");
+            router.refresh();
+            return;
+          }
+        }
+
+        // 2. Fallback ke API internal login (Admin / Developer Account)
         const response = await fetch("/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -42,7 +66,7 @@ export default function LoginScreen() {
           router.push("/dashboard");
           router.refresh();
         } else {
-          setError(data.error || t.loginError);
+          setError(getHumanErrorMessage(data.error || t.loginError));
         }
       } else if (mode === 'register') {
         if (supabaseClient) {
@@ -51,13 +75,13 @@ export default function LoginScreen() {
             password,
           });
           if (signUpError) {
-            setError(signUpError.message);
+            setError(getHumanErrorMessage(signUpError));
           } else {
-            setInfoMessage("Pendaftaran berhasil! Silakan cek email Anda untuk verifikasi akun.");
+            setInfoMessage("Pendaftaran berhasil! Silakan periksa email Anda untuk mengonfirmasi akun.");
             setMode('login');
           }
         } else {
-          setInfoMessage("Akun Anda telah dicatat untuk pendaftaran. Silakan login.");
+          setInfoMessage("Pendaftaran akun berhasil dicatat. Silakan masuk.");
           setMode('login');
         }
       } else if (mode === 'forgot') {
@@ -69,14 +93,14 @@ export default function LoginScreen() {
 
         const data = await response.json();
         if (response.ok && data.success) {
-          setInfoMessage(data.message || "Tautan reset password telah dikirim.");
+          setInfoMessage(data.message || "Tautan reset password telah dikirim ke email Anda.");
           setMode('login');
         } else {
-          setError(data.error || "Gagal memproses reset sandi.");
+          setError(getHumanErrorMessage(data.error || "Gagal memproses reset sandi."));
         }
       }
-    } catch {
-      setError("Kesalahan koneksi server.");
+    } catch (err: any) {
+      setError(getHumanErrorMessage(err));
     } finally {
       setLoading(false);
     }

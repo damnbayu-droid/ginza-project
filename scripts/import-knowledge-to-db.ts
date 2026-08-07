@@ -27,6 +27,7 @@ const EXTRA_CATEGORIES: { slug: string; name: string; order: number }[] = [
   { slug: "adat-budaya", name: "Adat & Budaya", order: 15 },
   { slug: "bahasa-sastra", name: "Bahasa & Sastra", order: 25 },
   { slug: "aksara-naskah", name: "Aksara & Naskah", order: 35 },
+  { slug: "pidato-bahasa-mongondow", name: "Pidato Bahasa Mongondow", order: 45 },
 ];
 
 // file utama (root knowledge/) — sudah tersintesis rapi, layak "published"
@@ -36,6 +37,8 @@ const CURATED_FILES: { file: string; categorySlug: string; title?: string }[] = 
   { file: "Bahasa_dan_Sastra_Mongondow.md", categorySlug: "bahasa-sastra" },
   { file: "Bahasa_Mongondow_Kuno_Acuan_Utama.md", categorySlug: "bahasa-sastra" },
   { file: "Aksara_Bolaang_Mongondow.md", categorySlug: "aksara-naskah" },
+  { file: "Pidato_Peran_PKK_Kon_Pembangunan.md", categorySlug: "pidato-bahasa-mongondow" },
+  { file: "Pidato_Peran_Masyarakat_Kon_Pombanganan_Lipu.md", categorySlug: "pidato-bahasa-mongondow" },
 ];
 
 // arsip_download/*.md — teks mentah/OCR, masuk sbg "pending_review" (belum

@@ -1,6 +1,7 @@
 'use client';
 
-import { Sun, Moon } from "lucide-react";
+import Link from "next/link";
+import { Sun, Moon, Home } from "lucide-react";
 import { Language } from "@/lib/types";
 
 interface NavbarProps {
@@ -13,9 +14,17 @@ interface NavbarProps {
 export default function Navbar({ lang, setLang, theme, setTheme }: NavbarProps) {
   return (
     <header className="h-16 border-b border-bento-border px-8 flex items-center justify-between shrink-0 transition-colors duration-300 bg-bento-bg text-bento-text-primary">
-      {/* Current View Title */}
-      <div className="flex items-center gap-3">
+      {/* Current View Title & Home Link */}
+      <div className="flex items-center gap-4">
         <h2 className="font-semibold text-lg tracking-tight" id="navbar-view-title">Admin Dashboard</h2>
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-bento-border bg-bento-surface text-bento-text-primary hover:text-blue-400 hover:border-blue-500/40 text-xs font-semibold transition-all shadow-sm"
+          title="Kembali ke Beranda MongondowPedia"
+        >
+          <Home className="w-3.5 h-3.5 text-blue-400" />
+          <span>Beranda</span>
+        </Link>
       </div>
 
       {/* Control Actions */}

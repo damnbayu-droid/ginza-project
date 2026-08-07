@@ -5,6 +5,7 @@ import { Language } from "@/lib/types";
 import Sidebar from "@/components/Sidebar";
 import Navbar from "@/components/Navbar";
 import OverviewPanel from "@/components/dashboard/panels/OverviewPanel";
+import MessagesPanel from "@/components/dashboard/panels/MessagesPanel";
 import UserManagementPanel from "@/components/dashboard/panels/UserManagementPanel";
 import VerificatorManagementPanel from "@/components/dashboard/panels/VerificatorManagementPanel";
 import DatabaseKamusPanel from "@/components/dashboard/panels/DatabaseKamusPanel";
@@ -16,7 +17,7 @@ import AiMasterPanel from "@/components/dashboard/panels/AiMasterPanel";
 import LogsPanel from "@/components/dashboard/panels/LogsPanel";
 
 export type AdminPanelKey =
-  | "overview" | "users" | "verificators" | "kamus" | "knowledge"
+  | "overview" | "messages" | "users" | "verificators" | "kamus" | "knowledge"
   | "aksara" | "contributions" | "metrics" | "ai-master" | "logs";
 
 interface DashboardProps {
@@ -52,6 +53,7 @@ export default function Dashboard({ adminEmail }: DashboardProps) {
   function renderPanel() {
     switch (activePanel) {
       case "overview": return <OverviewPanel onNavigate={setActivePanel} />;
+      case "messages": return <MessagesPanel />;
       case "users": return <UserManagementPanel />;
       case "verificators": return <VerificatorManagementPanel />;
       case "kamus": return <DatabaseKamusPanel />;

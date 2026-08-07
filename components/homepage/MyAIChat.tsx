@@ -19,12 +19,16 @@ import {
   Lock,
   LogIn,
   BookOpen,
-  Database
+  Database,
+  Settings,
+  Moon,
+  Sun
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import Link from "next/link";
 import MyAILogo from "./MyAILogo";
 import LoginModal from "@/components/LoginModal";
+import SettingsModal from "@/components/SettingsModal";
 import { HomeChatMessage, HomeChatSession, Language } from "@/lib/types";
 import { speakMongondow, stopSpeakingMongondow } from "@/lib/mongondow-voice";
 
@@ -74,6 +78,7 @@ export default function MyAIChat({
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [selectedModelOverride, setSelectedModelOverride] = useState<string | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
   const [featureNotice, setFeatureNotice] = useState<string | null>(null);
 
@@ -669,6 +674,15 @@ export default function MyAIChat({
 
       {/* Login Modal Popup */}
       <LoginModal isOpen={showLoginModal} onClose={() => setShowLoginModal(false)} />
+
+      {/* Settings Modal Popup */}
+      <SettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+        lang={lang}
+        onLangChange={() => {}}
+        user={user}
+      />
     </div>
   );
 }

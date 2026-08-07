@@ -16,6 +16,8 @@ interface OverviewData {
     totalKnowledge: number;
     pendingContributions: number;
     totalContributions: number;
+    unreadMessages?: number;
+    totalMessages?: number;
   };
 }
 
@@ -62,12 +64,13 @@ export default function OverviewPanel({ onNavigate }: { onNavigate: (panel: Admi
       {s && (
         <>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+            <button onClick={() => onNavigate("messages")} className="text-left"><StatCard label="Pesan Masuk" value={s.unreadMessages ?? 0} hint={`${s.totalMessages ?? 0} total pesan`} /></button>
             <button onClick={() => onNavigate("users")} className="text-left"><StatCard label="Total User" value={s.totalUsers} /></button>
             <button onClick={() => onNavigate("verificators")} className="text-left"><StatCard label="Verifikator Aktif" value={s.totalVerificators} hint={`${s.pendingVerificatorApps} pengajuan menunggu`} /></button>
             <button onClick={() => onNavigate("kamus")} className="text-left"><StatCard label="Kata Kamus" value={s.totalKamus} hint={`${s.verifiedKamus} terverifikasi`} /></button>
-            <button onClick={() => onNavigate("knowledge")} className="text-left"><StatCard label="Artikel Knowledge" value={s.totalKnowledge} hint="status published" /></button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+            <button onClick={() => onNavigate("knowledge")} className="text-left"><StatCard label="Artikel Knowledge" value={s.totalKnowledge} hint="status published" /></button>
             <button onClick={() => onNavigate("contributions")} className="text-left"><StatCard label="Kontribusi Pending" value={s.pendingContributions} /></button>
             <button onClick={() => onNavigate("contributions")} className="text-left"><StatCard label="Total Kontribusi" value={s.totalContributions} /></button>
           </div>

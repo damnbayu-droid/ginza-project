@@ -2,12 +2,13 @@
 
 import { useState } from "react";
 import {
-  LogOut, Code, ChevronLeft, ChevronRight, LayoutDashboard, Users, ShieldCheck,
+  LogOut, Code, ChevronLeft, ChevronRight, LayoutDashboard, MessageSquare, Users, ShieldCheck,
   BookMarked, Library, Type, FileCheck2, BarChart3, Bot, ScrollText,
 } from "lucide-react";
 import { Language } from "@/lib/types";
 import { translations } from "@/lib/i18n";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { AdminPanelKey } from "@/components/Dashboard";
 
 interface SidebarProps {
@@ -20,6 +21,7 @@ interface SidebarProps {
 
 const NAV_ITEMS: { key: AdminPanelKey; label: string; icon: typeof LayoutDashboard }[] = [
   { key: "overview", label: "Overview", icon: LayoutDashboard },
+  { key: "messages", label: "Pesan Masuk (Messages)", icon: MessageSquare },
   { key: "users", label: "User Management", icon: Users },
   { key: "verificators", label: "Verifikator Management", icon: ShieldCheck },
   { key: "kamus", label: "Database Kamus", icon: BookMarked },
@@ -55,17 +57,17 @@ export default function Sidebar({ lang, theme, adminEmail, activePanel, onSelect
 
       {/* Brand Header */}
       <div className={`px-4 py-3.5 border-b border-bento-border flex items-center justify-between`}>
-        <div className={`flex items-center ${collapsed ? 'justify-center w-full' : 'gap-3 pl-1.5'}`}>
-          <div className="p-2 rounded-lg bg-bento-accent-muted text-bento-accent shrink-0">
+        <Link href="/" title="Kembali ke Beranda MongondowPedia" className={`flex items-center group ${collapsed ? 'justify-center w-full' : 'gap-3 pl-1.5'}`}>
+          <div className="p-2 rounded-lg bg-bento-accent-muted text-bento-accent group-hover:bg-blue-600 group-hover:text-white transition-all shrink-0">
             <Code className="h-5 w-5" id="brand-logo-icon" />
           </div>
           {!collapsed && (
             <div className="overflow-hidden">
-              <h1 className="font-bold text-base tracking-tight truncate" id="sidebar-app-title">MongondowPedia</h1>
+              <h1 className="font-bold text-base tracking-tight truncate group-hover:text-blue-400 transition-colors" id="sidebar-app-title">MongondowPedia</h1>
               <p className="text-[10px] font-medium tracking-widest uppercase opacity-60 text-bento-text-secondary">Bogani AI • Ginza Project</p>
             </div>
           )}
-        </div>
+        </Link>
       </div>
 
       {/* Nav panel admin */}

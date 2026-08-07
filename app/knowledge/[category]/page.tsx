@@ -16,17 +16,51 @@ export async function generateMetadata({ params }: Props) {
   };
 }
 
+const STATIC_CATEGORIES: Record<string, { id: string; name: string; description: string; articles: Array<{ id: string; title: string; slug: string; summary: string; view_count: number }> }> = {
+  "pidato-bahasa-mongondow": {
+    id: "cat-pidato-01",
+    name: "Pidato Bahasa Mongondow",
+    description: "Kumpulan teks pidato adat, sambutan formal, dan wacana lisan Bahasa Bolaang Mongondow beserta terjemahan Bahasa Indonesia.",
+    articles: [
+      {
+        id: "art-pidato-01",
+        title: 'PIDATO BAHASA MONGONDOW "PERAN PKK KON PEMBANGUNAN"',
+        slug: "peran-pkk-kon-pembangunan",
+        summary: "Pidato resmi Bahasa Mongondow mengenai peranan perempuan, keluarga, serta pelestarian bahasa dan budaya daerah dalam Program Keluarga Berencana dan Pembangunan Daerah Totabuan.",
+        view_count: 124
+      },
+      {
+        id: "art-pidato-02",
+        title: 'PIDATO BAHASA MONGONDOW "PERAN MASYARAKAT KON POMBANGUNAN LIPU"',
+        slug: "peran-masyarakat-kon-pombanganan-lipu",
+        summary: "Pidato adat dan wacana kebangsaan Bahasa Mongondow mengenai peranan penting partisipasi gotong royong seluruh warga masyarakat serta pelestarian bahasa daerah dalam pembangunan daerah Totabuan.",
+        view_count: 98
+      }
+    ]
+  }
+};
+
 export default async function KnowledgeCategoryPage({ params }: Props) {
   const { category: slug } = await params;
-  if (!supabaseAdmin) return notFound();
 
-  const { data: category } = await supabaseAdmin.from("knowledge_categories").select("*").eq("slug", slug).maybeSingle();
+  let category: { id: string; name: string; description?: string | null; visit_count?: number } | null = null;
+  let articles: Array<{ id: string; title: string; slug: string; summary?: string | null; view_count?: number }> = [];
+
+  if (supabaseAdmin) {
+    const { data: catData } = await supabaseAdmin.from("knowledge_categories").select("*").eq("slug", slug).maybeSingle();
+    if (catData) {
+      category = catData;
+      await supabaseAdmin.from("knowledge_categories").update({ visit_count: (catData.visit_count ?? 0) + 1 }).eq("id", catData.id);
+      articles = await listKnowledgeArticles({ categoryId: catData.id, status: "published" });
+    }
+  }
+
+  if (!category && STATIC_CATEGORIES[slug]) {
+    category = STATIC_CATEGORIES[slug];
+    articles = STATIC_CATEGORIES[slug].articles;
+  }
+
   if (!category) return notFound();
-
-  // Catat kunjungan tab ini — dipakai utk urutan "tab terpopuler tampil duluan"
-  await supabaseAdmin.from("knowledge_categories").update({ visit_count: (category.visit_count ?? 0) + 1 }).eq("id", category.id);
-
-  const articles = await listKnowledgeArticles({ categoryId: category.id, status: "published" });
 
   return (
     <div className="min-h-screen bg-[#0d0e12] text-white p-6 md:p-12 font-sans">

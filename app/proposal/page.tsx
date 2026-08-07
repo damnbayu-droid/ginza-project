@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import ContactModal from "@/components/ContactModal";
 import {
   FileText,
   Building2,
@@ -35,6 +36,7 @@ export default function ProposalPage() {
   const [expandAll, setExpandAll] = useState<boolean>(false);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [selectedDistrict, setSelectedDistrict] = useState<string>("all");
+  const [isContactOpen, setIsContactOpen] = useState<boolean>(false);
 
   const handlePrintPDF = () => {
     setExpandAll(true);
@@ -196,6 +198,12 @@ export default function ProposalPage() {
       title: "Modernisasi Metode Pembelajaran Sejarah Mongondow",
       description:
         "Penerapan teknologi kecerdasan buatan terdepan (Bogani AI / MyAI OS), platform website interaktif RAG, dan Aplikasi Mobile App cross-platform (Android & iOS)."
+    },
+    {
+      number: "09",
+      title: "Game Edukasi Interaktif Kebudayaan & Sejarah BMR",
+      description:
+        "Pengembangan Game Kebudayaan Mongondow (Educational Quest & Aksara Adventure) untuk anak sekolah & pemuda, memadukan kuis sejarah sutan raja, tantangan menulis aksara, dan simulasi penjelajahan cagar budaya BMR."
     }
   ];
 
@@ -800,13 +808,14 @@ export default function ProposalPage() {
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-3 text-xs font-mono">
-            <a
-              href="mailto:developer@mongondowpedia.com"
-              className="py-2 px-3.5 rounded-xl bg-[#181B26] border border-[#282D3F] text-cyan-400 hover:border-cyan-500 transition-all flex items-center gap-2 print:bg-gray-100 print:border-gray-300 print:text-black print:text-[8.5pt]"
+            <button
+              type="button"
+              onClick={() => setIsContactOpen(true)}
+              className="py-2 px-3.5 rounded-xl bg-[#181B26] border border-[#282D3F] text-cyan-400 hover:border-cyan-500 transition-all flex items-center gap-2 print:bg-gray-100 print:border-gray-300 print:text-black print:text-[8.5pt] cursor-pointer"
             >
               <Mail className="w-3.5 h-3.5" />
               <span>developer@mongondowpedia.com</span>
-            </a>
+            </button>
 
             <a
               href="https://maps.app.goo.gl/Gznpt6NtqFNLxE4F8"
@@ -831,6 +840,8 @@ export default function ProposalPage() {
         </div>
 
       </div>
+
+      <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
     </div>
   );
 }

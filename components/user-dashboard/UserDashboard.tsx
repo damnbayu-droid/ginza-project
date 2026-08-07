@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { User, MessageSquare, FileCheck2, PlusCircle, LogOut, ShieldCheck } from "lucide-react";
+import { User, MessageSquare, FileCheck2, PlusCircle, LogOut, ShieldCheck, Home } from "lucide-react";
 import type { Profile } from "@/lib/ginza-db";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser-auth";
 import TrendingUsersWidget from "@/components/TrendingUsersWidget";
@@ -66,6 +66,9 @@ export default function UserDashboard({ profile }: { profile: Profile }) {
               <ShieldCheck className="h-4 w-4 shrink-0" /> Verifikator Dashboard
             </a>
           )}
+          <a href="/" className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left text-bento-text-secondary hover:bg-bento-surface-lighter hover:text-bento-text-primary font-medium">
+            <Home className="h-4 w-4 shrink-0 text-blue-400" /> Kembali ke Beranda
+          </a>
         </nav>
 
         <button onClick={handleLogout} className="w-full flex items-center gap-2 px-3 py-2 mt-6 rounded-lg text-xs border border-red-500/20 text-red-400 hover:bg-red-500/10">

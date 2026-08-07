@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Eye, EyeOff } from "lucide-react";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser-auth";
+import { getHumanErrorMessage } from "@/lib/auth-utils";
 
 export default function DaftarPage() {
   const [email, setEmail] = useState("");
@@ -25,7 +26,7 @@ export default function DaftarPage() {
       options: { data: { full_name: displayName } },
     });
     setLoading(false);
-    if (signErr) { setError(signErr.message); return; }
+    if (signErr) { setError(getHumanErrorMessage(signErr)); return; }
     setDone(true);
   }
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ShieldCheck, Vote, Mic, Coins, ArrowLeft } from "lucide-react";
+import { ShieldCheck, Vote, Mic, Coins, ArrowLeft, Home } from "lucide-react";
 import type { Profile } from "@/lib/ginza-db";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser-auth";
 
@@ -286,6 +286,9 @@ function VerificatorTools({ profile }: { profile: Profile }) {
               <Icon className="h-4 w-4 shrink-0" /> {label}
             </button>
           ))}
+          <a href="/" className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left text-bento-text-secondary hover:bg-bento-surface-lighter hover:text-bento-text-primary font-medium">
+            <Home className="h-4 w-4 shrink-0 text-blue-400" /> Kembali ke Beranda
+          </a>
           <a href="/u" className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-left text-bento-text-secondary hover:bg-bento-surface-lighter">
             <ArrowLeft className="h-4 w-4 shrink-0" /> Kembali ke User Dashboard
           </a>

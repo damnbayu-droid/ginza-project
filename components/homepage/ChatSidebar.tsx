@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import SettingsModal from "@/components/SettingsModal";
 import { HomeChatSession, Language } from "@/lib/types";
 import MyAILogo from "./MyAILogo";
 
@@ -358,72 +359,18 @@ export default function ChatSidebar({
       </aside>
 
       {/* Settings Modal */}
-      {showSettingsModal && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-[#212121] border border-[#333333] rounded-2xl w-full max-w-md p-6 text-white space-y-6 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-[#333] pb-4">
-              <h3 className="font-semibold text-base flex items-center gap-2">
-                <Settings className="w-5 h-5 text-blue-400" />
-                {lang === 'id' ? 'Pengaturan MongondowPedia' : 'MongondowPedia Settings'}
-              </h3>
-              <button
-                onClick={() => setShowSettingsModal(false)}
-                className="p-1 hover:bg-[#2f2f2f] rounded-lg text-gray-400 hover:text-white"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-gray-400 flex items-center gap-1.5">
-                <Globe className="w-3.5 h-3.5" />
-                {lang === 'id' ? 'Bahasa Antarmuka' : 'Interface Language'}
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => setLang('id')}
-                  className={`p-3 rounded-xl border text-xs font-medium flex items-center justify-between ${
-                    lang === 'id' ? 'bg-blue-600/20 border-blue-500 text-white' : 'bg-[#171717] border-[#333] text-gray-400'
-                  }`}
-                >
-                  <span>🇮🇩 Bahasa Indonesia</span>
-                  {lang === 'id' && <Check className="w-4 h-4 text-blue-400" />}
-                </button>
-                <button
-                  onClick={() => setLang('en')}
-                  className={`p-3 rounded-xl border text-xs font-medium flex items-center justify-between ${
-                    lang === 'en' ? 'bg-blue-600/20 border-blue-500 text-white' : 'bg-[#171717] border-[#333] text-gray-400'
-                  }`}
-                >
-                  <span>🇺🇸 English</span>
-                  {lang === 'en' && <Check className="w-4 h-4 text-blue-400" />}
-                </button>
-              </div>
-            </div>
-
-            <div className="bg-[#171717] p-3.5 rounded-xl border border-[#333] space-y-2">
-              <p className="text-xs font-medium text-blue-400">Status System (myai.nexus):</p>
-              <ul className="text-xs text-gray-300 space-y-1.5">
-                <li className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                  Text & File Vision (Tier 1 & Tier 2 Models) - Aktif
-                </li>
-                <li className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400" />
-                  Voice Input & Output (Microphone Enabled) - Aktif
-                </li>
-              </ul>
-            </div>
-
-            <button
-              onClick={() => setShowSettingsModal(false)}
-              className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs transition-colors"
-            >
-              {lang === 'id' ? 'Simpan & Tutup' : 'Save & Close'}
-            </button>
-          </div>
-        </div>
-      )}
+      <SettingsModal
+        isOpen={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+        lang={lang}
+        onLangChange={setLang}
+        user={user}
+        onClearChats={() => {
+          if (sessions.length > 0) {
+            sessions.forEach(s => onDeleteSession(s.id));
+          }
+        }}
+      />
     </>
   );
 
