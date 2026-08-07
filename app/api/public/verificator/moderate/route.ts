@@ -124,16 +124,20 @@ export async function POST(req: NextRequest) {
     if (updErr) throw updErr;
 
     // Record action log
-    await supabaseAdmin.from("verificator_actions").insert({
-      verificator_id: profile.id,
-      target_domain: domain,
-      target_id: targetId,
-      action,
-      notes: notes ?? null,
-    }).catch(() => {});
+    try {
+      await supabaseAdmin.from("verificator_actions").insert({
+        verificator_id: profile.id,
+        target_domain: domain,
+        target_id: targetId,
+        action,
+        notes: notes ?? null,
+      });
+    } catch {}
 
     // Award bonus score to Verifikator (+10 pts)
-    await supabaseAdmin.rpc("increment_score", { user_id: profile.id, score_delta: 10 }).catch(() => {});
+    try {
+      await supabaseAdmin.rpc("increment_score", { user_id: profile.id, score_delta: 10 });
+    } catch {}
 
     await writeAuditLog({
       actorId: profile.id,
