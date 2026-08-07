@@ -24,7 +24,11 @@ import {
   Eye,
   ThumbsUp,
   ThumbsDown,
-  ExternalLink
+  ExternalLink,
+  BookOpen,
+  BookMarked,
+  Type,
+  MessageSquare
 } from "lucide-react";
 import type { Profile } from "@/lib/ginza-db";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser-auth";
@@ -382,12 +386,15 @@ function KtpApplicationScreen({ profile }: { profile: Profile }) {
 
 // ── Tools Lengkap Verifikator (role 'verificator' / 'admin') ─────────────
 
-type VerificatorTab = "voting" | "voice" | "usage" | "artikel" | "logs" | "pengaturan" | "privasi";
+type VerificatorTab = "knowledge_verif" | "kamus_verif" | "aksara_verif" | "voting" | "voice" | "usage" | "artikel" | "logs" | "pengaturan" | "privasi";
 
 function VerificatorTools({ profile }: { profile: Profile }) {
-  const [tab, setTab] = useState<VerificatorTab>("voting");
+  const [tab, setTab] = useState<VerificatorTab>("knowledge_verif");
 
   const NAV: { key: VerificatorTab; label: string; icon: typeof Vote }[] = [
+    { key: "knowledge_verif", label: "Verifikasi Knowledge", icon: BookOpen },
+    { key: "kamus_verif", label: "Verifikasi Kamus", icon: BookMarked },
+    { key: "aksara_verif", label: "Verifikasi Aksara", icon: Type },
     { key: "voting", label: "Voting Usulan Kata", icon: Vote },
     { key: "voice", label: "Pelatihan Suara AI", icon: Mic },
     { key: "usage", label: "Token & Insentif", icon: Coins },
@@ -452,6 +459,9 @@ function VerificatorTools({ profile }: { profile: Profile }) {
       </aside>
 
       <main className="flex-1 p-5 md:p-8 max-w-4xl overflow-y-auto">
+        {tab === "knowledge_verif" && <KnowledgeVerifTab />}
+        {tab === "kamus_verif" && <KamusVerifTab />}
+        {tab === "aksara_verif" && <AksaraVerifTab />}
         {tab === "voting" && <VotingTab profile={profile} />}
         {tab === "voice" && <VoiceTrainingTab profile={profile} />}
         {tab === "usage" && <UsageTab />}
@@ -460,6 +470,428 @@ function VerificatorTools({ profile }: { profile: Profile }) {
         {tab === "pengaturan" && <VerificatorSettingsTab />}
         {tab === "privasi" && <VerificatorPrivacyTab profile={profile} />}
       </main>
+    </div>
+  );
+}
+
+// ── Modul 1: Verifikasi Knowledge ─────────────────────────────────────────────
+function KnowledgeVerifTab() {
+  const [items, setItems] = useState<any[] | null>(null);
+  const [activeItem, setActiveItem] = useState<any | null>(null);
+  const [notes, setNotes] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  function load() {
+    fetch("/api/public/verificator/moderate?domain=knowledge")
+      .then((r) => r.json())
+      .then((d) => setItems(d.items ?? []))
+      .catch(() => setItems([]));
+  }
+
+  useEffect(() => { load(); }, []);
+
+  async function handleAction(item: any, action: "verify" | "comment" | "reject") {
+    setSubmitting(true);
+    try {
+      await fetch("/api/public/verificator/moderate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ domain: "knowledge", targetId: item.id, action, notes }),
+      });
+      setActiveItem(null);
+      setNotes("");
+      load();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-bold text-bento-text-primary flex items-center gap-2">
+          <BookOpen className="h-5 w-5 text-purple-400" />
+          <span>Verifikasi & Moderasi Knowledge</span>
+        </h2>
+        <p className="text-xs text-bento-text-secondary mt-1">
+          Sahkan naskah pengetahuan, berikan catatan koreksi pakar, atau tolak pengajuan yang tidak akurat.
+        </p>
+      </div>
+
+      {!items ? (
+        <div className="p-8 text-center text-xs text-bento-text-secondary">Memuat daftar artikel knowledge...</div>
+      ) : items.length === 0 ? (
+        <div className="p-8 text-center bg-bento-surface rounded-2xl border border-bento-border text-xs text-bento-text-secondary">
+          Belum ada naskah knowledge yang perlu diverifikasi.
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {items.map((art) => (
+            <div key={art.id} className="bg-bento-surface border border-bento-border rounded-2xl p-5 space-y-3 shadow-md">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-bento-border pb-3">
+                <div>
+                  <h3 className="text-sm font-bold text-bento-text-primary">{art.title}</h3>
+                  <p className="text-[11px] text-bento-text-secondary mt-0.5">
+                    Diposting: {new Date(art.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
+                  </p>
+                </div>
+                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
+                  art.verification_status === "verified"
+                    ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                    : art.verification_status === "rejected"
+                    ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                    : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                }`}>
+                  {art.verification_status ?? "pending"}
+                </span>
+              </div>
+
+              <p className="text-xs text-bento-text-secondary line-clamp-3 leading-relaxed bg-bento-bg p-3 rounded-xl border border-bento-border">
+                {art.excerpt || art.content}
+              </p>
+
+              {art.verificator_notes && (
+                <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-xs space-y-1">
+                  <p className="font-bold text-purple-300 flex items-center gap-1">
+                    <MessageSquare className="w-3.5 h-3.5" /> Catatan Pakar Verifikator:
+                  </p>
+                  <p className="text-purple-200">{art.verificator_notes}</p>
+                </div>
+              )}
+
+              {/* Verificator Action Buttons */}
+              <div className="flex flex-wrap items-center gap-2 pt-2">
+                <button
+                  onClick={() => handleAction(art, "verify")}
+                  disabled={submitting}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md transition-all flex items-center gap-1.5"
+                >
+                  ✅ Verify (Sahkan)
+                </button>
+                <button
+                  onClick={() => { setActiveItem(art); setNotes(art.verificator_notes ?? ""); }}
+                  disabled={submitting}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-purple-600 hover:bg-purple-500 text-white shadow-md transition-all flex items-center gap-1.5"
+                >
+                  💬 Beri Catatan / Komentar
+                </button>
+                <button
+                  onClick={() => handleAction(art, "reject")}
+                  disabled={submitting}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 transition-all flex items-center gap-1.5"
+                >
+                  ❌ Reject (Tolak)
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Modal Edit Catatan Verifikator */}
+      {activeItem && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-bento-surface border border-bento-border rounded-2xl p-6 max-w-lg w-full space-y-4">
+            <h3 className="text-sm font-bold text-bento-text-primary">Catatan Koreksi Verifikator — {activeItem.title}</h3>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Tuliskan catatan rekomendasi pakar atau rujukan adat/sejarah..."
+              rows={4}
+              className="w-full bg-bento-bg border border-bento-border p-3 text-xs rounded-xl text-bento-text-primary focus:outline-none focus:border-purple-500"
+            />
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setActiveItem(null)} className="px-4 py-2 text-xs font-semibold text-bento-text-secondary">Batal</button>
+              <button
+                onClick={() => handleAction(activeItem, "comment")}
+                disabled={submitting}
+                className="px-4 py-2 bg-purple-600 text-white font-bold text-xs rounded-xl shadow-md"
+              >
+                Simpan Catatan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Modul 2: Verifikasi Kamus ─────────────────────────────────────────────────
+function KamusVerifTab() {
+  const [items, setItems] = useState<any[] | null>(null);
+  const [activeItem, setActiveItem] = useState<any | null>(null);
+  const [notes, setNotes] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  function load() {
+    fetch("/api/public/verificator/moderate?domain=kamus")
+      .then((r) => r.json())
+      .then((d) => setItems(d.items ?? []))
+      .catch(() => setItems([]));
+  }
+
+  useEffect(() => { load(); }, []);
+
+  async function handleAction(item: any, action: "verify" | "comment" | "reject") {
+    setSubmitting(true);
+    try {
+      await fetch("/api/public/verificator/moderate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ domain: "kamus", targetId: item.id, action, notes }),
+      });
+      setActiveItem(null);
+      setNotes("");
+      load();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-bold text-bento-text-primary flex items-center gap-2">
+          <BookMarked className="h-5 w-5 text-purple-400" />
+          <span>Verifikasi & Moderasi Kamus</span>
+        </h2>
+        <p className="text-xs text-bento-text-secondary mt-1">
+          Validasi kata Bahasa Mongondow, ejaan dialek, dan contoh penggunaan kata resmi.
+        </p>
+      </div>
+
+      {!items ? (
+        <div className="p-8 text-center text-xs text-bento-text-secondary">Memuat daftar usulan kamus...</div>
+      ) : items.length === 0 ? (
+        <div className="p-8 text-center bg-bento-surface rounded-2xl border border-bento-border text-xs text-bento-text-secondary">
+          Belum ada kosakata kamus yang perlu diverifikasi.
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {items.map((word) => (
+            <div key={word.id} className="bg-bento-surface border border-bento-border rounded-2xl p-5 space-y-3 shadow-md">
+              <div className="flex items-center justify-between border-b border-bento-border pb-3">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base font-bold text-bento-text-primary">{word.word}</h3>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-300 border border-purple-500/20">
+                    {word.region || "Umum"}
+                  </span>
+                </div>
+                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
+                  word.verification_status === "verified"
+                    ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                    : word.verification_status === "rejected"
+                    ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                    : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                }`}>
+                  {word.verification_status ?? "pending"}
+                </span>
+              </div>
+
+              <div className="bg-bento-bg p-3 rounded-xl border border-bento-border space-y-1 text-xs">
+                <p className="text-bento-text-primary font-medium">Arti: {word.meaning}</p>
+                {word.example_sentence && <p className="text-bento-text-secondary italic">Contoh: "{word.example_sentence}"</p>}
+              </div>
+
+              {word.verificator_notes && (
+                <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-xs space-y-1">
+                  <p className="font-bold text-purple-300 flex items-center gap-1">
+                    <MessageSquare className="w-3.5 h-3.5" /> Catatan Linguistik Verifikator:
+                  </p>
+                  <p className="text-purple-200">{word.verificator_notes}</p>
+                </div>
+              )}
+
+              <div className="flex flex-wrap items-center gap-2 pt-2">
+                <button
+                  onClick={() => handleAction(word, "verify")}
+                  disabled={submitting}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md transition-all flex items-center gap-1.5"
+                >
+                  ✅ Verify (Sahkan)
+                </button>
+                <button
+                  onClick={() => { setActiveItem(word); setNotes(word.verificator_notes ?? ""); }}
+                  disabled={submitting}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-purple-600 hover:bg-purple-500 text-white shadow-md transition-all flex items-center gap-1.5"
+                >
+                  💬 Beri Catatan / Komentar
+                </button>
+                <button
+                  onClick={() => handleAction(word, "reject")}
+                  disabled={submitting}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 transition-all flex items-center gap-1.5"
+                >
+                  ❌ Reject (Tolak)
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {activeItem && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-bento-surface border border-bento-border rounded-2xl p-6 max-w-lg w-full space-y-4">
+            <h3 className="text-sm font-bold text-bento-text-primary">Catatan Etimologi / Dialek — {activeItem.word}</h3>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Tuliskan ragam dialek daerah atau rujukan kamus asli..."
+              rows={4}
+              className="w-full bg-bento-bg border border-bento-border p-3 text-xs rounded-xl text-bento-text-primary focus:outline-none focus:border-purple-500"
+            />
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setActiveItem(null)} className="px-4 py-2 text-xs font-semibold text-bento-text-secondary">Batal</button>
+              <button
+                onClick={() => handleAction(activeItem, "comment")}
+                disabled={submitting}
+                className="px-4 py-2 bg-purple-600 text-white font-bold text-xs rounded-xl shadow-md"
+              >
+                Simpan Catatan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Modul 3: Verifikasi Aksara & Epigrafi ─────────────────────────────────────
+function AksaraVerifTab() {
+  const [items, setItems] = useState<any[] | null>(null);
+  const [activeItem, setActiveItem] = useState<any | null>(null);
+  const [notes, setNotes] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  function load() {
+    fetch("/api/public/verificator/moderate?domain=aksara")
+      .then((r) => r.json())
+      .then((d) => setItems(d.items ?? []))
+      .catch(() => setItems([]));
+  }
+
+  useEffect(() => { load(); }, []);
+
+  async function handleAction(item: any, action: "verify" | "comment" | "reject") {
+    setSubmitting(true);
+    try {
+      await fetch("/api/public/verificator/moderate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ domain: "aksara", targetId: item.id, action, notes }),
+      });
+      setActiveItem(null);
+      setNotes("");
+      load();
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-bold text-bento-text-primary flex items-center gap-2">
+          <Type className="h-5 w-5 text-purple-400" />
+          <span>Verifikasi Aksara & Epigrafi</span>
+        </h2>
+        <p className="text-xs text-bento-text-secondary mt-1">
+          Validasi alih tulisan Latin ke Aksara Mongondow kuno dan inskripsi epigrafi.
+        </p>
+      </div>
+
+      {!items ? (
+        <div className="p-8 text-center text-xs text-bento-text-secondary">Memuat data verifikasi aksara...</div>
+      ) : items.length === 0 ? (
+        <div className="p-8 text-center bg-bento-surface rounded-2xl border border-bento-border text-xs text-bento-text-secondary">
+          Belum ada naskah aksara yang perlu diverifikasi.
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {items.map((ak) => (
+            <div key={ak.id} className="bg-bento-surface border border-bento-border rounded-2xl p-5 space-y-3 shadow-md">
+              <div className="flex items-center justify-between border-b border-bento-border pb-3">
+                <h3 className="text-sm font-bold text-bento-text-primary">{ak.title || "Naskah Aksara"}</h3>
+                <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
+                  ak.verification_status === "verified"
+                    ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                    : ak.verification_status === "rejected"
+                    ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                    : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                }`}>
+                  {ak.verification_status ?? "pending"}
+                </span>
+              </div>
+
+              <div className="bg-bento-bg p-4 rounded-xl border border-bento-border space-y-2">
+                <p className="text-xs text-bento-text-secondary font-mono">Latin: {ak.latin_text}</p>
+                <p className="text-lg font-aksara text-amber-400 leading-relaxed">{ak.aksara_text}</p>
+              </div>
+
+              {ak.verificator_notes && (
+                <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-xs space-y-1">
+                  <p className="font-bold text-purple-300 flex items-center gap-1">
+                    <MessageSquare className="w-3.5 h-3.5" /> Catatan Epigrafi:
+                  </p>
+                  <p className="text-purple-200">{ak.verificator_notes}</p>
+                </div>
+              )}
+
+              <div className="flex flex-wrap items-center gap-2 pt-2">
+                <button
+                  onClick={() => handleAction(ak, "verify")}
+                  disabled={submitting}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md transition-all flex items-center gap-1.5"
+                >
+                  ✅ Verify (Sahkan)
+                </button>
+                <button
+                  onClick={() => { setActiveItem(ak); setNotes(ak.verificator_notes ?? ""); }}
+                  disabled={submitting}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-purple-600 hover:bg-purple-500 text-white shadow-md transition-all flex items-center gap-1.5"
+                >
+                  💬 Beri Catatan / Komentar
+                </button>
+                <button
+                  onClick={() => handleAction(ak, "reject")}
+                  disabled={submitting}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/30 transition-all flex items-center gap-1.5"
+                >
+                  ❌ Reject (Tolak)
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {activeItem && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-bento-surface border border-bento-border rounded-2xl p-6 max-w-lg w-full space-y-4">
+            <h3 className="text-sm font-bold text-bento-text-primary">Catatan Epigrafi / Aksara — {activeItem.title}</h3>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Tuliskan catatan uraian bentuk glyph atau kaidah transliterasi..."
+              rows={4}
+              className="w-full bg-bento-bg border border-bento-border p-3 text-xs rounded-xl text-bento-text-primary focus:outline-none focus:border-purple-500"
+            />
+            <div className="flex justify-end gap-2">
+              <button onClick={() => setActiveItem(null)} className="px-4 py-2 text-xs font-semibold text-bento-text-secondary">Batal</button>
+              <button
+                onClick={() => handleAction(activeItem, "comment")}
+                disabled={submitting}
+                className="px-4 py-2 bg-purple-600 text-white font-bold text-xs rounded-xl shadow-md"
+              >
+                Simpan Catatan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

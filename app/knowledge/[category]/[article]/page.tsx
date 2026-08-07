@@ -270,8 +270,25 @@ export default async function KnowledgeArticlePage({ params }: Props) {
         </Link>
 
         <article className="space-y-4">
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white leading-snug">{article.title}</h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white leading-snug">{article.title}</h1>
+            {(article as any).verification_status === "verified" && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                ✓ Terverifikasi Resmi Tim Pakar
+              </span>
+            )}
+          </div>
           {article.summary && <p className="text-sm md:text-base text-gray-400 leading-relaxed italic border-l-2 border-blue-500/50 pl-3">{article.summary}</p>}
+
+          {(article as any).verificator_notes && (
+            <div className="p-4 rounded-2xl bg-purple-900/20 border border-purple-500/30 text-xs md:text-sm space-y-1.5 my-4">
+              <div className="font-bold text-purple-300 flex items-center gap-2">
+                <span>💬 Catatan Koreksi & Pengayaan Pakar Verifikator</span>
+              </div>
+              <p className="text-purple-200 leading-relaxed">{(article as any).verificator_notes}</p>
+            </div>
+          )}
+
           <div className="pt-6 border-t border-[#212330]">
             <MarkdownRenderer content={cleanBodyContent} />
           </div>
