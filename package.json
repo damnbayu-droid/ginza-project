@@ -21,7 +21,6 @@
     "jose": "^5.9.6",
     "jspdf": "^4.2.1",
     "lightningcss": "^1.33.0",
-    "lightningcss-darwin-arm64": "^1.33.0",
     "lucide-react": "^0.546.0",
     "mammoth": "^1.12.0",
     "motion": "^12.23.24",
