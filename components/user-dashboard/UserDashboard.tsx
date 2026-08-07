@@ -54,6 +54,11 @@ type Tab =
 export default function UserDashboard({ profile }: { profile: Profile }) {
   const [tab, setTab] = useState<Tab>("profil");
 
+  useEffect(() => {
+    document.documentElement.classList.add("dark");
+    document.documentElement.style.backgroundColor = "#0a0a0f";
+  }, []);
+
   async function handleLogout() {
     try {
       const supabase = getSupabaseBrowserClient();

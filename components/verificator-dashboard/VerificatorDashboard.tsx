@@ -33,6 +33,11 @@ import TrendingUsersWidget from "@/components/TrendingUsersWidget";
 export default function VerificatorDashboard({ profile }: { profile: Profile }) {
   const router = useRouter();
 
+  useEffect(() => {
+    document.documentElement.classList.add("dark");
+    document.documentElement.style.backgroundColor = "#0a0a0f";
+  }, []);
+
   if (profile.role === "user") {
     return <KtpApplicationScreen profile={profile} />;
   }
