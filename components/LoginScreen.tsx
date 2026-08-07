@@ -56,18 +56,17 @@ export default function LoginScreen() {
               .maybeSingle();
 
             const role = profile?.role || "user";
-            const targetRoute = role === "admin" ? "/dashboard" : role === "verificator" ? "/verifikator" : "/u";
+            const targetRoute = role === "admin" || role === "owner" || role === "developer" ? "/dashboard" : role === "verificator" ? "/verifikator" : "/u";
 
             setInfoMessage(`Berhasil masuk! Mengalihkan ke portal ${role.toUpperCase()}...`);
             setTimeout(() => {
-              router.push(targetRoute);
-              router.refresh();
-            }, 600);
+              window.location.href = targetRoute;
+            }, 500);
             return;
           }
         }
 
-        // 2. Fallback ke API internal login (Admin / Developer Account)
+        // 2. Fallback ke API internal login (Admin / Developer / Test Account)
         const response = await fetch("/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -76,11 +75,13 @@ export default function LoginScreen() {
 
         const data = await response.json();
         if (response.ok && data.success) {
-          setInfoMessage("Berhasil masuk! Mengalihkan ke Admin Dashboard...");
+          const role = data.user?.role || "user";
+          const targetRoute = data.redirectUrl || (role === "admin" || role === "owner" || role === "developer" ? "/dashboard" : role === "verificator" ? "/verifikator" : "/u");
+
+          setInfoMessage(`Berhasil masuk! Mengalihkan ke portal ${role.toUpperCase()}...`);
           setTimeout(() => {
-            router.push("/dashboard");
-            router.refresh();
-          }, 600);
+            window.location.href = targetRoute;
+          }, 500);
         } else {
           setError(getHumanErrorMessage(data.error || t.loginError));
         }
