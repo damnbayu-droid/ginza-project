@@ -428,7 +428,7 @@ export default function HomeApp() {
   const activeSession = chatSessions.find(s => s.id === activeSessionId) || null;
 
   return (
-    <div className="flex h-screen w-full bg-[#171717] overflow-hidden font-sans">
+    <div className="flex bg-[#171717] overflow-hidden font-sans w-full" style={{ height: '100dvh' }}>
       <ChatSidebar
         sessions={chatSessions}
         activeSessionId={activeSessionId}

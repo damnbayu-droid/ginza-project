@@ -261,10 +261,10 @@ export default async function KnowledgeArticlePage({ params }: Props) {
   };
 
   return (
-    <div className="min-h-screen bg-[#0d0e12] text-white p-6 md:p-12 font-sans">
+    <div className="min-h-screen bg-[#0d0e12] text-white p-4 sm:p-6 md:p-12 font-sans overflow-x-hidden max-w-full">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
-      <div className="max-w-3xl mx-auto w-full space-y-8">
+      <div className="max-w-3xl mx-auto w-full space-y-6 sm:space-y-8 overflow-hidden">
         <Link href={`/knowledge/${categorySlug}`} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#171821] hover:bg-[#222433] text-gray-300 hover:text-white border border-[#2b2d3e] text-xs font-semibold transition-all">
           <ArrowLeft className="w-4 h-4" /> <span>Kembali ke Kategori</span>
         </Link>

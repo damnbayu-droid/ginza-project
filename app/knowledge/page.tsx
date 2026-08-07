@@ -1,9 +1,9 @@
-import Link from "next/link";
-import { ArrowLeft, Database, BookOpenText, ScrollText } from "lucide-react";
 import { listKnowledgeCategories, listKnowledgeArticles } from "@/lib/ginza-db";
 import { isSupabaseReady } from "@/lib/supabase";
-import ContributeCTA from "@/components/knowledge/ContributeCTA";
-import KnowledgeGraphViewer from "@/components/knowledge/KnowledgeGraphViewer";
+import KnowledgeExplorerClient, {
+  KnowledgeCategoryItem,
+  KnowledgeArticleItem
+} from "@/components/knowledge/KnowledgeExplorerClient";
 
 export const metadata = {
   title: "Knowledge Base MongondowPedia — Ensiklopedia Bolaang Mongondow",
@@ -11,37 +11,99 @@ export const metadata = {
 };
 
 export default async function KnowledgePage() {
-  let categories: Awaited<ReturnType<typeof listKnowledgeCategories>> = [];
-  let articleCounts = new Map<string, number>();
+  let categories: KnowledgeCategoryItem[] = [];
+  let articles: KnowledgeArticleItem[] = [];
   let dbReady = false;
 
   if (isSupabaseReady) {
     try {
-      const [cats, articles] = await Promise.all([
+      const [cats, arts] = await Promise.all([
         listKnowledgeCategories(),
         listKnowledgeArticles({ status: "published" }),
       ]);
-      categories = cats.filter(c => c.is_active);
-      for (const a of articles) {
-        articleCounts.set(a.category_id, (articleCounts.get(a.category_id) ?? 0) + 1);
-      }
+      categories = cats
+        .filter((c) => c.is_active)
+        .map((c) => ({
+          id: c.id,
+          slug: c.slug,
+          name: c.name,
+          visit_count: c.visit_count ?? 0,
+          description: c.description ?? null,
+        }));
+
+      const catNameById = new Map(categories.map((c) => [c.id, c.name]));
+      const catSlugById = new Map(categories.map((c) => [c.id, c.slug]));
+
+      articles = arts.map((a) => ({
+        id: a.id,
+        slug: a.slug,
+        title: a.title,
+        excerpt: a.summary || (a.content ? a.content.substring(0, 140) + "..." : ""),
+        category_id: a.category_id,
+        category_slug: catSlugById.get(a.category_id) || "sejarah",
+        category_name: catNameById.get(a.category_id) || "Pengetahuan",
+        visit_count: a.view_count || 0,
+        created_at: a.created_at || new Date().toISOString(),
+        author_name: a.created_by || "Tim Verifikator",
+      }));
+
       dbReady = true;
     } catch {
       dbReady = false;
     }
   }
 
+  // Fallback Data jika Database belum terhubung
   if (!dbReady || categories.length === 0) {
     categories = [
-      { id: "cat-sejarah", slug: "sejarah", name: "Sejarah", visit_count: 850, is_active: true, display_order: 10, description: null, created_by: null, created_at: new Date().toISOString() },
-      { id: "cat-adat", slug: "adat-budaya", name: "Adat & Budaya", visit_count: 640, is_active: true, display_order: 15, description: null, created_by: null, created_at: new Date().toISOString() },
-      { id: "cat-bahasa", slug: "bahasa-sastra", name: "Bahasa & Sastra", visit_count: 920, is_active: true, display_order: 25, description: null, created_by: null, created_at: new Date().toISOString() },
-      { id: "cat-kerajaan", slug: "kerajaan-bolaang-mongondow", name: "Kerajaan Bolaang Mongondow", visit_count: 530, is_active: true, display_order: 30, description: null, created_by: null, created_at: new Date().toISOString() },
-      { id: "cat-aksara", slug: "aksara-naskah", name: "Aksara & Naskah", visit_count: 780, is_active: true, display_order: 35, description: null, created_by: null, created_at: new Date().toISOString() },
-      { id: "cat-pidato", slug: "pidato-bahasa-mongondow", name: "Pidato Bahasa Mongondow", visit_count: 450, is_active: true, display_order: 45, description: null, created_by: null, created_at: new Date().toISOString() },
-      { id: "cat-edukasi", slug: "edukasi", name: "Edukasi", visit_count: 310, is_active: true, display_order: 50, description: null, created_by: null, created_at: new Date().toISOString() },
+      { id: "cat-sejarah", slug: "sejarah", name: "Sejarah", visit_count: 850, description: "Arsip sejarah masuknya peradaban, suku, dan peristiwa penting Bolaang Mongondow." },
+      { id: "cat-adat", slug: "adat-budaya", name: "Adat & Budaya", visit_count: 640, description: "Tatanan adat istiadat, ritual kebudayaan, norma sosial, dan filosofi kehidupan suku Mongondow." },
+      { id: "cat-bahasa", slug: "bahasa-sastra", name: "Bahasa & Sastra", visit_count: 920, description: "Dokumentasi kosa kata, ungkapan sastra kuno, peribahasa, dan tuturan khas Bolaang Mongondow." },
+      { id: "cat-kerajaan", slug: "kerajaan-bolaang-mongondow", name: "Kerajaan Bolaang Mongondow", visit_count: 530, description: "Naskah silsilah raja-raja, Loloda Mokoagow, stamboom istana, dan peninggalan era kerajaan." },
+      { id: "cat-aksara", slug: "aksara-naskah", name: "Aksara & Naskah", visit_count: 780, description: "Kumpulan 88 suku kata Aksara Mongondow, manuskrip kuno, dan panduan transliterasi digital." },
+      { id: "cat-pidato", slug: "pidato-bahasa-mongondow", name: "Pidato Bahasa Mongondow", visit_count: 450, description: "Teks sambutan adat, pidato resmi BMR, dan retorika tuturan lisan penutur asli." },
+      { id: "cat-edukasi", slug: "edukasi", name: "Edukasi", visit_count: 310, description: "Materi pembelajaran bahasa daerah untuk sekolah, mahasiswa, dan masyarakat umum." },
     ];
-    articleCounts.set("cat-pidato", 1);
+
+    articles = [
+      {
+        id: "art-1",
+        slug: "sejarah-raja-loloda-mokoagow",
+        title: "Sejarah Ringkas Silsilah Raja Loloda Mokoagow & Kejayaan Bolaang Mongondow",
+        excerpt: "Kisah kepemimpinan Raja Loloda Mokoagow dalam menyatukan wilayah Bolaang Mongondow Raya serta diplomasi dengan kerajaan tetangga.",
+        category_id: "cat-kerajaan",
+        category_slug: "kerajaan-bolaang-mongondow",
+        category_name: "Kerajaan Bolaang Mongondow",
+        visit_count: 520,
+        created_at: new Date().toISOString(),
+        author_name: "Dewan Verifikator Adat",
+      },
+      {
+        id: "art-2",
+        slug: "filosofi-ksatria-bogani",
+        title: "Filosofi Ksatria Bogani & Makna Ungkapan Adat 'Palu'an kon Komintan'",
+        excerpt: "Pencerminan nilai kepemimpinan ksatria Bogani dalam menjaga integritas, keberanian, dan kerukunan masyarakat Mongondow.",
+        category_id: "cat-adat",
+        category_slug: "adat-budaya",
+        category_name: "Adat & Budaya",
+        visit_count: 430,
+        created_at: new Date().toISOString(),
+        author_name: "Tim Peneliti Budaya BMR",
+      },
+      {
+        id: "art-3",
+        slug: "panduan-membaca-aksara-mongondow",
+        title: "Panduan Lengkap Membaca Diakritik Vokal & Pamudpod Aksara Mongondow",
+        excerpt: "Aturan penulisan 88 suku kata tradisional Bolaang Mongondow serta penerapan tanda silang pamudpod untuk konsonan mati.",
+        category_id: "cat-aksara",
+        category_slug: "aksara-naskah",
+        category_name: "Aksara & Naskah",
+        visit_count: 610,
+        created_at: new Date().toISOString(),
+        author_name: "Tim Aksara Digital",
+      },
+    ];
+
     dbReady = true;
   }
 
@@ -54,90 +116,19 @@ export default async function KnowledgePage() {
     "description": "Pusat pengetahuan sejarah, adat budaya, bahasa, dan seni Bolaang Mongondow — disusun komunitas & diverifikasi.",
     "isPartOf": { "@id": "https://mongondowpedia.com/#website" },
     "inLanguage": "id-ID",
-    "hasPart": categories.map((cat) => ({
-      "@type": "CollectionPage",
-      "name": cat.name,
-      "url": `https://mongondowpedia.com/knowledge/${cat.slug}`,
-    })),
   };
 
   return (
-    <div className="min-h-screen bg-[#0d0e12] text-white p-6 md:p-12 font-sans flex flex-col justify-between">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }} />
-      <div className="max-w-5xl mx-auto w-full space-y-8">
-        <div className="flex items-center justify-between border-b border-[#212330] pb-6">
-          <Link href="/" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#171821] hover:bg-[#222433] text-gray-300 hover:text-white border border-[#2b2d3e] text-xs font-semibold transition-all">
-            <ArrowLeft className="w-4 h-4" />
-            <span>Kembali ke Page Utama</span>
-          </Link>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/aksara-mongondow"
-              className="px-4 py-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 text-xs font-bold flex items-center gap-2 shadow-sm transition-all active:scale-95"
-            >
-              <ScrollText className="w-4 h-4 text-blue-400" />
-              <span>Aksara Mongondow</span>
-            </Link>
-            <span className="text-xs font-mono text-blue-400 bg-blue-500/10 border border-blue-500/20 px-3 py-1 rounded-full font-semibold">
-              Pusat Pengetahuan
-            </span>
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <div className="inline-flex p-3 rounded-2xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
-            <Database className="w-8 h-8" />
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight text-white">Knowledge Base MongondowPedia</h1>
-          <p className="text-sm text-gray-400 max-w-xl leading-relaxed">
-            Ensiklopedia sejarah, adat budaya, bahasa & sastra, serta seni Bolaang Mongondow — disusun dari arsip komunitas
-            dan diverifikasi verifikator MongondowPedia.
-          </p>
-        </div>
-
-        {!dbReady && (
-          <div className="p-6 rounded-3xl bg-[#14151e] border border-[#232536] text-sm text-gray-400">
-            Kategori pengetahuan belum tersedia — database belum terhubung. Jalankan migration &amp; script import
-            (<code className="text-blue-400">scripts/import-knowledge-to-db.ts</code>) dulu.
-          </div>
-        )}
-
-        {dbReady && categories.length === 0 && (
-          <div className="p-6 rounded-3xl bg-[#14151e] border border-[#232536] text-sm text-gray-400">
-            Belum ada kategori aktif. Admin bisa menambah tab dari panel Database Knowledge.
-          </div>
-        )}
-
-        {dbReady && categories.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {categories.map(cat => (
-              <Link
-                key={cat.id}
-                href={`/knowledge/${cat.slug}`}
-                className="p-6 rounded-3xl bg-[#14151e] hover:bg-[#191b26] border border-[#232536] hover:border-blue-500/40 transition-all shadow-xl flex flex-col gap-3 group"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                    <BookOpenText className="w-5 h-5" />
-                  </div>
-                  <span className="text-[10px] font-mono text-gray-500">{cat.visit_count} kunjungan</span>
-                </div>
-                <h3 className="text-lg font-bold text-white group-hover:text-blue-400 transition-colors">{cat.name}</h3>
-                <p className="text-xs text-gray-400">{articleCounts.get(cat.id) ?? 0} artikel</p>
-              </Link>
-            ))}
-          </div>
-        )}
-
-        {/* Visualisasi Interactive Knowledge Graphify */}
-        <KnowledgeGraphViewer />
-
-        <ContributeCTA type="knowledge" />
-      </div>
-
-      <footer className="text-center text-xs text-gray-600 pt-8">
-        © 2026 MongondowPedia™ (Ginza Project) — Knowledge Base Module
-      </footer>
-    </div>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }}
+      />
+      <KnowledgeExplorerClient
+        categories={categories}
+        articles={articles}
+        dbReady={dbReady}
+      />
+    </>
   );
 }

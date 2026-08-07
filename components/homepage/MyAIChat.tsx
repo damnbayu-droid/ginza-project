@@ -12,6 +12,10 @@ import {
   Sparkles,
   Menu,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  Minus,
   Info,
   Image as ImageIcon,
   FileText,
@@ -84,6 +88,7 @@ export default function MyAIChat({
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
   const [featureNotice, setFeatureNotice] = useState<string | null>(null);
+  const [isMobileQuickMenuOpen, setIsMobileQuickMenuOpen] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -217,7 +222,7 @@ export default function MyAIChat({
   const hasMessages = currentSession && currentSession.messages.length > 0;
 
   return (
-    <div className="flex-1 flex flex-col h-screen bg-[#171717] text-[#ececec] relative overflow-hidden font-sans">
+    <div className="flex-1 flex flex-col min-h-0 bg-[#171717] text-[#ececec] relative overflow-hidden font-sans">
       {/* Hidden File Input */}
       <input
         type="file"
@@ -228,7 +233,7 @@ export default function MyAIChat({
       />
 
       {/* Header Bar */}
-      <header className="h-14 px-4 flex items-center justify-between border-b border-[#212121] bg-[#171717]/90 backdrop-blur-md z-30 shrink-0">
+      <header className="h-14 px-3 sm:px-4 flex items-center justify-between border-b border-[#212121] bg-[#171717]/90 backdrop-blur-md z-30 shrink-0" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <div className="flex items-center gap-3">
           <button
             onClick={onToggleSidebarMobile}
@@ -279,15 +284,15 @@ export default function MyAIChat({
       {/* Main Messages & Welcome View */}
       <div className="flex-1 overflow-y-auto flex flex-col justify-between custom-scrollbar">
         {!hasMessages ? (
-          <div className="my-auto w-full max-w-2xl mx-auto px-4 py-8 flex flex-col items-center justify-center text-center space-y-8 animate-fade-in">
-            <div className="space-y-3">
-              <MyAILogo size="lg" className="mb-2 mx-auto" />
-              <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-white">
+          <div className="my-auto w-full max-w-2xl mx-auto px-4 sm:px-6 py-4 sm:py-8 flex flex-col items-center justify-center text-center space-y-5 sm:space-y-8 animate-fade-in">
+            <div className="space-y-2 sm:space-y-3">
+              <MyAILogo size="lg" className="mb-1 sm:mb-2 mx-auto" />
+              <h1 className="text-[1.35rem] sm:text-2xl md:text-3xl font-semibold tracking-tight text-white leading-snug">
                 {lang === 'id'
                   ? `Apa yang bisa ${AI_NAME} bantu hari ini?`
                   : `What can ${AI_NAME} help you with today?`}
               </h1>
-              <p className="text-xs text-gray-400 font-mono">
+              <p className="text-[10px] sm:text-xs text-gray-400 font-mono">
                 {WEBSITE_NAME} • Bogani AI powered by MyAI OS
               </p>
             </div>
@@ -414,27 +419,27 @@ export default function MyAIChat({
               </form>
             </div>
 
-            {/* Quick Prompt Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full">
+            {/* Quick Prompt Cards — always 2×2 grid (mobile & desktop) */}
+            <div className="grid grid-cols-2 gap-2 sm:gap-2.5 w-full">
               {[
                 {
-                  title: "Arti kata 'Boluya' & 'Komintan'",
-                  subtitle: "Terjemahkan & contoh tuturan bahasa",
+                  title: "Arti 'Boluya' & 'Komintan'",
+                  subtitle: "Terjemahkan & contoh tuturan",
                   prompt: "Tolong jelaskan arti kata 'Boluya' dan 'Komintan' serta berikan contoh penggunaannya dalam tuturan Bahasa Mongondow."
                 },
                 {
-                  title: "Panduan membaca Aksara Mongondow",
-                  subtitle: "Aturan vokal, diakritik, & pamudpod",
+                  title: "Aksara Mongondow",
+                  subtitle: "Vokal, diakritik & pamudpod",
                   prompt: "Bagaimana aturan membaca diakritik vokal dan tanda silang (pamudpod) pada Aksara Mongondow?"
                 },
                 {
-                  title: "Filosofi Ksatria Bogani & Adat",
-                  subtitle: "Makna ungkapan 'Palu'an kon komintan'",
+                  title: "Filosofi Ksatria Bogani",
+                  subtitle: "Makna adat Mongondow",
                   prompt: "Apa filosofi utama ksatria Bogani dan makna ungkapan adat 'Palu'an kon komintan'?"
                 },
                 {
-                  title: "Sejarah Raja Bolaang Mongondow",
-                  subtitle: "Silsilah Mokoagow & naskah kuno",
+                  title: "Sejarah Raja Bolaang",
+                  subtitle: "Silsilah Mokoagow",
                   prompt: "Jelaskan sejarah ringkas silsilah Raja Loloda Mokoagow dan asal-usul naskah kuno Bolaang Mongondow."
                 },
               ].map((item, idx) => (
@@ -445,17 +450,17 @@ export default function MyAIChat({
                     setInputText(item.prompt || item.title);
                     if (textareaRef.current) textareaRef.current.focus();
                   }}
-                  className="p-3.5 rounded-2xl bg-[#212121] hover:bg-[#272727] border border-[#2f2f2f] text-left transition-all duration-200 hover:border-[#444] group disabled:opacity-50"
+                  className="p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl bg-[#212121] hover:bg-[#272727] border border-[#2f2f2f] text-left transition-all duration-200 hover:border-[#444] group disabled:opacity-50 active:scale-[0.97]"
                 >
-                  <p className="text-xs font-medium text-white group-hover:text-blue-400 transition-colors">{item.title}</p>
-                  <p className="text-[11px] text-gray-400">{item.subtitle}</p>
+                  <p className="text-[11px] sm:text-xs font-semibold text-white group-hover:text-blue-400 transition-colors line-clamp-2">{item.title}</p>
+                  <p className="text-[10px] sm:text-[11px] text-gray-500 mt-0.5 line-clamp-1">{item.subtitle}</p>
                 </button>
               ))}
             </div>
           </div>
         ) : (
           /* Active Chat Conversation View */
-          <div className="w-full max-w-3xl mx-auto px-4 py-6 space-y-6">
+          <div className="w-full max-w-3xl mx-auto px-3 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
             {currentSession.messages.map((msg: HomeChatMessage) => {
               const isUser = msg.role === 'user';
               const msgProviderKey = msg.providerUsed?.toLowerCase() || 'gemini';
@@ -472,7 +477,7 @@ export default function MyAIChat({
                     </div>
                   )}
 
-                  <div className={`space-y-2 max-w-[85%] ${isUser ? "items-end" : "items-start"}`}>
+                  <div className={`space-y-2 max-w-[90%] sm:max-w-[85%] ${isUser ? "items-end" : "items-start"}`}>
                     {!isUser && (
                       <div className="flex items-center gap-2">
                         <span className="text-[11px] font-semibold text-white">Bogani AI</span>
@@ -573,7 +578,7 @@ export default function MyAIChat({
 
       {/* Bottom Floating Input Bar when messages exist */}
       {hasMessages && !isGuestLocked && (
-        <div className="w-full max-w-3xl mx-auto px-4 pb-4 pt-2 bg-[#171717]/90 backdrop-blur-md z-20 shrink-0">
+        <div className="w-full max-w-3xl mx-auto px-3 sm:px-4 pt-2 bg-[#171717]/90 backdrop-blur-md z-20 shrink-0" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 1rem))' }}>
           <form
             onSubmit={handleSubmit}
             className="w-full bg-[#212121] border border-[#2f2f2f] focus-within:border-[#444] rounded-3xl p-2.5 shadow-2xl transition-all duration-200"
@@ -689,7 +694,7 @@ export default function MyAIChat({
       )}
 
       {!hasMessages && (
-        <p className="text-[11px] text-gray-500 text-center pb-4 px-4 font-sans shrink-0">
+        <p className="text-[10px] sm:text-[11px] text-gray-500 text-center px-4 font-sans shrink-0" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 1rem))' }}>
           (Ginza Project) MongondowPedia Inc. All rights reserved.
         </p>
       )}
@@ -705,6 +710,100 @@ export default function MyAIChat({
         onLangChange={() => {}}
         user={user}
       />
+
+      {/* ─── Mobile Quick Menu Floating Trigger & Individual Floating Buttons (Mobile Only) ─── */}
+      {/* 1. Backdrop for Click-Outside Hiding (100% CLEAR, no blur, no dimming) */}
+      {isMobileQuickMenuOpen && (
+        <div
+          onClick={() => setIsMobileQuickMenuOpen(false)}
+          className="fixed inset-0 z-40 bg-transparent md:hidden"
+        />
+      )}
+
+      {/* 2. Floating Round Trigger Button (Visible only when closed) */}
+      {!isMobileQuickMenuOpen && (
+        <button
+          type="button"
+          onClick={() => setIsMobileQuickMenuOpen(true)}
+          className="fixed bottom-5 right-5 z-50 md:hidden w-12 h-12 rounded-full bg-[#1e1e1e] border border-[#383838] text-gray-200 hover:text-white shadow-2xl flex items-center justify-center active:scale-95 transition-all duration-200"
+          title="Menu Cepat Mobile"
+        >
+          <ChevronLeft className="w-6 h-6 stroke-[2.5]" />
+        </button>
+      )}
+
+      {/* 3. Individual Floating Buttons (Photo 2 - CLEAR background, smooth pop-up) */}
+      {isMobileQuickMenuOpen && (
+        <div
+          className="fixed bottom-3 left-0 right-0 z-50 md:hidden pointer-events-none px-4 pb-2 pt-2 animate-pop-up-smooth"
+          style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0.75rem))' }}
+        >
+          <div className="flex items-end justify-between max-w-sm mx-auto px-2 pointer-events-auto">
+            {/* 1. Aksara */}
+            <Link
+              href="/aksara"
+              onClick={() => setIsMobileQuickMenuOpen(false)}
+              className="flex flex-col items-center gap-1.5 group transition-transform duration-200 active:scale-95"
+            >
+              <div className="w-14 h-14 rounded-full bg-[#242424] border border-[#383838] flex items-center justify-center text-gray-100 group-hover:text-white group-hover:bg-[#2e2e2e] transition-all shadow-xl">
+                <ChevronRight className="w-7 h-7 stroke-[2.5]" />
+              </div>
+              <span className="text-[11px] font-bold text-white tracking-wide shadow-sm">Aksara</span>
+            </Link>
+
+            {/* 2. Text to */}
+            <button
+              type="button"
+              onClick={() => {
+                setIsMobileQuickMenuOpen(false);
+                onOpenVoiceOverlay();
+              }}
+              className="flex flex-col items-center gap-1.5 group transition-transform duration-200 active:scale-95"
+            >
+              <div className="w-14 h-14 rounded-full bg-[#242424] border border-[#383838] flex items-center justify-center text-gray-100 group-hover:text-white group-hover:bg-[#2e2e2e] transition-all shadow-xl">
+                <Minus className="w-7 h-7 stroke-[3]" />
+              </div>
+              <span className="text-[11px] font-bold text-white tracking-wide shadow-sm">Text to</span>
+            </button>
+
+            {/* 3. Artikel (Center Featured Larger Circle) */}
+            <Link
+              href="/artikel"
+              onClick={() => setIsMobileQuickMenuOpen(false)}
+              className="flex flex-col items-center gap-1.5 group -translate-y-1 transition-transform duration-200 active:scale-95"
+            >
+              <div className="w-16 h-16 rounded-full bg-[#242424] border border-[#444] flex items-center justify-center text-gray-100 group-hover:text-white group-hover:bg-[#2e2e2e] transition-all shadow-2xl">
+                <Plus className="w-8 h-8 stroke-[2.5]" />
+              </div>
+              <span className="text-[11px] font-bold text-white tracking-wide shadow-sm">Artikel</span>
+            </Link>
+
+            {/* 4. Kamus */}
+            <Link
+              href="/kamus"
+              onClick={() => setIsMobileQuickMenuOpen(false)}
+              className="flex flex-col items-center gap-1.5 group transition-transform duration-200 active:scale-95"
+            >
+              <div className="w-14 h-14 rounded-full bg-[#242424] border border-[#383838] flex items-center justify-center text-gray-100 group-hover:text-white group-hover:bg-[#2e2e2e] transition-all shadow-xl">
+                <Minus className="w-7 h-7 stroke-[3]" />
+              </div>
+              <span className="text-[11px] font-bold text-white tracking-wide shadow-sm">Kamus</span>
+            </Link>
+
+            {/* 5. Knowledge */}
+            <Link
+              href="/knowledge"
+              onClick={() => setIsMobileQuickMenuOpen(false)}
+              className="flex flex-col items-center gap-1.5 group transition-transform duration-200 active:scale-95"
+            >
+              <div className="w-14 h-14 rounded-full bg-[#242424] border border-[#383838] flex items-center justify-center text-gray-100 group-hover:text-white group-hover:bg-[#2e2e2e] transition-all shadow-xl">
+                <ChevronUp className="w-7 h-7 stroke-[2.5]" />
+              </div>
+              <span className="text-[11px] font-bold text-white tracking-wide shadow-sm">Knowledge</span>
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Feedback / Kuisioner Modal Popup */}
       <FeedbackModal

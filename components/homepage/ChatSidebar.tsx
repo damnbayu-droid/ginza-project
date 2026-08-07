@@ -33,7 +33,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
+
 import SettingsModal from "@/components/SettingsModal";
 import { HomeChatSession, Language, ChatFolder } from "@/lib/types";
 import MyAILogo from "./MyAILogo";
@@ -166,15 +166,6 @@ export default function ChatSidebar({
         {/* Top Header */}
         <div className="px-4 py-3.5 flex items-center justify-between border-b border-[#262626]">
           <div className="flex items-center gap-2.5 pl-1.5">
-            <Image
-              src="/logo.webp"
-              alt="MongondowPedia Logo"
-              width={24}
-              height={24}
-              className="w-6 h-6 object-contain rounded-md shrink-0 shadow-sm"
-              unoptimized
-              priority
-            />
             <h1 className="font-semibold text-sm tracking-tight text-white">
               <span>MongondowPedia</span>
             </h1>
