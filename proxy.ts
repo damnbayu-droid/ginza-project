@@ -1,12 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
+import { createSupabaseServerClient } from "@/lib/supabase-auth-server";
 
-// Routes that do NOT require authentication
+// Rute publik yang bebas diakses tanpa perlu login
 const PUBLIC_PATHS = [
+  "/",
   "/login",
+  "/akun",
+  "/auth/callback",
+  "/u",
+  "/verifikator",
+  "/dashboard",
+  "/game",
   "/kamus",
   "/knowledge",
   "/aksara",
+  "/aksara-mongondow",
   "/ecosystem",
   "/info",
   "/proposal",
@@ -14,52 +23,42 @@ const PUBLIC_PATHS = [
   "/panduan",
   "/terms",
   "/privacy",
-  "/docs",
-  "/api-reference",
-  "/examples",
-  "/guides",
-  "/api/auth/login",
-  "/api/auth/logout",
-  "/api/auth/forgot-password",
-  "/api/v1/chat/completions",
-  "/api/homepage/chat",
+  "/robots.txt",
+  "/sitemap.xml",
+  "/api/auth/",
+  "/api/public/",
+  "/api/homepage/",
   "/api/kamus",
+  "/api/knowledge",
   "/api/health",
   "/_next",
   "/favicon.ico",
   "/favicon.png",
   "/logo.webp",
   "/logo.png",
-  "/Logo.png",
   "/icon.png"
 ];
 
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Allow static images and media directly
+  // Izinkan gambar statis & berkas media langsung
   if (/\.(png|jpg|jpeg|webp|svg|ico|gif)$/i.test(pathname)) {
     return NextResponse.next();
   }
 
-  // Public MyAI OS chat homepage (consumer-facing, no login required)
-  if (pathname === "/") {
+  // Halaman publik & API publik langsung diizinkan
+  if (PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p))) {
     return NextResponse.next();
   }
 
-  // Allow public paths
-  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
-    return NextResponse.next();
-  }
-
-  // Protect all other routes
-  const session = await getSession(req);
-  if (!session || session.role !== 'owner') {
-    // API routes return 401, pages redirect to login
-    if (pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // Proteksi Rute Khusus Admin (/api/admin/*)
+  if (pathname.startsWith("/api/admin")) {
+    const session = await getSession(req);
+    const isAllowed = session && (session.role === 'owner' || session.role === 'developer' || session.role === 'admin');
+    if (!isAllowed) {
+      return NextResponse.json({ error: "Unauthorized admin access" }, { status: 401 });
     }
-    return NextResponse.redirect(new URL("/login", req.url));
   }
 
   return NextResponse.next();
@@ -67,7 +66,6 @@ export async function proxy(req: NextRequest) {
 
 export const config = {
   matcher: [
-    // Match all routes except static files and _next internals
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|webp|svg|ico|gif)$).*)",
   ],
 };
