@@ -39,6 +39,9 @@ const CURATED_FILES: { file: string; categorySlug: string; title?: string }[] = 
   { file: "Aksara_Bolaang_Mongondow.md", categorySlug: "aksara-naskah" },
   { file: "Pidato_Peran_PKK_Kon_Pembangunan.md", categorySlug: "pidato-bahasa-mongondow" },
   { file: "Pidato_Peran_Masyarakat_Kon_Pombanganan_Lipu.md", categorySlug: "pidato-bahasa-mongondow" },
+  { file: "Graphify_Silsilah_Raja_Raja_Mongondow.md", categorySlug: "sejarah" },
+  { file: "Graphify_Pemetaan_Konsep_Adat_dan_Falsafah.md", categorySlug: "adat-budaya" },
+  { file: "Graphify_Etimologi_dan_Morfologi_Bahasa_Mongondow.md", categorySlug: "bahasa-sastra" },
 ];
 
 // arsip_download/*.md — teks mentah/OCR, masuk sbg "pending_review" (belum
