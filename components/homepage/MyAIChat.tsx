@@ -408,16 +408,32 @@ export default function MyAIChat({
             {/* Quick Prompt Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full">
               {[
-                { title: "Bantu buat ide strategi bisnis", subtitle: "Untuk pengembangan produk baru" },
-                { title: "Jelaskan konsep teknik AI", subtitle: "Bahasa mudah dipahami" },
-                { title: "Tulis email bisnis profesional", subtitle: "Sopan, ringkas, dan persuasif" },
-                { title: "Analisis sistem & arsitektur API", subtitle: "Rekomendasi praktik terbaik" },
+                {
+                  title: "Arti kata 'Boluya' & 'Komintan'",
+                  subtitle: "Terjemahkan & contoh tuturan bahasa",
+                  prompt: "Tolong jelaskan arti kata 'Boluya' dan 'Komintan' serta berikan contoh penggunaannya dalam tuturan Bahasa Mongondow."
+                },
+                {
+                  title: "Panduan membaca Aksara Mongondow",
+                  subtitle: "Aturan vokal, diakritik, & pamudpod",
+                  prompt: "Bagaimana aturan membaca diakritik vokal dan tanda silang (pamudpod) pada Aksara Mongondow?"
+                },
+                {
+                  title: "Filosofi Ksatria Bogani & Adat",
+                  subtitle: "Makna ungkapan 'Palu'an kon komintan'",
+                  prompt: "Apa filosofi utama ksatria Bogani dan makna ungkapan adat 'Palu'an kon komintan'?"
+                },
+                {
+                  title: "Sejarah Raja Bolaang Mongondow",
+                  subtitle: "Silsilah Mokoagow & naskah kuno",
+                  prompt: "Jelaskan sejarah ringkas silsilah Raja Loloda Mokoagow dan asal-usul naskah kuno Bolaang Mongondow."
+                },
               ].map((item, idx) => (
                 <button
                   key={idx}
                   disabled={isGuestLocked}
                   onClick={() => {
-                    setInputText(item.title);
+                    setInputText(item.prompt || item.title);
                     if (textareaRef.current) textareaRef.current.focus();
                   }}
                   className="p-3.5 rounded-2xl bg-[#212121] hover:bg-[#272727] border border-[#2f2f2f] text-left transition-all duration-200 hover:border-[#444] group disabled:opacity-50"
