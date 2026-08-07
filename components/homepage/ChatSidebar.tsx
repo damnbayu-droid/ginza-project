@@ -26,12 +26,16 @@ import {
   ScrollText,
   PenTool,
   Gamepad2,
-  FileText
+  FileText,
+  Folder,
+  FolderPlus,
+  ChevronDown,
+  ChevronRight
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import SettingsModal from "@/components/SettingsModal";
-import { HomeChatSession, Language } from "@/lib/types";
+import { HomeChatSession, Language, ChatFolder } from "@/lib/types";
 import MyAILogo from "./MyAILogo";
 
 interface ChatSidebarProps {
@@ -47,6 +51,11 @@ interface ChatSidebarProps {
   onOpenVoiceOverlay: () => void;
   user: { name: string; email: string; role: string } | null;
   guestCount: number;
+  folders?: ChatFolder[];
+  onMoveToFolder?: (sessionId: string, folderId: string | null) => void;
+  onCreateFolder?: (name: string) => void;
+  onRenameFolder?: (folderId: string, name: string) => void;
+  onDeleteFolder?: (folderId: string) => void;
 }
 
 export default function ChatSidebar({
@@ -61,14 +70,44 @@ export default function ChatSidebar({
   setLang,
   onOpenVoiceOverlay,
   user,
-  guestCount
+  guestCount,
+  folders = [],
+  onMoveToFolder,
+  onCreateFolder,
+  onRenameFolder,
+  onDeleteFolder
 }: ChatSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [collapsedFolders, setCollapsedFolders] = useState<Record<string, boolean>>({});
+  const [isAddingFolder, setIsAddingFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [editingFolderId, setEditingFolderId] = useState<string | null>(null);
+  const [editingFolderName, setEditingFolderName] = useState("");
+  const [moveMenuForSession, setMoveMenuForSession] = useState<string | null>(null);
 
   const filteredSessions = sessions.filter(s =>
     s.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Obrolan yg belum masuk folder mana pun -- ini yg dikelompokkan per
+  // tanggal (Hari Ini/7 Hari Terakhir/Lebih Lama) spt sebelumnya. Obrolan
+  // yg sudah punya folder_id ditampilkan di bawah section Folder-nya sendiri.
+  const unfiledSessions = filteredSessions.filter(s => !s.folder_id);
+
+  const submitNewFolder = () => {
+    const name = newFolderName.trim();
+    if (name && onCreateFolder) onCreateFolder(name);
+    setNewFolderName("");
+    setIsAddingFolder(false);
+  };
+
+  const submitRenameFolder = (folderId: string) => {
+    const name = editingFolderName.trim();
+    if (name && onRenameFolder) onRenameFolder(folderId, name);
+    setEditingFolderId(null);
+    setEditingFolderName("");
+  };
 
   // Group sessions by date (Today, Past 7 Days, Older)
   const groupSessionsByDate = (sessionList: HomeChatSession[]) => {
@@ -96,7 +135,7 @@ export default function ChatSidebar({
     return { today, past7Days, older };
   };
 
-  const grouped = groupSessionsByDate(filteredSessions);
+  const grouped = groupSessionsByDate(unfiledSessions);
 
   const handleLogout = async () => {
     try {
@@ -257,6 +296,53 @@ export default function ChatSidebar({
           </div>
         </div>
 
+        {/* Folder / Project Sections (hanya utk user login -- disimpan di Supabase) */}
+        {user && (
+          <div className="px-3 pb-1">
+            <div className="flex items-center justify-between px-0 pb-1.5">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500">
+                {lang === 'id' ? 'Folder' : 'Folders'}
+              </p>
+              <button
+                onClick={() => setIsAddingFolder(true)}
+                className="p-1 text-gray-500 hover:text-white rounded transition-colors"
+                title={lang === 'id' ? 'Buat Folder Baru' : 'New Folder'}
+              >
+                <FolderPlus className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {isAddingFolder && (
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <input
+                  autoFocus
+                  type="text"
+                  value={newFolderName}
+                  onChange={(e) => setNewFolderName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") submitNewFolder();
+                    if (e.key === "Escape") { setIsAddingFolder(false); setNewFolderName(""); }
+                  }}
+                  placeholder={lang === 'id' ? 'Nama folder...' : 'Folder name...'}
+                  className="flex-1 bg-[#212121] text-xs text-white placeholder-gray-500 px-2 py-1.5 rounded-lg border border-blue-500/50 focus:outline-none"
+                />
+                <button onClick={submitNewFolder} className="p-1.5 text-emerald-400 hover:bg-[#212121] rounded-lg">
+                  <Check className="w-3.5 h-3.5" />
+                </button>
+                <button onClick={() => { setIsAddingFolder(false); setNewFolderName(""); }} className="p-1.5 text-gray-500 hover:bg-[#212121] rounded-lg">
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
+            {folders.length > 0 && (
+              <div className="space-y-1">
+                {folders.map(folder => renderFolderGroup(folder))}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Chat History Sections */}
         <div className="flex-1 overflow-y-auto px-2 space-y-4 py-2 custom-scrollbar">
           {filteredSessions.length === 0 ? (
@@ -398,8 +484,76 @@ export default function ChatSidebar({
     </>
   );
 
+  function renderFolderGroup(folder: ChatFolder) {
+    const folderSessions = filteredSessions.filter(s => s.folder_id === folder.id);
+    const isCollapsed = collapsedFolders[folder.id];
+    const isEditing = editingFolderId === folder.id;
+
+    return (
+      <div key={folder.id} className="space-y-0.5">
+        <div className="group flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-[#212121] transition-colors">
+          <button
+            onClick={() => setCollapsedFolders(prev => ({ ...prev, [folder.id]: !prev[folder.id] }))}
+            className="flex items-center gap-1.5 min-w-0 flex-1 text-left"
+          >
+            {isCollapsed ? <ChevronRight className="w-3 h-3 text-gray-500 shrink-0" /> : <ChevronDown className="w-3 h-3 text-gray-500 shrink-0" />}
+            <Folder className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+            {isEditing ? (
+              <input
+                autoFocus
+                type="text"
+                value={editingFolderName}
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => setEditingFolderName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") submitRenameFolder(folder.id);
+                  if (e.key === "Escape") setEditingFolderId(null);
+                }}
+                onBlur={() => submitRenameFolder(folder.id)}
+                className="flex-1 bg-[#171717] text-xs text-white px-1.5 py-0.5 rounded border border-blue-500/50 focus:outline-none"
+              />
+            ) : (
+              <span className="truncate text-xs font-medium text-gray-200">{folder.name}</span>
+            )}
+            <span className="text-[9px] text-gray-600 font-mono shrink-0">{folderSessions.length}</span>
+          </button>
+
+          {!isEditing && (
+            <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-opacity shrink-0">
+              <button
+                onClick={() => { setEditingFolderId(folder.id); setEditingFolderName(folder.name); }}
+                className="p-1 text-gray-500 hover:text-white rounded"
+                title={lang === 'id' ? 'Ganti Nama' : 'Rename'}
+              >
+                <Edit2 className="w-3 h-3" />
+              </button>
+              <button
+                onClick={() => { if (onDeleteFolder) onDeleteFolder(folder.id); }}
+                className="p-1 text-gray-500 hover:text-rose-400 rounded"
+                title={lang === 'id' ? 'Hapus Folder' : 'Delete Folder'}
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {!isCollapsed && (
+          <div className="pl-4 space-y-0.5">
+            {folderSessions.length === 0 ? (
+              <p className="px-3 py-1 text-[10px] text-gray-600 italic">{lang === 'id' ? 'Belum ada obrolan' : 'No chats yet'}</p>
+            ) : (
+              folderSessions.map(session => renderSessionItem(session))
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   function renderSessionItem(session: HomeChatSession) {
     const isActive = session.id === activeSessionId;
+    const showMoveMenu = moveMenuForSession === session.id;
     return (
       <div
         key={session.id}
@@ -418,16 +572,56 @@ export default function ChatSidebar({
           <span className="truncate">{session.title || (lang === 'id' ? 'Obrolan Tanpa Judul' : 'Untitled Chat')}</span>
         </div>
 
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onDeleteSession(session.id);
-          }}
-          className="opacity-0 group-hover:opacity-100 p-1 hover:text-rose-400 text-gray-500 rounded transition-opacity"
-          title="Hapus Obrolan"
-        >
-          <Trash2 className="w-3.5 h-3.5" />
-        </button>
+        <div className="opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-opacity shrink-0 relative">
+          {user && onMoveToFolder && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setMoveMenuForSession(showMoveMenu ? null : session.id);
+              }}
+              className="p-1 hover:text-blue-400 text-gray-500 rounded"
+              title={lang === 'id' ? 'Pindah ke Folder' : 'Move to Folder'}
+            >
+              <Folder className="w-3.5 h-3.5" />
+            </button>
+          )}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDeleteSession(session.id);
+            }}
+            className="p-1 hover:text-rose-400 text-gray-500 rounded"
+            title="Hapus Obrolan"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+
+          {showMoveMenu && (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="absolute right-0 top-full mt-1 w-44 bg-[#212121] border border-[#333] rounded-xl shadow-xl z-30 py-1 max-h-48 overflow-y-auto"
+            >
+              <button
+                onClick={() => { onMoveToFolder?.(session.id, null); setMoveMenuForSession(null); }}
+                className="w-full text-left px-3 py-1.5 text-[11px] text-gray-300 hover:bg-[#2b2b2b] hover:text-white flex items-center gap-1.5"
+              >
+                <X className="w-3 h-3" /> {lang === 'id' ? 'Tanpa Folder' : 'No Folder'}
+              </button>
+              {folders.map(f => (
+                <button
+                  key={f.id}
+                  onClick={() => { onMoveToFolder?.(session.id, f.id); setMoveMenuForSession(null); }}
+                  className="w-full text-left px-3 py-1.5 text-[11px] text-gray-300 hover:bg-[#2b2b2b] hover:text-white flex items-center gap-1.5"
+                >
+                  <Folder className="w-3 h-3 text-amber-400 shrink-0" /> <span className="truncate">{f.name}</span>
+                </button>
+              ))}
+              {folders.length === 0 && (
+                <p className="px-3 py-1.5 text-[10px] text-gray-600 italic">{lang === 'id' ? 'Belum ada folder' : 'No folders yet'}</p>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     );
   }

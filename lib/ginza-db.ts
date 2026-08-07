@@ -757,15 +757,31 @@ export async function getOverviewStats() {
 
 // ── Conversations (riwayat chat AI) ─────────────────────────────────────
 
-export async function listConversationsByUser(userId: string) {
+export async function listConversationsByUser(userId: string, folderId?: string | null) {
   const db = assertDb();
-  const { data, error } = await db
+  let query = db
     .from("conversations")
     .select("*")
     .eq("user_id", userId)
     .order("updated_at", { ascending: false });
+  if (folderId !== undefined) {
+    query = folderId === null ? query.is("folder_id", null) : query.eq("folder_id", folderId);
+  }
+  const { data, error } = await query;
   if (error) throw error;
   return data ?? [];
+}
+
+export async function getConversation(userId: string, conversationId: string) {
+  const db = assertDb();
+  const { data, error } = await db
+    .from("conversations")
+    .select("*")
+    .eq("id", conversationId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
 }
 
 export async function saveConversation(userId: string, conversationId: string | undefined, title: string, messages: unknown[]) {
@@ -778,6 +794,159 @@ export async function saveConversation(userId: string, conversationId: string | 
   const { data, error } = await db.from("conversations").insert({ user_id: userId, title, messages }).select("id").single();
   if (error) throw error;
   return data.id as string;
+}
+
+export async function deleteConversation(userId: string, conversationId: string) {
+  const db = assertDb();
+  const { error } = await db.from("conversations").delete().eq("id", conversationId).eq("user_id", userId);
+  if (error) throw error;
+}
+
+export async function moveConversationToFolder(userId: string, conversationId: string, folderId: string | null) {
+  const db = assertDb();
+  const { error } = await db
+    .from("conversations")
+    .update({ folder_id: folderId })
+    .eq("id", conversationId)
+    .eq("user_id", userId);
+  if (error) throw error;
+}
+
+export async function renameConversation(userId: string, conversationId: string, title: string) {
+  const db = assertDb();
+  const { error } = await db.from("conversations").update({ title }).eq("id", conversationId).eq("user_id", userId);
+  if (error) throw error;
+}
+
+// ── Chat Folders (pengelompokan obrolan, spt "Project" di ChatGPT/Claude) ─
+
+export interface ChatFolder {
+  id: string;
+  user_id: string;
+  name: string;
+  color: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function listFoldersByUser(userId: string): Promise<ChatFolder[]> {
+  const db = assertDb();
+  const { data, error } = await db
+    .from("chat_folders")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: true });
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function createFolder(userId: string, name: string, color?: string | null): Promise<ChatFolder> {
+  const db = assertDb();
+  const { data, error } = await db
+    .from("chat_folders")
+    .insert({ user_id: userId, name: name.trim().slice(0, 60), color: color ?? null })
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data as ChatFolder;
+}
+
+export async function renameFolder(userId: string, folderId: string, name: string) {
+  const db = assertDb();
+  const { error } = await db
+    .from("chat_folders")
+    .update({ name: name.trim().slice(0, 60) })
+    .eq("id", folderId)
+    .eq("user_id", userId);
+  if (error) throw error;
+}
+
+export async function deleteFolder(userId: string, folderId: string) {
+  const db = assertDb();
+  // Obrolan di dalamnya TIDAK ikut terhapus -- folder_id-nya otomatis jadi
+  // NULL (lihat "on delete set null" di migration), jadi cukup hapus foldernya.
+  const { error } = await db.from("chat_folders").delete().eq("id", folderId).eq("user_id", userId);
+  if (error) throw error;
+}
+
+// ── User Memory (fakta ringkas ttg user, dipakai lintas-sesi oleh Bogani AI) ─
+
+export interface UserMemoryRow {
+  id: string;
+  user_id: string;
+  content: string;
+  category: "general" | "preference" | "fact" | "goal";
+  source_conversation_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+const MAX_MEMORY_PER_USER = 60;
+
+export async function listUserMemory(userId: string): Promise<UserMemoryRow[]> {
+  const db = assertDb();
+  const { data, error } = await db
+    .from("user_memory")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return data ?? [];
+}
+
+/**
+ * Simpan fakta baru ttg user. Dedup sederhana (skip kalau ada isi identik
+ * persis yg sudah tersimpan) + batasi jumlah total per user (hapus yg paling
+ * lama kalau sudah kepenuhan) supaya konteks yg disuntik ke prompt tiap
+ * giliran chat tidak membengkak tanpa batas.
+ */
+export async function upsertUserMemory(
+  userId: string,
+  content: string,
+  category: UserMemoryRow["category"] = "general",
+  sourceConversationId?: string | null
+) {
+  const db = assertDb();
+  const trimmed = content.trim();
+  if (!trimmed) return null;
+
+  const { data: existing } = await db
+    .from("user_memory")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("content", trimmed)
+    .limit(1);
+  if (existing && existing.length > 0) return existing[0].id as string;
+
+  const { data, error } = await db
+    .from("user_memory")
+    .insert({
+      user_id: userId,
+      content: trimmed.slice(0, 500),
+      category,
+      source_conversation_id: sourceConversationId ?? null,
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+
+  const { data: all } = await db
+    .from("user_memory")
+    .select("id, created_at")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  if (all && all.length > MAX_MEMORY_PER_USER) {
+    const toDelete = all.slice(MAX_MEMORY_PER_USER).map((r) => r.id);
+    await db.from("user_memory").delete().in("id", toDelete);
+  }
+
+  return data.id as string;
+}
+
+export async function deleteUserMemory(userId: string, memoryId: string) {
+  const db = assertDb();
+  const { error } = await db.from("user_memory").delete().eq("id", memoryId).eq("user_id", userId);
+  if (error) throw error;
 }
 
 // ── Contact Messages (Pesan Masuk & Email Forwarding) ───────────────────
@@ -840,4 +1009,68 @@ export async function updateContactMessageStatus(id: string, status: ContactMess
     .single();
   if (error) throw error;
   return data as ContactMessageRow;
+}
+
+// ── Feedback / Kuisioner (masa percobaan) ───────────────────────────────
+
+export interface FeedbackSubmissionRow {
+  id: string;
+  user_id: string | null;
+  name: string | null;
+  email: string | null;
+  category: "bug" | "saran_fitur" | "kritik" | "kuisioner" | "lainnya";
+  rating: number | null;
+  message: string;
+  page_url: string | null;
+  status: "baru" | "dibaca" | "ditindaklanjuti" | "diarsipkan";
+  created_at: string;
+  updated_at: string;
+}
+
+export async function createFeedbackSubmission(input: {
+  userId?: string | null;
+  name?: string | null;
+  email?: string | null;
+  category?: FeedbackSubmissionRow["category"];
+  rating?: number | null;
+  message: string;
+  pageUrl?: string | null;
+}) {
+  const db = assertDb();
+  const { data, error } = await db
+    .from("feedback_submissions")
+    .insert({
+      user_id: input.userId ?? null,
+      name: input.name?.trim().slice(0, 120) || null,
+      email: input.email?.trim().slice(0, 200) || null,
+      category: input.category || "lainnya",
+      rating: input.rating ?? null,
+      message: input.message.trim().slice(0, 3000),
+      page_url: input.pageUrl?.slice(0, 500) || null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return data as FeedbackSubmissionRow;
+}
+
+export async function listFeedbackSubmissions(opts: { status?: string } = {}) {
+  const db = assertDb();
+  let q = db.from("feedback_submissions").select("*").order("created_at", { ascending: false });
+  if (opts.status) q = q.eq("status", opts.status);
+  const { data, error } = await q;
+  if (error) throw error;
+  return (data ?? []) as FeedbackSubmissionRow[];
+}
+
+export async function updateFeedbackSubmissionStatus(id: string, status: FeedbackSubmissionRow["status"]) {
+  const db = assertDb();
+  const { data, error } = await db
+    .from("feedback_submissions")
+    .update({ status })
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  return data as FeedbackSubmissionRow;
 }

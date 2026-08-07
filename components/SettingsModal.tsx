@@ -31,10 +31,12 @@ import {
   HelpCircle,
   ToggleLeft,
   ToggleRight,
-  Smartphone
+  Smartphone,
+  Brain,
+  Loader2
 } from "lucide-react";
 import Link from "next/link";
-import { Language } from "@/lib/types";
+import { Language, UserMemoryItem } from "@/lib/types";
 import ContactModal from "@/components/ContactModal";
 
 interface SettingsModalProps {
@@ -46,7 +48,7 @@ interface SettingsModalProps {
   onClearChats?: () => void;
 }
 
-type TabType = 'general' | 'model' | 'personalization' | 'account' | 'about';
+type TabType = 'general' | 'model' | 'personalization' | 'memory' | 'account' | 'about';
 
 export default function SettingsModal({
   isOpen,
@@ -69,6 +71,11 @@ export default function SettingsModal({
   const [customTone, setCustomTone] = useState<string>("totabuan");
   const [confirmClear, setConfirmClear] = useState<boolean>(false);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
+
+  const [memoryItems, setMemoryItems] = useState<UserMemoryItem[]>([]);
+  const [memoryLoading, setMemoryLoading] = useState<boolean>(false);
+  const [newMemoryText, setNewMemoryText] = useState<string>("");
+  const [memoryLoaded, setMemoryLoaded] = useState<boolean>(false);
 
   // Load preferences from localStorage on open
   useEffect(() => {
@@ -95,6 +102,51 @@ export default function SettingsModal({
       if (savedRate) setSpeechRate(parseFloat(savedRate));
     }
   }, [isOpen]);
+
+  // Muat daftar memori sekali saat tab Memori pertama kali dibuka (bukan
+  // tiap render) -- ringan tapi tetap tidak perlu fetch berulang kalau user
+  // cuma gonta-ganti tab lain lalu balik lagi.
+  useEffect(() => {
+    if (isOpen && activeTab === 'memory' && user && !memoryLoaded) {
+      setMemoryLoading(true);
+      fetch("/api/public/memory")
+        .then((res) => res.json())
+        .then((data) => setMemoryItems(data.memory || []))
+        .catch(() => setMemoryItems([]))
+        .finally(() => {
+          setMemoryLoading(false);
+          setMemoryLoaded(true);
+        });
+    }
+  }, [isOpen, activeTab, user, memoryLoaded]);
+
+  const handleDeleteMemory = async (id: string) => {
+    setMemoryItems((prev) => prev.filter((m) => m.id !== id));
+    try {
+      await fetch(`/api/public/memory?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+    } catch (e) {
+      console.warn("Failed deleting memory item:", e);
+    }
+  };
+
+  const handleAddMemory = async () => {
+    const content = newMemoryText.trim();
+    if (!content) return;
+    setNewMemoryText("");
+    try {
+      const res = await fetch("/api/public/memory", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      });
+      const data = await res.json();
+      if (data.id) {
+        setMemoryItems((prev) => [{ id: data.id, content, category: 'general', created_at: new Date().toISOString() }, ...prev]);
+      }
+    } catch (e) {
+      console.warn("Failed adding memory item:", e);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -200,6 +252,18 @@ export default function SettingsModal({
               >
                 <Sliders className="w-4 h-4" />
                 <span>{lang === 'id' ? 'Personalisasi & Aksara' : 'Personalization'}</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('memory')}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                  activeTab === 'memory'
+                    ? 'bg-blue-600/15 border border-blue-500/30 text-blue-400 shadow-sm'
+                    : 'text-gray-400 hover:text-white hover:bg-[#181A24]'
+                }`}
+              >
+                <Brain className="w-4 h-4" />
+                <span>{lang === 'id' ? 'Memori Bogani AI' : 'Bogani AI Memory'}</span>
               </button>
 
               <button
@@ -519,6 +583,74 @@ export default function SettingsModal({
                   className="w-full p-3 bg-[#171922] border border-[#252836] rounded-2xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 resize-none"
                 />
               </div>
+            </div>
+          )}
+
+          {/* TAB: MEMORI BOGANI AI */}
+          {activeTab === 'memory' && (
+            <div className="space-y-6">
+              <div className="border-b border-[#202330] pb-3">
+                <h4 className="font-bold text-base text-white">{lang === 'id' ? 'Memori Bogani AI' : 'Bogani AI Memory'}</h4>
+                <p className="text-xs text-gray-400">
+                  {lang === 'id'
+                    ? 'Fakta ringkas yang Bogani AI ingat tentang Anda lintas-sesi (mis. nama panggilan, preferensi). Anda bisa hapus kapan saja.'
+                    : 'Short facts Bogani AI remembers about you across sessions. You can delete anytime.'}
+                </p>
+              </div>
+
+              {!user ? (
+                <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs">
+                  {lang === 'id' ? 'Login diperlukan agar Bogani AI bisa mengingat Anda lintas-sesi.' : 'Login required for Bogani AI to remember you across sessions.'}
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={newMemoryText}
+                      onChange={(e) => setNewMemoryText(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") handleAddMemory(); }}
+                      placeholder={lang === 'id' ? 'Tambah memori manual, mis: "Aku suka kopi pahit"...' : 'Add memory manually...'}
+                      className="flex-1 p-3 bg-[#171922] border border-[#252836] rounded-xl text-xs text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddMemory}
+                      className="py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shrink-0"
+                    >
+                      {lang === 'id' ? 'Tambah' : 'Add'}
+                    </button>
+                  </div>
+
+                  {memoryLoading ? (
+                    <div className="p-6 flex items-center justify-center text-gray-500">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    </div>
+                  ) : memoryItems.length === 0 ? (
+                    <div className="p-6 rounded-2xl bg-[#171922] border border-[#252836] text-center text-xs text-gray-500">
+                      {lang === 'id' ? 'Belum ada memori tersimpan. Akan terisi otomatis seiring Anda mengobrol dengan Bogani AI.' : 'No memory saved yet. Fills in automatically as you chat with Bogani AI.'}
+                    </div>
+                  ) : (
+                    <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                      {memoryItems.map((m) => (
+                        <div key={m.id} className="p-3 rounded-xl bg-[#171922] border border-[#252836] flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="text-xs text-gray-200 break-words">{m.content}</p>
+                            <span className="text-[9px] font-mono text-gray-500 uppercase">{m.category}</span>
+                          </div>
+                          <button
+                            onClick={() => handleDeleteMemory(m.id)}
+                            className="p-1.5 text-gray-500 hover:text-rose-400 rounded-lg shrink-0"
+                            title={lang === 'id' ? 'Hapus' : 'Delete'}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
 

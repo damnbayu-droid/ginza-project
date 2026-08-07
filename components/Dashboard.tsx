@@ -6,6 +6,7 @@ import Sidebar from "@/components/Sidebar";
 import Navbar from "@/components/Navbar";
 import OverviewPanel from "@/components/dashboard/panels/OverviewPanel";
 import MessagesPanel from "@/components/dashboard/panels/MessagesPanel";
+import FeedbackPanel from "@/components/dashboard/panels/FeedbackPanel";
 import UserManagementPanel from "@/components/dashboard/panels/UserManagementPanel";
 import VerificatorManagementPanel from "@/components/dashboard/panels/VerificatorManagementPanel";
 import DatabaseKamusPanel from "@/components/dashboard/panels/DatabaseKamusPanel";
@@ -18,7 +19,7 @@ import LogsPanel from "@/components/dashboard/panels/LogsPanel";
 import ArtikelManagementPanel from "@/components/dashboard/panels/ArtikelManagementPanel";
 
 export type AdminPanelKey =
-  | "overview" | "messages" | "users" | "verificators" | "kamus" | "knowledge"
+  | "overview" | "messages" | "feedback" | "users" | "verificators" | "kamus" | "knowledge"
   | "aksara" | "contributions" | "articles" | "metrics" | "ai-master" | "logs";
 
 interface DashboardProps {
@@ -55,6 +56,7 @@ export default function Dashboard({ adminEmail }: DashboardProps) {
     switch (activePanel) {
       case "overview": return <OverviewPanel onNavigate={setActivePanel} />;
       case "messages": return <MessagesPanel />;
+      case "feedback": return <FeedbackPanel />;
       case "users": return <UserManagementPanel />;
       case "verificators": return <VerificatorManagementPanel />;
       case "kamus": return <DatabaseKamusPanel />;

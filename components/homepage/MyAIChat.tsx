@@ -22,13 +22,15 @@ import {
   Database,
   Settings,
   Moon,
-  Sun
+  Sun,
+  ClipboardList
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import Link from "next/link";
 import MyAILogo from "./MyAILogo";
 import LoginModal from "@/components/LoginModal";
 import SettingsModal from "@/components/SettingsModal";
+import FeedbackModal from "@/components/FeedbackModal";
 import { HomeChatMessage, HomeChatSession, Language } from "@/lib/types";
 import { speakMongondow, stopSpeakingMongondow } from "@/lib/mongondow-voice";
 
@@ -79,6 +81,7 @@ export default function MyAIChat({
   const [selectedModelOverride, setSelectedModelOverride] = useState<string | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
   const [featureNotice, setFeatureNotice] = useState<string | null>(null);
 
@@ -245,6 +248,15 @@ export default function MyAIChat({
 
         {/* Right Action Items */}
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowFeedbackModal(true)}
+            className="flex items-center gap-2 bg-[#21232B] hover:bg-[#2A2D37] text-gray-300 hover:text-white border border-[#2E313D] px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shadow-sm group"
+            title={lang === 'id' ? "Kritik, Saran & Kuisioner" : "Feedback & Survey"}
+          >
+            <ClipboardList className="w-4 h-4 text-purple-400 group-hover:scale-110 transition-transform" />
+            <span>{lang === 'id' ? 'Feedback' : 'Feedback'}</span>
+          </button>
+
           <Link
             href="/info"
             className="flex items-center gap-2 bg-[#21232B] hover:bg-[#2A2D37] text-gray-300 hover:text-white border border-[#2E313D] px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shadow-sm group"
@@ -698,6 +710,14 @@ export default function MyAIChat({
         lang={lang}
         onLangChange={() => {}}
         user={user}
+      />
+
+      {/* Feedback / Kuisioner Modal Popup */}
+      <FeedbackModal
+        isOpen={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
+        defaultEmail={user?.email || ""}
+        defaultName={user?.name || ""}
       />
     </div>
   );

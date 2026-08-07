@@ -6,10 +6,12 @@ import { PROVIDER_REGISTRY } from "@/lib/provider-adapters";
 import { parseUploadedFile } from "@/lib/file-parser";
 import type { HomeChatMessage, Language } from "@/lib/types";
 import { searchKamusEntries, getFeaturedSiderCards } from "@/lib/kamus-parser";
+import { searchMongondowVerifiedWords, getFeaturedMongondowWords } from "@/lib/mongondow-vocab";
+import { searchManadoPhrases, getFeaturedManadoPhrases } from "@/lib/manado-vocab";
 import { AI_NAME, WEBSITE_NAME, PROJECT_NAME, BOGANI_PERSONA_ID, BOGANI_PERSONA_EN } from "@/lib/bogani-persona";
 import { getKnowledgeContext } from "@/lib/knowledge-retrieval";
 import { getCurrentUserProfile } from "@/lib/supabase-auth-server";
-import { saveConversation, logMetricEvent, type Profile } from "@/lib/ginza-db";
+import { saveConversation, logMetricEvent, listUserMemory, upsertUserMemory, type Profile, type UserMemoryRow } from "@/lib/ginza-db";
 import {
   checkGuestQuota,
   checkUserQuota,
@@ -70,17 +72,100 @@ function getKamusContext(userPrompt: string): string {
   return "";
 }
 
-function buildPromptWithHistory(history: HomeChatMessage[], prompt: string): string {
+/**
+ * Kosakata Manado + Mongondow ✔ yang boleh dipakai Bogani AI untuk
+ * menyisipkan bahasa daerah otentik di balasan santai (lihat aturan
+ * "Campuran Bahasa" di lib/bogani-persona.ts). Terpisah dari
+ * getKamusContext() di atas -- fungsi itu untuk pertanyaan tentang KATA
+ * MONGONDOW itu sendiri (mode "definisikan kata"), sementara ini untuk
+ * bumbu percakapan sehari-hari terlepas dari topik. Selalu sertakan set
+ * "featured" kecil (sapaan/kata ganti) walau tidak ada kata yang cocok
+ * dengan pesan pengguna, supaya obrolan singkat pun tetap kebagian warna
+ * lokal -- tapi HANYA dari daftar terverifikasi ini, tidak pernah dikarang.
+ */
+function getLanguageMixContext(userPrompt: string): string {
+  try {
+    const manadoMatches = searchManadoPhrases(userPrompt, 6);
+    const manado = manadoMatches.length > 0 ? manadoMatches : getFeaturedManadoPhrases().slice(0, 4);
+
+    const mongondowMatches = searchMongondowVerifiedWords(userPrompt, 8);
+    const mongondow = mongondowMatches.length > 0 ? mongondowMatches : getFeaturedMongondowWords().slice(0, 4);
+
+    if (manado.length === 0 && mongondow.length === 0) return "";
+
+    let ctx = `\n\n--- KOSAKATA MANADO & MONGONDOW UNTUK CAMPURAN BAHASA (boleh dipakai apa adanya, JANGAN dikarang di luar daftar ini) ---\n`;
+    if (manado.length > 0) {
+      ctx += `Manado:\n${manado.map((m) => `- "${m.indonesia}" → ${m.manado}`).join("\n")}\n`;
+    }
+    if (mongondow.length > 0) {
+      ctx += `Mongondow ✔:\n${mongondow.map((w) => `- ${w.mongondow} = ${w.meaning}${w.example ? ` (${w.example})` : ""}`).join("\n")}\n`;
+    }
+    ctx += `--- AKHIR KOSAKATA CAMPURAN BAHASA ---`;
+    return ctx;
+  } catch (e) {
+    console.warn("[homepage-chat] Failed retrieving language-mix context:", e);
+  }
+  return "";
+}
+
+/**
+ * Format memori tersimpan ttg user (lihat lib/ginza-db.ts#listUserMemory)
+ * jadi blok konteks -- rows sudah difetch di pemanggil (paralel dgn cek
+ * kuota, lihat POST handler) supaya fungsi ini murni sinkron & tidak
+ * menambah round-trip DB baru di sini.
+ */
+function formatMemoryContext(rows: UserMemoryRow[]): string {
+  if (!rows || rows.length === 0) return "";
+  const top = rows.slice(0, 20);
+  return `\n\n--- MEMORI TENTANG UTAT INI (fakta ringkas dari percakapan sebelumnya, boleh dipakai utk personalisasi -- JANGAN diucapkan ulang scr harfiah kecuali relevan) ---\n${top
+    .map((m) => `- ${m.content}`)
+    .join("\n")}\n--- AKHIR MEMORI ---`;
+}
+
+/**
+ * Ekstraksi memori RINGAN berbasis pola teks (regex), BUKAN panggilan LLM
+ * tambahan -- sengaja begitu supaya TIDAK menambah latensi balasan chat sama
+ * sekali. Dipanggil fire-and-forget SETELAH balasan sudah dikirim ke user
+ * (lihat logChatTurn()). Sengaja konservatif: cuma tangkap pola pernyataan
+ * eksplisit umum, supaya tidak salah tangkap kalimat biasa jadi "fakta".
+ */
+function extractMemoryCandidates(prompt: string): { content: string; category: UserMemoryRow["category"] }[] {
+  const text = prompt.trim();
+  const results: { content: string; category: UserMemoryRow["category"] }[] = [];
+  if (!text || text.length > 300) return results; // pesan kepanjangan kemungkinan bukan pernyataan fakta sederhana
+
+  const patterns: { re: RegExp; category: UserMemoryRow["category"]; label: (m: RegExpMatchArray) => string }[] = [
+    { re: /\b(?:nama saya|namaku|nama aku|panggil saya|panggil aku)\s+([a-zA-Z' ]{2,40})/i, category: "fact", label: (m) => `Nama panggilan: ${m[1].trim()}` },
+    { re: /\baku\s+(?:tidak suka|nggak suka|ga suka|benci)\s+(.{2,80})/i, category: "preference", label: (m) => `Tidak suka: ${m[1].trim()}` },
+    { re: /\baku\s+(?:suka|senang|hobi)\s+(.{2,80})/i, category: "preference", label: (m) => `Suka: ${m[1].trim()}` },
+    { re: /\baku\s+(?:tinggal di|berasal dari|asal dari)\s+([a-zA-Z' ]{2,40})/i, category: "fact", label: (m) => `Domisili/asal: ${m[1].trim()}` },
+    { re: /\baku\s+(?:kerja sebagai|bekerja sebagai)\s+(.{2,60})/i, category: "fact", label: (m) => `Pekerjaan: ${m[1].trim()}` },
+    { re: /\b(?:tolong ingat|ingatkan|camkan|catat)\s*(?:ya|dong|bahwa|kalau)?[:,]?\s+(.{3,150})/i, category: "general", label: (m) => m[1].trim() },
+    { re: /\baku\s+(?:sedang|lagi)\s+belajar\s+(.{2,60})/i, category: "goal", label: (m) => `Sedang belajar: ${m[1].trim()}` },
+  ];
+
+  for (const p of patterns) {
+    const m = text.match(p.re);
+    if (m) {
+      const content = p.label(m).replace(/[.!?]+$/, "").trim();
+      if (content.length >= 3) results.push({ content, category: p.category });
+    }
+  }
+  return results.slice(0, 2); // maks 2 fakta baru per giliran, jaga2 supaya tidak spam
+}
+
+function buildPromptWithHistory(history: HomeChatMessage[], prompt: string, memoryCtx: string = ""): string {
   const kamusCtx = getKamusContext(prompt);
+  const languageMixCtx = getLanguageMixContext(prompt);
   let knowledgeCtx = "";
   try {
     knowledgeCtx = getKnowledgeContext(prompt);
   } catch (e) {
     console.warn("[homepage-chat] Failed retrieving knowledge context:", e);
   }
-  
+
   const personaHeader = `[SYSTEM INSTRUCTION BOGANI AI]:\n${SYSTEM_PROMPT_ID}\n\n`;
-  const fullPrompt = prompt + kamusCtx + knowledgeCtx;
+  const fullPrompt = prompt + kamusCtx + languageMixCtx + memoryCtx + knowledgeCtx;
 
   if (!Array.isArray(history) || history.length === 0) return personaHeader + fullPrompt;
 
@@ -95,10 +180,13 @@ function buildPromptWithHistory(history: HomeChatMessage[], prompt: string): str
 function simulateReply(prompt: string, lang: Language, isFirstMessage: boolean = true): string {
   const lower = prompt.toLowerCase();
   const variations = [
+    "Niondon utat! ",
+    "Dega Niondon tat! ",
+    "Niondon... ",
     "Niondon Utat! ",
     "Dega Niondon Utat! ",
     "Niondon kon MongondowPedia, Utat! ",
-    "Salam hangat kekeluargaan, Utat! "
+    "Niondon Utat! Salam hangat kekeluargaan, "
   ];
   const greeting = isFirstMessage ? variations[Math.floor(Math.random() * variations.length)] : "";
 
@@ -114,10 +202,10 @@ function simulateReply(prompt: string, lang: Language, isFirstMessage: boolean =
   }
 
   if (lower.includes("siapa kamu") || lower.includes("bogani") || lower.includes("mongondowpedia")) {
-    return `${greeting}Ako oi **${AI_NAME}** (sering dipanggil Abo), asisten kecerdasan buatan dan sahabat digital untuk **${WEBSITE_NAME}** (*${PROJECT_NAME}*) — pusat pengetahuan digital tentang Sejarah, Adat & Budaya, Bahasa/Kamus, dan Aksara Bolaang Mongondow Raya.\n\nNama "Bogani" diambil dari gelar pahlawan dan pimpinan adat Bolaang Mongondow yang dipilih karena keberanian, kebijaksanaan, dan kejujurannya mengayomi masyarakat. Ada hal seputar budaya atau sejarah yang ingin Utat pelajari bersama Abo hari ini?`;
+    return `${greeting}Aku'oy **${AI_NAME}** (sering dipanggil Abo), asisten kecerdasan buatan dan sahabat digital untuk **${WEBSITE_NAME}** (*${PROJECT_NAME}*) — pusat pengetahuan digital tentang Sejarah, Adat & Budaya, Bahasa/Kamus, dan Aksara Bolaang Mongondow Raya.\n\nNama "Bogani" diambil dari gelar pahlawan dan pimpinan adat Bolaang Mongondow yang dipilih karena keberanian, kebijaksanaan, dan kejujurannya mengayomi masyarakat. Ada hal seputar budaya atau sejarah yang ingin Utat pelajari bersama Abo hari ini?`;
   }
   if (lower.includes("halo") || lower.includes("hi") || lower.includes("hello")) {
-    return `${greeting}Halo, senang sekali bisa menyapa Utat di **${WEBSITE_NAME}**. Ako oi **${AI_NAME}** (Abo), siap menemani Utat belajar bahasa, sejarah, adat, dan Aksara Bolaang Mongondow Raya. Ada cerita atau pertanyaan menarik apa hari ini, Utat?`;
+    return `${greeting}Halo, senang sekali bisa menyapa Utat di **${WEBSITE_NAME}**. Aku'oy **${AI_NAME}** (Abo), siap menemani Utat belajar bahasa, sejarah, adat, dan Aksara Bolaang Mongondow Raya. Ada cerita atau pertanyaan menarik apa hari ini, Utat?`;
   }
   if (lower.includes("fitur") || lower.includes("suara") || lower.includes("voice")) {
     return `${greeting}**${AI_NAME}** mendukung mode **Teks Percakapan**, **Mode Suara Langsung**, dan **Unggah Dokumen/Gambar** untuk membantu penelitian dan pembelajaran kebudayaan Mongondow.`;
@@ -308,8 +396,9 @@ async function logChatTurn(opts: {
   completionTokens?: number;
   guestId?: string | null;
   ip?: string;
+  conversationId?: string | null;
 }) {
-  const { profile, prompt, responseText, provider, history, promptTokens, completionTokens, guestId, ip } = opts;
+  const { profile, prompt, responseText, provider, history, promptTokens, completionTokens, guestId, ip, conversationId } = opts;
 
   try {
     await logMetricEvent({ type: "ai_question", targetText: prompt, userId: profile?.id });
@@ -332,9 +421,26 @@ async function logChatTurn(opts: {
       { role: "assistant", content: responseText, timestamp: now },
     ];
     const title = prompt.slice(0, 60) + (prompt.length > 60 ? "..." : "");
-    await saveConversation(profile.id, undefined, title, messages);
+    // conversationId dikirim client dari sesi yg sudah dibuat lewat
+    // POST /api/public/conversations (lihat HomeApp.tsx) -- kalau dikirim,
+    // ini meng-UPDATE baris yg sama tiap giliran (bukan bikin baris baru
+    // tiap kali chat, yg sebelumnya jadi bug krn selalu undefined di sini).
+    await saveConversation(profile.id, conversationId || undefined, title, messages);
   } catch (e) {
     console.warn("[homepage-chat] Failed saving conversation history:", e);
+  }
+
+  // Ekstraksi memori ringan (regex, bukan panggilan AI tambahan) -- non-blocking,
+  // tidak menunda apa pun karena logChatTurn sendiri sudah dipanggil via `void`.
+  try {
+    const candidates = extractMemoryCandidates(prompt);
+    for (const c of candidates) {
+      void upsertUserMemory(profile.id, c.content, c.category).catch((e) =>
+        console.warn("[homepage-chat] Failed saving memory candidate:", e)
+      );
+    }
+  } catch (e) {
+    console.warn("[homepage-chat] Failed extracting memory candidates:", e);
   }
 
   if (!supabaseAdmin) return;
@@ -442,17 +548,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Prompt or file is required" }, { status: 400 });
   }
 
-  const fullPrompt = buildPromptWithHistory(history, prompt);
+  const conversationId: string | null = typeof body.conversationId === "string" ? body.conversationId : null;
   const profile = await profilePromise;
 
   // Kontrol pemakaian AI (lihat lib/ai-usage-quota.ts): tamu dapat jatah
   // kecil sekali-pakai (wajib login/daftar sesudahnya), User biasa dapat
   // jatah harian, verifikator & admin tanpa batas. Dicek SEBELUM memanggil
   // provider AI manapun supaya yg sudah habis jatah tidak membebani biaya.
+  // Memori user (kalau login) di-fetch PARALEL dgn cek kuota -- dua-duanya
+  // cuma butuh profile.id, tidak saling bergantung, jadi tidak menambah
+  // latensi berurutan dibanding sebelumnya cuma cek kuota saja.
   const guestId = profile ? null : getOrCreateGuestId(req.headers.get("cookie")).guestId;
-  const quota = profile
-    ? await checkUserQuota(profile.id, profile.role)
-    : await checkGuestQuota(guestId!, ip);
+  const [quota, memoryRows] = await Promise.all([
+    profile ? checkUserQuota(profile.id, profile.role) : checkGuestQuota(guestId!, ip),
+    profile ? listUserMemory(profile.id).catch(() => []) : Promise.resolve([]),
+  ]);
+
+  const fullPrompt = buildPromptWithHistory(history, prompt, formatMemoryContext(memoryRows));
 
   if (!quota.allowed) {
     const blocked = NextResponse.json(
@@ -468,7 +580,7 @@ export async function POST(req: NextRequest) {
   // 1. Preferred: route through the AI Gateway (myai.nexus or local) as a registered client app.
   const gatewayResult = await callGateway(req, fullPrompt, fileInput, isVoiceMode);
   if (gatewayResult && gatewayResult.text) {
-    void logChatTurn({ profile, prompt, responseText: gatewayResult.text, provider: gatewayResult.provider, history, guestId, ip });
+    void logChatTurn({ profile, prompt, responseText: gatewayResult.text, provider: gatewayResult.provider, history, guestId, ip, conversationId });
     if (wantStream) {
       const res = createTextStreamResponse(gatewayResult.text, gatewayResult.provider);
       if (guestId) setGuestCookieHeader(res, guestId);
@@ -503,6 +615,7 @@ Jawab secara lisan dengan hangat, natural, dan ringkas (maksimal 2–3 kalimat).
       completionTokens: direct.completionTokens,
       guestId,
       ip,
+      conversationId,
     });
     if (wantStream) {
       const res = createTextStreamResponse(direct.text, provider);
@@ -517,7 +630,7 @@ Jawab secara lisan dengan hangat, natural, dan ringkas (maksimal 2–3 kalimat).
   // 3. Fallback simulation if no API key is set
   const isFirstMsg = !history || history.length === 0;
   const simulatedText = simulateReply(prompt, lang, isFirstMsg);
-  void logChatTurn({ profile, prompt, responseText: simulatedText, provider: "simulated", history, guestId, ip });
+  void logChatTurn({ profile, prompt, responseText: simulatedText, provider: "simulated", history, guestId, ip, conversationId });
   // Non-blocking sync to MyAI OS Master Data Center
   (async () => {
     try {

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import {
   LogOut, Code, ChevronLeft, ChevronRight, LayoutDashboard, MessageSquare, Users, ShieldCheck,
-  BookMarked, Library, Type, FileCheck2, BarChart3, Bot, ScrollText, FileText
+  BookMarked, Library, Type, FileCheck2, BarChart3, Bot, ScrollText, FileText, ClipboardList
 } from "lucide-react";
 import { Language } from "@/lib/types";
 import { translations } from "@/lib/i18n";
@@ -22,6 +22,7 @@ interface SidebarProps {
 const NAV_ITEMS: { key: AdminPanelKey; label: string; icon: typeof LayoutDashboard }[] = [
   { key: "overview", label: "Overview", icon: LayoutDashboard },
   { key: "messages", label: "Pesan Masuk (Messages)", icon: MessageSquare },
+  { key: "feedback", label: "Feedback & Kuisioner", icon: ClipboardList },
   { key: "users", label: "User Management", icon: Users },
   { key: "verificators", label: "Verifikator Management", icon: ShieldCheck },
   { key: "kamus", label: "Database Kamus", icon: BookMarked },

@@ -38,11 +38,19 @@ export async function POST(req: NextRequest) {
 
   const inputEmail = email.trim().toLowerCase();
 
+  // Password fallback hardcoded di bawah ini HANYA aktif di luar production
+  // (mis. dev lokal) -- kalau env var terkait tidak diisi di Vercel, jalur
+  // login test-user/test-verifikator/developer ini otomatis tertutup di
+  // production, bukan diam-diam jatuh ke string lama yang sudah pernah
+  // ditampilkan di chat/riwayat. Sama persis pola "hard-disabled outside
+  // dev" yang dipakai DISABLE_ADMIN_AUTH di lib/auth.ts.
+  const isDev = process.env.NODE_ENV !== "production";
+
   const testUserEmail = (process.env.TEST_USER_EMAIL || "test.user@mongondowpedia.test").toLowerCase();
-  const testUserPwd = process.env.TEST_USER_PASSWORD || "N7srab5AZYi7zE";
+  const testUserPwd = process.env.TEST_USER_PASSWORD || (isDev ? "N7srab5AZYi7zE" : "");
 
   const testVerificatorEmail = (process.env.TEST_VERIFICATOR_EMAIL || "test.verifikator@mongondowpedia.test").toLowerCase();
-  const testVerificatorPwd = process.env.TEST_VERIFICATOR_PASSWORD || "8qF6odFkcyGBjY";
+  const testVerificatorPwd = process.env.TEST_VERIFICATOR_PASSWORD || (isDev ? "8qF6odFkcyGBjY" : "");
 
   const isDeveloperAccount = inputEmail === "developer@mongondowpedia.com" || inputEmail === (process.env.DEVELOPER_EMAIL || "").toLowerCase();
   const isTestUser = inputEmail === testUserEmail;
@@ -82,9 +90,9 @@ export async function POST(req: NextRequest) {
   const matchesEnvHash = isAdminEmail && await checkPasswordMatch(password, envHash);
   const matchesEnvPlain = isAdminEmail && await checkPasswordMatch(password, envPassword);
   const matchesDb = await checkPasswordMatch(password, dbHash);
-  const matchesDevPassword = isDeveloperAccount && (password === "Kotabunan*2026" || password === "Kotabunan2026");
-  const matchesTestUser = isTestUser && password === testUserPwd;
-  const matchesTestVerificator = isTestVerificator && password === testVerificatorPwd;
+  const matchesDevPassword = isDeveloperAccount && isDev && (password === "Kotabunan*2026" || password === "Kotabunan2026");
+  const matchesTestUser = isTestUser && !!testUserPwd && password === testUserPwd;
+  const matchesTestVerificator = isTestVerificator && !!testVerificatorPwd && password === testVerificatorPwd;
 
   const isValid = matchesEnvHash || matchesEnvPlain || matchesDb || matchesDevPassword || matchesTestUser || matchesTestVerificator;
 

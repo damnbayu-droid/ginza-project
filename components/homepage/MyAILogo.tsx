@@ -1,4 +1,4 @@
-import { Bot, Sparkles } from "lucide-react";
+import { Code } from "lucide-react";
 
 interface MyAILogoProps {
   className?: string;
@@ -22,9 +22,9 @@ const iconSizes = {
 export default function MyAILogo({ className = "", size = 'md' }: MyAILogoProps) {
   return (
     <div
-      className={`bg-gradient-to-tr from-purple-600 via-blue-600 to-indigo-500 text-white flex items-center justify-center shadow-lg shadow-purple-500/20 border border-purple-400/30 transition-transform hover:scale-105 shrink-0 ${sizeClasses[size]} ${className}`}
+      className={`bg-[#5B8DEF]/10 text-[#5B8DEF] flex items-center justify-center shadow-lg transition-transform hover:scale-105 shrink-0 ${sizeClasses[size]} ${className}`}
     >
-      <Bot className={iconSizes[size]} />
+      <Code className={iconSizes[size]} />
     </div>
   );
 }
