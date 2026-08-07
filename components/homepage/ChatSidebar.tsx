@@ -165,11 +165,9 @@ export default function ChatSidebar({
             <kbd className="text-[9px] font-mono bg-[#171717] text-gray-400 px-1.5 py-0.5 rounded border border-[#333]">⌘K</kbd>
           </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              onCloseMobile();
-            }}
+          <Link
+            href="/artikel"
+            onClick={onCloseMobile}
             className="w-full py-2 px-3 rounded-xl bg-purple-600/10 hover:bg-purple-600/20 text-purple-400 border border-purple-500/30 font-medium text-xs flex items-center justify-between transition-all duration-200"
           >
             <div className="flex items-center gap-2">
@@ -177,7 +175,7 @@ export default function ChatSidebar({
               <span>{lang === 'id' ? 'Artikel Pengguna' : 'User Articles'}</span>
             </div>
             <span className="text-[9px] font-semibold bg-purple-500 text-white px-1.5 py-0.5 rounded-full">Baru</span>
-          </button>
+          </Link>
 
           {/* Navigation Items: Kamus & Knowledge */}
           <div className="grid grid-cols-2 gap-2 pt-1">
