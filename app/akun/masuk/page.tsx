@@ -14,19 +14,35 @@ export default function MasukPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [infoMessage, setInfoMessage] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setInfoMessage(null);
 
     // 1. Coba login via Supabase Auth
     const supabase = getSupabaseBrowserClient();
-    const { error: signErr } = await supabase.auth.signInWithPassword({ email, password });
-    if (!signErr) {
+    const { data: suData, error: signErr } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (!signErr && suData?.user) {
+      // Query role user dari tabel profiles
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", suData.user.id)
+        .maybeSingle();
+
+      const role = profile?.role || "user";
+      const targetRoute = role === "admin" ? "/dashboard" : role === "verificator" ? "/verifikator" : "/u";
+
+      setInfoMessage(`Login berhasil! Mengalihkan ke portal ${role.toUpperCase()}...`);
       setLoading(false);
-      router.push("/u");
-      router.refresh();
+      setTimeout(() => {
+        router.push(targetRoute);
+        router.refresh();
+      }, 600);
       return;
     }
 
@@ -38,10 +54,13 @@ export default function MasukPage() {
         body: JSON.stringify({ email, password }),
       });
       const data = await res.json();
-      setLoading(false);
       if (res.ok && data.success) {
-        router.push("/dashboard");
-        router.refresh();
+        setInfoMessage("Login Berhasil! Mengalihkan ke Admin Dashboard...");
+        setLoading(false);
+        setTimeout(() => {
+          router.push("/dashboard");
+          router.refresh();
+        }, 600);
         return;
       }
     } catch {
@@ -49,17 +68,21 @@ export default function MasukPage() {
     }
 
     setLoading(false);
-    setError(getHumanErrorMessage(signErr));
+    setError(getHumanErrorMessage(signErr || "Gagal masuk. Silakan periksa kembali email dan kata sandi Anda."));
   }
 
   async function handleGoogleLogin() {
     setError(null);
+    setInfoMessage("Menghubungkan ke Google OAuth...");
     const supabase = getSupabaseBrowserClient();
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
-    if (oauthError) setError(getHumanErrorMessage(oauthError));
+    if (oauthError) {
+      setInfoMessage(null);
+      setError(getHumanErrorMessage(oauthError));
+    }
   }
 
   return (
@@ -101,7 +124,8 @@ export default function MasukPage() {
           </div>
         </div>
 
-        {error && <p className="text-xs text-red-400">{error}</p>}
+        {infoMessage && <p className="text-xs text-emerald-400 font-medium bg-emerald-500/10 p-2.5 rounded-lg border border-emerald-500/20">{infoMessage}</p>}
+        {error && <p className="text-xs text-red-400 font-medium bg-red-500/10 p-2.5 rounded-lg border border-red-500/20">{error}</p>}
 
         <button type="submit" disabled={loading}
           className="w-full rounded-lg bg-bento-accent text-white py-2 text-sm font-medium disabled:opacity-50">

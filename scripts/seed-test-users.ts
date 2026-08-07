@@ -57,6 +57,7 @@ async function main() {
       console.log(`   ℹ️ User ${acc.email} sudah ada di Auth, memperbarui password & metadata...`);
       const { error: updateErr } = await supabase.auth.admin.updateUserById(userId!, {
         password: acc.password,
+        email_confirm: true,
         user_metadata: { full_name: acc.fullName, role: acc.role },
       });
       if (updateErr) {

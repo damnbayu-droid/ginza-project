@@ -23,7 +23,10 @@ export default function DaftarPage() {
     const { error: signErr } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { full_name: displayName } },
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        data: { full_name: displayName },
+      },
     });
     setLoading(false);
     if (signErr) { setError(getHumanErrorMessage(signErr)); return; }

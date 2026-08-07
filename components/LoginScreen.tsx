@@ -47,9 +47,22 @@ export default function LoginScreen() {
             password,
           });
 
-          if (!suErr && suData.session) {
-            router.push("/u");
-            router.refresh();
+          if (!suErr && suData?.session) {
+            // Query profile role
+            const { data: profile } = await supabaseClient
+              .from("profiles")
+              .select("role")
+              .eq("id", suData.user.id)
+              .maybeSingle();
+
+            const role = profile?.role || "user";
+            const targetRoute = role === "admin" ? "/dashboard" : role === "verificator" ? "/verifikator" : "/u";
+
+            setInfoMessage(`Berhasil masuk! Mengalihkan ke portal ${role.toUpperCase()}...`);
+            setTimeout(() => {
+              router.push(targetRoute);
+              router.refresh();
+            }, 600);
             return;
           }
         }
@@ -63,8 +76,11 @@ export default function LoginScreen() {
 
         const data = await response.json();
         if (response.ok && data.success) {
-          router.push("/dashboard");
-          router.refresh();
+          setInfoMessage("Berhasil masuk! Mengalihkan ke Admin Dashboard...");
+          setTimeout(() => {
+            router.push("/dashboard");
+            router.refresh();
+          }, 600);
         } else {
           setError(getHumanErrorMessage(data.error || t.loginError));
         }
@@ -73,11 +89,14 @@ export default function LoginScreen() {
           const { error: signUpError } = await supabaseClient.auth.signUp({
             email,
             password,
+            options: {
+              emailRedirectTo: `${window.location.origin}/auth/callback`,
+            },
           });
           if (signUpError) {
             setError(getHumanErrorMessage(signUpError));
           } else {
-            setInfoMessage("Pendaftaran berhasil! Silakan periksa email Anda untuk mengonfirmasi akun.");
+            setInfoMessage("Pendaftaran berhasil! Silakan periksa email Anda dan klik tautan konfirmasi untuk otomatis masuk.");
             setMode('login');
           }
         } else {
