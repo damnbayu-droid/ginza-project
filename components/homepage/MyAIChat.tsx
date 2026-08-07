@@ -237,12 +237,9 @@ export default function MyAIChat({
             <Menu className="w-5 h-5" />
           </button>
 
-          {/* Header Title & MyAI OS Badge */}
+          {/* Header Title */}
           <div className="flex items-center gap-2 px-2 py-1.5">
             <span className="font-sans font-semibold text-sm text-white/90">Bogani AI</span>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded-md border font-bold text-emerald-400 bg-emerald-500/10 border-emerald-500/30">
-              MyAI OS
-            </span>
           </div>
         </div>
 
