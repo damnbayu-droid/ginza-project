@@ -96,8 +96,22 @@ export async function getCurrentUserProfile(): Promise<Profile | null> {
         .maybeSingle();
 
       if (gwUser?.role) {
-        // Map role owner/developer ke admin jika diperlukan
         role = gwUser.role;
+      }
+
+      // 3. Query profiles table untuk membaca data tersimpan (avatar_url, display_name, bio, score)
+      const { data: existingProfile } = await supabaseAdmin
+        .from("profiles")
+        .select("*")
+        .eq("email", session.email)
+        .maybeSingle();
+
+      if (existingProfile) {
+        return {
+          ...existingProfile,
+          email: session.email,
+          role: role === "owner" || role === "developer" ? "admin" : (existingProfile.role || role),
+        } as Profile;
       }
 
       return {

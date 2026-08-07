@@ -29,7 +29,8 @@ import {
   BookOpen,
   BookMarked,
   Type,
-  MessageSquare
+  MessageSquare,
+  Smartphone
 } from "lucide-react";
 import type { Profile } from "@/lib/ginza-db";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser-auth";
@@ -1240,8 +1241,35 @@ function VerificatorSettingsTab() {
 
       <div className="bg-bento-surface border border-bento-border rounded-2xl p-6 space-y-4 max-w-xl">
         <p className="text-xs text-bento-text-secondary">
-          Pengaturan pemberitahuan usulan baru diaktifkan secara otomatis.
+          Pengaturan pemberitahuan usulan baru diaktifkan secara otomatis untuk seluruh tim Verifikator.
         </p>
+      </div>
+
+      {/* Download Mobile App Card */}
+      <div className="p-5 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-blue-500/10 to-purple-500/10 border border-emerald-500/30 flex items-center justify-between gap-3 text-xs max-w-xl shadow-lg">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">
+            <Smartphone className="w-5 h-5" />
+          </div>
+          <div>
+            <h6 className="font-bold text-bento-text-primary text-xs flex items-center gap-1.5">
+              <span>Download Aplikasi HP (Android)</span>
+              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold">APK</span>
+            </h6>
+            <p className="text-[11px] text-bento-text-secondary mt-0.5">Akses cepat Bogani AI & Pengetahuan Mongondow langsung dari smartphone Android Anda.</p>
+          </div>
+        </div>
+
+        <a
+          href={process.env.NEXT_PUBLIC_MOBILE_APP_URL || "#"}
+          target="_blank"
+          rel="noreferrer"
+          className="py-2 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs shrink-0 transition-all shadow-lg shadow-emerald-500/20 flex items-center gap-1.5"
+          title="Download Aplikasi HP Android"
+        >
+          <Download className="w-4 h-4" />
+          <span>Download App</span>
+        </a>
       </div>
     </div>
   );

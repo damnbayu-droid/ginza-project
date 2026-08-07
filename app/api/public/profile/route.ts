@@ -20,6 +20,7 @@ export async function PATCH(req: NextRequest) {
   const updateData = {
     id: profile!.id,
     role: profile!.role,
+    ...(profile!.email ? { email: profile!.email } : {}),
     ...(display_name !== undefined ? { display_name } : {}),
     ...(bio !== undefined ? { bio } : {}),
     ...(avatar_url !== undefined ? { avatar_url } : {}),
