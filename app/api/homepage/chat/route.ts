@@ -96,24 +96,24 @@ function simulateReply(prompt: string, lang: Language): string {
   const lower = prompt.toLowerCase();
   if (lang === 'en') {
     if (lower.includes("who are you") || lower.includes("bogani") || lower.includes("mongondowpedia")) {
-      return `I am **${AI_NAME}**, the AI assistant for **${WEBSITE_NAME}** (*${PROJECT_NAME}*). A fast, intelligent AI assistant built to help with research, information, analysis, and everyday conversations.`;
+      return `Niondon! I am **${AI_NAME}** (also known as Abo), your AI assistant and cultural companion for **${WEBSITE_NAME}** (*${PROJECT_NAME}*). I am here to help you explore Bolaang Mongondow's rich history, language, customs, and traditional Aksara script! How can I assist you today?`;
     }
     if (lower.includes("hi") || lower.includes("hello")) {
-      return `Hello! How can **${AI_NAME}** assist you on **${WEBSITE_NAME}** today?`;
+      return `Niondon! Hello and welcome to **${WEBSITE_NAME}**! I am **${AI_NAME}** (Abo), glad to accompany you. What would you like to explore together today?`;
     }
-    return `Thanks for reaching out to **${AI_NAME}** on **${WEBSITE_NAME}**! Your question about *"${prompt}"* has been received. I'm ready to help you explore, analyze, and build detailed answers. Anything else you'd like to ask?`;
+    return `Niondon! Thank you for reaching out to **${AI_NAME}** on **${WEBSITE_NAME}**! Regarding *"${prompt}"*, I am ready to help you explore, analyze, and learn more. How can I assist you further?`;
   }
 
   if (lower.includes("siapa kamu") || lower.includes("bogani") || lower.includes("mongondowpedia")) {
-    return `Saya adalah **${AI_NAME}**, asisten AI cerdas untuk platform **${WEBSITE_NAME}** (*${PROJECT_NAME}*). Saya dirancang untuk membantu Anda menjelajahi informasi, ensiklopedia, analisis, koding, serta percakapan harian.`;
+    return `Niondon Utat! Ako oi **${AI_NAME}** (sering dipanggil Abo), asisten kecerdasan buatan dan sahabat digital untuk **${WEBSITE_NAME}** (*${PROJECT_NAME}*) — pusat pengetahuan digital tentang Sejarah, Adat & Budaya, Bahasa/Kamus, dan Aksara Bolaang Mongondow Raya.\n\nNama "Bogani" diambil dari gelar pahlawan dan pimpinan adat Bolaang Mongondow yang dipilih karena keberanian, kebijaksanaan, dan kejujurannya mengayomi masyarakat. Ada hal seputar budaya atau sejarah yang ingin Utat pelajari bersama Abo hari ini?`;
   }
   if (lower.includes("halo") || lower.includes("hi") || lower.includes("hello")) {
-    return `Halo! Ada yang bisa **${AI_NAME}** bantu untuk Anda di **${WEBSITE_NAME}** hari ini?`;
+    return `Niondon Utat! Halo, senang sekali bisa menyapa Utat di **${WEBSITE_NAME}**. Ako oi **${AI_NAME}** (Abo), siap menemani Utat belajar bahasa, sejarah, adat, dan Aksara Bolaang Mongondow Raya. Ada cerita atau pertanyaan menarik apa hari ini, Utat?`;
   }
-  if (lower.includes("fitur") || lower.includes("voice") || lower.includes("suara")) {
-    return `Saat ini **${AI_NAME}** mendukung mode **Teks**, **Suara**, dan **Unggah Dokumen/Gambar** untuk melayani pengguna **${WEBSITE_NAME}**.`;
+  if (lower.includes("fitur") || lower.includes("suara") || lower.includes("voice")) {
+    return `Niondon Utat! **${AI_NAME}** mendukung mode **Teks Percakapan**, **Mode Suara Langsung**, dan **Unggah Dokumen/Gambar** untuk membantu penelitian dan pembelajaran kebudayaan Mongondow.`;
   }
-  return `Terima kasih telah menghubungi **${AI_NAME}** di **${WEBSITE_NAME}**! Pertanyaan Anda tentang *"${prompt}"* telah diproses. Saya siap membantu Anda menganalisis dan memberikan informasi detail. Ada hal spesifik lain yang ingin ditanyakan?`;
+  return `Niondon Utat! Terima kasih telah menghubungi **${AI_NAME}** di **${WEBSITE_NAME}**. Mengenai pertanyaan Utat tentang *"${prompt}"*, mari kita pelajari bersama informasi dan etimologinya secara mendalam. Ada topik spesifik yang ingin Utat tanyakan lebih lanjut?`;
 }
 
 /**

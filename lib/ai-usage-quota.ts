@@ -12,8 +12,8 @@ import crypto from "crypto";
  * Sekali jatah 5 pertanyaan habis, user TIDAK BISA mereset walau buka Incognito / hapus cookie.
  */
 
-export const GUEST_QUESTION_LIMIT = 5;
-export const USER_DAILY_QUESTION_LIMIT = 15;
+export const GUEST_QUESTION_LIMIT = 7;
+export const USER_DAILY_QUESTION_LIMIT = 35;
 export const GUEST_COOKIE_NAME = "mp_guest_id";
 const UNLIMITED_ROLES = new Set(["admin", "verificator", "developer", "vip", "owner"]);
 
