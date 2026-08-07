@@ -92,28 +92,31 @@ function buildPromptWithHistory(history: HomeChatMessage[], prompt: string): str
   return `${personaHeader}${historyText}\n\nUser: ${fullPrompt}`;
 }
 
-function simulateReply(prompt: string, lang: Language): string {
+function simulateReply(prompt: string, lang: Language, isFirstMessage: boolean = true): string {
   const lower = prompt.toLowerCase();
+  const greeting = isFirstMessage ? "Niondon Utat! " : "";
+
   if (lang === 'en') {
+    const enGreeting = isFirstMessage ? "Niondon! " : "";
     if (lower.includes("who are you") || lower.includes("bogani") || lower.includes("mongondowpedia")) {
-      return `Niondon! I am **${AI_NAME}** (also known as Abo), your AI assistant and cultural companion for **${WEBSITE_NAME}** (*${PROJECT_NAME}*). I am here to help you explore Bolaang Mongondow's rich history, language, customs, and traditional Aksara script! How can I assist you today?`;
+      return `${enGreeting}I am **${AI_NAME}** (also known as Abo), your AI assistant and cultural companion for **${WEBSITE_NAME}** (*${PROJECT_NAME}*). I am here to help you explore Bolaang Mongondow's rich history, language, customs, and traditional Aksara script! How can I assist you today?`;
     }
     if (lower.includes("hi") || lower.includes("hello")) {
-      return `Niondon! Hello and welcome to **${WEBSITE_NAME}**! I am **${AI_NAME}** (Abo), glad to accompany you. What would you like to explore together today?`;
+      return `${enGreeting}Hello and welcome to **${WEBSITE_NAME}**! I am **${AI_NAME}** (Abo), glad to accompany you. What would you like to explore together today?`;
     }
-    return `Niondon! Thank you for reaching out to **${AI_NAME}** on **${WEBSITE_NAME}**! Regarding *"${prompt}"*, I am ready to help you explore, analyze, and learn more. How can I assist you further?`;
+    return `${enGreeting}Thank you for reaching out to **${AI_NAME}** on **${WEBSITE_NAME}**! Regarding *"${prompt}"*, I am ready to help you explore, analyze, and learn more. How can I assist you further?`;
   }
 
   if (lower.includes("siapa kamu") || lower.includes("bogani") || lower.includes("mongondowpedia")) {
-    return `Niondon Utat! Ako oi **${AI_NAME}** (sering dipanggil Abo), asisten kecerdasan buatan dan sahabat digital untuk **${WEBSITE_NAME}** (*${PROJECT_NAME}*) — pusat pengetahuan digital tentang Sejarah, Adat & Budaya, Bahasa/Kamus, dan Aksara Bolaang Mongondow Raya.\n\nNama "Bogani" diambil dari gelar pahlawan dan pimpinan adat Bolaang Mongondow yang dipilih karena keberanian, kebijaksanaan, dan kejujurannya mengayomi masyarakat. Ada hal seputar budaya atau sejarah yang ingin Utat pelajari bersama Abo hari ini?`;
+    return `${greeting}Ako oi **${AI_NAME}** (sering dipanggil Abo), asisten kecerdasan buatan dan sahabat digital untuk **${WEBSITE_NAME}** (*${PROJECT_NAME}*) — pusat pengetahuan digital tentang Sejarah, Adat & Budaya, Bahasa/Kamus, dan Aksara Bolaang Mongondow Raya.\n\nNama "Bogani" diambil dari gelar pahlawan dan pimpinan adat Bolaang Mongondow yang dipilih karena keberanian, kebijaksanaan, dan kejujurannya mengayomi masyarakat. Ada hal seputar budaya atau sejarah yang ingin Utat pelajari bersama Abo hari ini?`;
   }
   if (lower.includes("halo") || lower.includes("hi") || lower.includes("hello")) {
-    return `Niondon Utat! Halo, senang sekali bisa menyapa Utat di **${WEBSITE_NAME}**. Ako oi **${AI_NAME}** (Abo), siap menemani Utat belajar bahasa, sejarah, adat, dan Aksara Bolaang Mongondow Raya. Ada cerita atau pertanyaan menarik apa hari ini, Utat?`;
+    return `${greeting}Halo, senang sekali bisa menyapa Utat di **${WEBSITE_NAME}**. Ako oi **${AI_NAME}** (Abo), siap menemani Utat belajar bahasa, sejarah, adat, dan Aksara Bolaang Mongondow Raya. Ada cerita atau pertanyaan menarik apa hari ini, Utat?`;
   }
   if (lower.includes("fitur") || lower.includes("suara") || lower.includes("voice")) {
-    return `Niondon Utat! **${AI_NAME}** mendukung mode **Teks Percakapan**, **Mode Suara Langsung**, dan **Unggah Dokumen/Gambar** untuk membantu penelitian dan pembelajaran kebudayaan Mongondow.`;
+    return `${greeting}**${AI_NAME}** mendukung mode **Teks Percakapan**, **Mode Suara Langsung**, dan **Unggah Dokumen/Gambar** untuk membantu penelitian dan pembelajaran kebudayaan Mongondow.`;
   }
-  return `Niondon Utat! Terima kasih telah menghubungi **${AI_NAME}** di **${WEBSITE_NAME}**. Mengenai pertanyaan Utat tentang *"${prompt}"*, mari kita pelajari bersama informasi dan etimologinya secara mendalam. Ada topik spesifik yang ingin Utat tanyakan lebih lanjut?`;
+  return `${greeting}Terima kasih telah menghubungi **${AI_NAME}** di **${WEBSITE_NAME}**. Mengenai pertanyaan Utat tentang *"${prompt}"*, mari kita pelajari bersama informasi dan etimologinya secara mendalam. Ada topik spesifik yang ingin Utat tanyakan lebih lanjut?`;
 }
 
 /**
@@ -506,7 +509,8 @@ Jawab secara lisan dengan hangat, natural, dan ringkas (maksimal 2–3 kalimat).
   }
 
   // 3. Fallback simulation if no API key is set
-  const simulatedText = simulateReply(prompt, lang);
+  const isFirstMsg = !history || history.length === 0;
+  const simulatedText = simulateReply(prompt, lang, isFirstMsg);
   void logChatTurn({ profile, prompt, responseText: simulatedText, provider: "simulated", history, guestId, ip });
   // Non-blocking sync to MyAI OS Master Data Center
   (async () => {
