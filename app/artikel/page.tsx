@@ -114,8 +114,8 @@ export default function ArtikelPage() {
 
           <div className="flex items-center gap-3">
             <Link
-              href="/u"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition-all shadow-lg shadow-purple-600/25"
+              href="/u/tulis-artikel"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs transition-all shadow-lg shadow-purple-600/25 active:scale-95"
             >
               <Plus className="w-4 h-4" />
               <span>Tulis Artikel Baru</span>
@@ -208,8 +208,8 @@ export default function ArtikelPage() {
               Jadilah yang pertama memposting artikel pengetahuan, sejarah, atau opini di MongondowPedia.
             </p>
             <Link
-              href="/u"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-purple-600 text-white font-bold text-xs mt-2"
+              href="/u/tulis-artikel"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs mt-2 transition-all active:scale-95 shadow-md shadow-purple-600/20"
             >
               <Plus className="w-4 h-4" />
               <span>Tulis Artikel Sekarang</span>

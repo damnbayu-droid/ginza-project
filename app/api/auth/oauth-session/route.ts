@@ -9,7 +9,7 @@ import { createSession } from "@/lib/auth";
  */
 export async function POST(req: NextRequest) {
   try {
-    const { email, name, avatarUrl } = await req.json();
+    const { email, name, avatarUrl, next } = await req.json();
 
     if (!email) {
       return NextResponse.json({ error: "Email wajib diisi" }, { status: 400 });
@@ -35,12 +35,14 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const redirectUrl =
+    const defaultRedirect =
       userRole === "admin" || userRole === "owner" || userRole === "developer"
         ? "/dashboard"
         : userRole === "verificator"
         ? "/verifikator"
         : "/u";
+
+    const redirectUrl = next || defaultRedirect;
 
     const res = NextResponse.json({
       success: true,

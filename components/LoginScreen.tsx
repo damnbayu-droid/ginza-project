@@ -106,9 +106,10 @@ export default function LoginScreen() {
               .maybeSingle();
 
             const role = profile?.role || "user";
-            const targetRoute = role === "admin" || role === "owner" || role === "developer" ? "/dashboard" : role === "verificator" ? "/verifikator" : "/u";
+            const nextParam = searchParams.get("next");
+            const targetRoute = nextParam || (role === "admin" || role === "owner" || role === "developer" ? "/dashboard" : role === "verificator" ? "/verifikator" : "/u");
 
-            setInfoMessage(`Berhasil masuk! Mengalihkan ke portal ${role.toUpperCase()}...`);
+            setInfoMessage(`Berhasil masuk! Mengalihkan ke portal...`);
             setTimeout(() => {
               window.location.href = targetRoute;
             }, 500);
@@ -126,9 +127,10 @@ export default function LoginScreen() {
         const data = await response.json();
         if (response.ok && data.success) {
           const role = data.user?.role || "user";
-          const targetRoute = data.redirectUrl || (role === "admin" || role === "owner" || role === "developer" ? "/dashboard" : role === "verificator" ? "/verifikator" : "/u");
+          const nextParam = searchParams.get("next");
+          const targetRoute = nextParam || data.redirectUrl || (role === "admin" || role === "owner" || role === "developer" ? "/dashboard" : role === "verificator" ? "/verifikator" : "/u");
 
-          setInfoMessage(`Berhasil masuk! Mengalihkan ke portal ${role.toUpperCase()}...`);
+          setInfoMessage(`Berhasil masuk! Mengalihkan ke portal...`);
           setTimeout(() => {
             window.location.href = targetRoute;
           }, 500);
@@ -183,10 +185,15 @@ export default function LoginScreen() {
     setInfoMessage("");
     if (provider === 'google') {
       if (supabaseClient) {
+        const nextParam = searchParams.get("next");
+        const callbackUrl = nextParam
+          ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextParam)}`
+          : `${window.location.origin}/auth/callback`;
+
         const { error: oauthError } = await supabaseClient.auth.signInWithOAuth({
           provider: 'google',
           options: {
-            redirectTo: `${window.location.origin}/auth/callback`,
+            redirectTo: callbackUrl,
           },
         });
         if (oauthError) {
