@@ -741,7 +741,7 @@ export default function MyAIChat({
           <div className="flex items-end justify-between max-w-sm mx-auto px-2 pointer-events-auto">
             {/* 1. Aksara */}
             <Link
-              href="/aksara"
+              href="/aksara-mongondow"
               onClick={() => setIsMobileQuickMenuOpen(false)}
               className="flex flex-col items-center gap-1.5 group transition-transform duration-200 active:scale-95"
             >
@@ -751,20 +751,17 @@ export default function MyAIChat({
               <span className="text-[11px] font-bold text-white tracking-wide shadow-sm">Aksara</span>
             </Link>
 
-            {/* 2. Text to */}
-            <button
-              type="button"
-              onClick={() => {
-                setIsMobileQuickMenuOpen(false);
-                onOpenVoiceOverlay();
-              }}
+            {/* 2. Transliterasi */}
+            <Link
+              href="/aksara-mongondow?tab=sandbox"
+              onClick={() => setIsMobileQuickMenuOpen(false)}
               className="flex flex-col items-center gap-1.5 group transition-transform duration-200 active:scale-95"
             >
               <div className="w-14 h-14 rounded-full bg-[#242424] border border-[#383838] flex items-center justify-center text-gray-100 group-hover:text-white group-hover:bg-[#2e2e2e] transition-all shadow-xl">
                 <Minus className="w-7 h-7 stroke-[3]" />
               </div>
-              <span className="text-[11px] font-bold text-white tracking-wide shadow-sm">Text to</span>
-            </button>
+              <span className="text-[11px] font-bold text-white tracking-wide shadow-sm">Transliterasi</span>
+            </Link>
 
             {/* 3. Artikel (Center Featured Larger Circle) */}
             <Link
