@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, FormEvent } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import { Mail, Lock, Eye, EyeOff, X, ArrowRight, UserPlus, KeyRound, CheckCircle2, AlertCircle, Info } from "lucide-react";
 import { supabaseClient } from "@/lib/supabase-client";
 
@@ -21,6 +21,59 @@ export default function LoginModal({ isOpen, onClose, onSuccess }: LoginModalPro
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [oauthNotice, setOauthNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isOpen || typeof window === "undefined" || !supabaseClient) return;
+
+    async function checkOAuthSession() {
+      if (typeof window === "undefined" || !supabaseClient) return;
+      const client = supabaseClient;
+
+      const hasHashToken = window.location.hash.includes("access_token");
+      const sessionRes = await client.auth.getSession();
+      const session = sessionRes.data?.session;
+
+      if (session?.user?.email || hasHashToken) {
+        let email = session?.user?.email;
+        let name = session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name;
+        let avatarUrl = session?.user?.user_metadata?.avatar_url;
+
+        if (!email && hasHashToken) {
+          const hashParams = new URLSearchParams(window.location.hash.replace("#", "?"));
+          const token = hashParams.get("access_token");
+          if (token) {
+            const userData = await client.auth.getUser(token);
+            email = userData.data?.user?.email;
+            name = userData.data?.user?.user_metadata?.full_name;
+            avatarUrl = userData.data?.user?.user_metadata?.avatar_url;
+          }
+        }
+
+        if (email) {
+          setLoading(true);
+          setMessage("Berhasil terhubung dengan Google! Mengalihkan ke portal...");
+          try {
+            const res = await fetch("/api/auth/oauth-session", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email, name, avatarUrl }),
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+              window.location.href = data.redirectUrl || "/dashboard";
+              return;
+            }
+          } catch (e) {
+            console.error("Gagal sinkronkan sesi OAuth:", e);
+          } finally {
+            setLoading(false);
+          }
+        }
+      }
+    }
+
+    checkOAuthSession();
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
