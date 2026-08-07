@@ -1,0 +1,139 @@
+{
+  "topic": "Naskah Teater \"Panang Lipu' Ku\" & Aksi HAM Masyarakat Adat Panang",
+  "sources": [
+    {
+      "type": "naskah_teater",
+      "title": "Final Draf Naskah \"Panang Lipu' Ku\" -- Teater Sejarah, Teatrikal Puisi, Drama Pantomim",
+      "author": "Wahyudin Damopolii - Manoppo",
+      "uploaded_by_user": "2026-08-07",
+      "note": "Karya kreatif berbasis sejarah lisan keluarga, BUKAN risalah akademis. Berisi tokoh yang didramatisasi (Doup, Ginza).",
+      "full_text_ref": "arsip_verbatim/16_naskah_teater_panang_lipu_ku.md"
+    },
+    {
+      "type": "dokumentasi_foto",
+      "title": "Aksi Hari HAM Sedunia ke-74, Masyarakat Adat Dusun 5 Panang, Kotabunan",
+      "date": "2022-12-09 s.d 2022-12-10",
+      "folder_original": "Knowladge/Aksi HAM",
+      "folder_arsip": "media/aksi-ham-panang-2022"
+    }
+  ],
+  "scope_note": "Melengkapi Sejarah_Bolaang_Mongondow_Timur_Boltim_Kotabunan.md (sumber blog) dengan versi teatrikal/dramatis dari keluarga yang sama, plus bukti dokumentasi bahwa isu tanah/HGU yang jadi 'plot hole' di akhir naskah masih nyata terjadi (Aksi HAM 2022).",
+  "characters": [
+    {
+      "id": "T01",
+      "name": "Aki Dontu'",
+      "role": "Pemimpin rombongan migran dari pedalaman Mongondow",
+      "journey": ["Simbalang", "Iloba", "Doup/Panang"],
+      "cross_reference": "Sejalan dengan 'Dontu Damopolii' di sumber blog, meski adegan mahar 7 Kokasi Emas & pernikahan dgn putri raja tidak dipentaskan eksplisit di naskah ini."
+    },
+    {
+      "id": "T02",
+      "name": "Doup (Inde Doup)",
+      "role": "Perempuan Mongondow paruh baya yang mengenalkan emas kepada Aki Dontu",
+      "status_note": "Personifikasi/tokoh dramatis -- di sumber blog 'Doup' adalah nama lokasi (Dagat to Botak), bukan nama pribadi."
+    },
+    {
+      "id": "T03",
+      "name": "Ginza",
+      "role": "Perempuan keturunan campuran (garis Dontu x Putri Kerajaan), musuh utama pendudukan tambang Portugis, mencuri & membagikan emas ke warga tertindas",
+      "status_note": "TIDAK muncul di sumber blog sama sekali -- murni tokoh khas naskah teater ini."
+    },
+    {
+      "id": "T04",
+      "name": "Wa Ode",
+      "role": "Anak pemukim Bone, tokoh adegan barter sisir dengan emas (Seq 7)"
+    },
+    {
+      "id": "T05",
+      "name": "Bupati Jambat Asyad Damopolii",
+      "role": "Bupati Bolaang Mongondow era 1980-an, mengizinkan survei PT. ANTAM Tbk."
+    },
+    {
+      "id": "T06",
+      "name": "Camat Lexie (Lix) Giroth",
+      "role": "Camat Kotabunan saat demo 1989, disandera massa",
+      "cross_reference": "Nama sama dengan 'Bpk. Lexie M. Giroth' di sumber blog."
+    }
+  ],
+  "locations": [
+    { "id": "L01", "name": "Simbalang", "role": "Titik singgah rombongan Aki Dontu sebelum Iloba" },
+    { "id": "L02", "name": "Iloba", "role": "Pegunungan pesisir timur Totabuan, pemukiman pertama" },
+    { "id": "L03", "name": "Doup / Panang (Dagat to Botak)", "role": "Lokasi tambang emas tradisional; 'Panang' = 'jauh di pandang' dari Kotabunan" },
+    { "id": "L04", "name": "Tambahan (kini Bulawan Satu)", "role": "Pemukiman hasil kawin silang kelompok Dontu x Bone" },
+    { "id": "L05", "name": "KonTAMBUNAN -> Kotabunan", "role": "Pesisir didiami pemukim Bone, resmi dinamai 'Kotabunan' 1901" }
+  ],
+  "timeline": [
+    { "id": "E01", "event": "Migrasi & pemukiman awal", "detail": "Aki Dontu memimpin rombongan dari pedalaman Mongondow, menetap di Iloba" },
+    { "id": "E02", "event": "Perjumpaan dengan Doup & pengenalan emas" },
+    { "id": "E03", "event": "Peringatan bahaya & eksodus ke Panang", "detail": "Kekeringan panjang di Iloba memaksa kelompok pindah" },
+    { "id": "E04", "event": "Kontak dengan pemukim Bone & hubungan dagang", "detail": "Barter emas dengan perkakas & hasil laut" },
+    { "id": "E05", "event": "Kawin silang & lahirnya Tambahan" },
+    { "id": "E06", "event": "Kedatangan Portugis & perlawanan Ginza", "detail": "Eksploitasi tambang kolonial pertama di Doup" },
+    { "id": "E07", "event": "Penamaan 'Kotabunan'", "year": 1901, "detail": "Kesepakatan para guhanga/tetua saat panen durian" },
+    { "id": "E08", "event": "Panang sebagai penyelamat ekonomi lintas krisis", "years": [1960, 1972, 1982, 1998, 2020], "detail": "Permesta, kemarau panjang x2, krisis moneter, Covid-19" },
+    { "id": "E09", "event": "Era eksplorasi PT. ANTAM & Brimob", "decade": "1980-an", "detail": "Bupati Jambat Asyad Damopolii mengizinkan survei; kekerasan Brimob terhadap penambang rakyat" },
+    { "id": "E10", "event": "Demo & pembakaran Base Camp PT. Antam", "year": 1989, "detail": "Camat Lexie Giroth disandera, Brimob diusir dari Kotabunan" },
+    { "id": "E11", "event": "Sengketa HGU berlanjut (Plot Hole)", "detail": "Status lahan Panang & jalan penghubung diklaim aset pemerintah/perusahaan -- isu terbuka menurut penulis naskah" },
+    { "id": "E12", "event": "Aksi Hari HAM Sedunia", "date": "2022-12-09/10", "detail": "Manifestasi nyata dari E11, bukan lagi dramatisasi panggung -- lihat contemporary_documentation" }
+  ],
+  "contemporary_documentation": {
+    "event_name": "Hari Hak Asasi Manusia Sedunia ke-74 -- HAM untuk Masyarakat Adat Dusun 5 Panang, Kotabunan",
+    "date": "2022-12-09 s.d 2022-12-10",
+    "framing": "Deklarasi Universal Hak Asasi Manusia PBB, 10 Desember 1948, Pasal 1-30",
+    "affiliation_note": "Logo Komnas HAM terlihat di salah satu banner, mengindikasikan keterhubungan dengan jalur advokasi HAM nasional resmi.",
+    "demands": [
+      "Hak untuk mendapatkan kehidupan yang layak",
+      "Hak untuk air bersih",
+      "Hak untuk energi (listrik)"
+    ],
+    "photos": [
+      {
+        "id": "D01",
+        "file": "/knowledge/aksi-ham-panang-2022/01_penampilan_teatrikal_panang_lipu_ku.jpg",
+        "caption": "Penampilan teatrikal -- penari/pemeran perempuan berbusana adat tampil di depan banner 'Hak Asasi Manusia -- Masyarakat Adat Panang, Kotabunan'."
+      },
+      {
+        "id": "D02",
+        "file": "/knowledge/aksi-ham-panang-2022/02_banner_petisi_hari_ham_sedunia.jpg",
+        "caption": "Banner utama acara memuat tanggal 9 Desember 2022 dan 3 tuntutan; tetua adat duduk di meja depan panggung."
+      },
+      {
+        "id": "D03",
+        "file": "/knowledge/aksi-ham-panang-2022/03_suasana_warga_dusun_5_panang.jpg",
+        "caption": "Panorama kehadiran warga (anak-anak hingga tetua) memenuhi tenda acara."
+      },
+      {
+        "id": "D04",
+        "file": "/knowledge/aksi-ham-panang-2022/04_orasi_perwakilan_masyarakat_adat.jpg",
+        "caption": "Perwakilan masyarakat berorasi di panggung dengan mikrofon, banner HAM di belakang."
+      },
+      {
+        "id": "D05",
+        "file": "/knowledge/aksi-ham-panang-2022/05_orasi_didampingi_banner_komnas_ham.jpg",
+        "caption": "Pembicara menyampaikan pernyataan 'Kami Masyarakat Adat Dusun 5 Panang, Kotabunan memperingati Hari HAM Sedunia', logo Komnas HAM terlihat di banner latar."
+      },
+      {
+        "id": "D06",
+        "file": "/knowledge/aksi-ham-panang-2022/06_pembacaan_puisi_surat_buat_tuan_tuan.jpg",
+        "caption": "Sekelompok pemuda-pemudi membacakan puisi/pernyataan bersama -- kemungkinan besar puisi 'Surat Buat Tuan-Tuan' yang menyertai Drama Pantomim di naskah (Act 2, Seq 9)."
+      }
+    ],
+    "path_note": "File asli di folder pengguna 'Knowladge/Aksi HAM/'; disalin & dikompres ke 'public/knowledge/aksi-ham-panang-2022/' di repo ginza-project agar web-servable. Arsip resolusi asli tetap di 'media/aksi-ham-panang-2022/' folder lokal ini."
+  },
+  "comparison_with_blog_source": [
+    { "aspect": "Tokoh pembuka Doup/Panang", "blog": "Dontu Damopolii (menikahi putri Raja Abraham Sugeha, mahar 7 Kokasi Emas)", "play": "Aki Dontu' (tanpa adegan pernikahan/mahar)" },
+    { "aspect": "Arti nama 'Doup'", "blog": "Nama lokasi (= Dagat to Botak)", "play": "Nama pribadi perempuan penemu emas" },
+    { "aspect": "Pemukim pesisir awal", "blog": "Bugis, Bone, Buton (pelarian Perang Arung Palakka)", "play": "Bone (spesifik, vs Kerajaan Gowa)" },
+    { "aspect": "Marga pemukim awal", "blog": ["Lamajido'", "Lamaluta", "Langaru", "Lababu", "Lapajawa", "Lasambu", "Lawatu", "Lasabuda", "Latojo"], "play": ["Lapadjawa", "Lamaluta", "Lasambu", "Lababu", "Lawatu", "Waode"] },
+    { "aspect": "Tahun penamaan Kotabunan", "blog": 1901, "play": 1901 },
+    { "aspect": "Tokoh perlawanan kolonial", "blog": "Tidak disebut", "play": "Ginza (tokoh khas naskah)" },
+    { "aspect": "Camat saat pembakaran camp", "blog": "Lexie M. Giroth", "play": "Camat Lexie (Lix) Giroth -- sama" },
+    { "aspect": "Isu tanah/HGU kontemporer", "blog": "Disinggung di bagian akhir (opini penulis blog)", "play": "'Plot Hole' eksplisit + dibuktikan lewat Aksi HAM 2022" }
+  ],
+  "unresolved_notes": [
+    {
+      "note": "Pengguna menyebut istilah 'O'uman' sebagai isi naskah, namun istilah ini TIDAK ditemukan tertulis di naskah PDF yang diunggah.",
+      "recommendation": "Perlu klarifikasi dari pengguna apakah 'O'uman' adalah istilah/tokoh/konsep spesifik yang terlewat dalam ekstraksi, atau kekeliruan penulisan."
+    }
+  ]
+}

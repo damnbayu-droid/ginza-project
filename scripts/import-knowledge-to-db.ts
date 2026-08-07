@@ -42,6 +42,9 @@ const CURATED_FILES: { file: string; categorySlug: string; title?: string }[] = 
   { file: "Graphify_Silsilah_Raja_Raja_Mongondow.md", categorySlug: "sejarah" },
   { file: "Graphify_Pemetaan_Konsep_Adat_dan_Falsafah.md", categorySlug: "adat-budaya" },
   { file: "Graphify_Etimologi_dan_Morfologi_Bahasa_Mongondow.md", categorySlug: "bahasa-sastra" },
+  { file: "Sejarah_Bolaang_Mongondow_Timur_Boltim_Kotabunan.md", categorySlug: "sejarah" },
+  { file: "Graphify_Naskah_Teater_Panang_Lipu_Ku_dan_Aksi_HAM_Panang.md", categorySlug: "sejarah" },
+  { file: "Sejarah_Kotabunan.md", categorySlug: "sejarah" },
 ];
 
 // arsip_download/*.md — teks mentah/OCR, masuk sbg "pending_review" (belum
@@ -61,6 +64,8 @@ const ARSIP_MAP: Record<string, string> = {
   "12_migrasi_kisah_raja_raja_bolango.md": "kerajaan-bolaang-mongondow",
   "13_tumbuhnya_nasionalisme_gorontalo.md": "sejarah",
   "14_minahasa_wanua_dan_kawanua.md": "sejarah",
+  "15_blog_panang_kotabunan_sejarah_boltim.md": "sejarah",
+  "16_naskah_teater_panang_lipu_ku.md": "sejarah",
 };
 
 function slugify(text: string): string {

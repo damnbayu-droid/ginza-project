@@ -1,0 +1,117 @@
+{
+  "topic": "Sejarah Bolaang Mongondow Timur (Boltim) — Persebaran Penduduk & Asal-usul Kotabunan",
+  "source": {
+    "title": "Masa Lalu, Sekarang dan Masa Yang Akan Datang",
+    "blog": "Sejarah Bolmong Timur (Kotabunan)",
+    "url": "https://panang-kotabunan.blogspot.com/2014/11/sejarah-kotabunan.html",
+    "author": "Bayu Damopolii",
+    "published": "2014-11-04",
+    "fetched": "2026-08-07",
+    "type": "sejarah_lisan_keluarga",
+    "note": "Bukan publikasi akademis; tuturan lisan turun-temurun. Nama tempat/tahun bisa berbeda kecil dengan sumber lain."
+  },
+  "scope_note": "Hanya mencakup sejarah asal-usul persebaran penduduk & pembentukan kampung. Sejarah industri tambang emas Panang/Doup abad ke-20 (Maskapai Tapa'i Beken, konflik PT. Aneka Tambang, dst) sengaja dipisahkan -- lihat mining_context di bawah untuk ringkasan saja.",
+  "migration_waves": [
+    {
+      "origin_villages": ["Desa Mongondow", "Motoboi Kecil", "Pobundayan"],
+      "settled_area": ["Bakan", "Dayukon", "Bokaka"],
+      "period": "awal 1800-an"
+    },
+    {
+      "origin_villages": ["Bungko", "Kopandakan"],
+      "settled_area": ["Ongkobu'", "Yohang"],
+      "period": "awal 1800-an"
+    },
+    {
+      "origin_villages": ["Mongkonai'"],
+      "settled_area": ["Pancurang"],
+      "period": "awal 1800-an"
+    },
+    {
+      "origin_villages": ["Bugis", "Bone", "Buton"],
+      "settled_area": ["pesisir KonTAMBUNAN (Kotabunan)"],
+      "period": "sebelum/sekitar awal-pertengahan 1800-an",
+      "reason": "mengungsi dari Perang Arung Palakka (perang saudara)",
+      "clans": ["Lamajido'", "Lamaluta", "Langaru", "Lababu", "Lapajawa", "Lasambu", "Lawatu", "Lasabuda", "Latojo"]
+    }
+  ],
+  "key_narrative_dontu_damopolii": {
+    "figure": "Dontu Damopolii",
+    "origin": "Pobundayan",
+    "married": "Bai' Lansong Sugeha, putri Raja Abraham Sugeha (Raja Bolaang Mongondow)",
+    "period": "pertengahan 1800-an",
+    "dowry_custom": {
+      "term_local": "pen' pitu no kokasi in bulawan",
+      "meaning": "tujuh (7) Kokasi Emas -- bambu emas ukuran 1 jengkal per ruas, diisi penuh biji emas",
+      "location_mined": "Dagat to Botak, dikenal sekarang sebagai Doup/Panang",
+      "traditional_mining_terms": ["Guang (galian tradisional)", "Kokali (alat gali dari kayu enau)", "Ginto' (pasir hitam mengandung emas)", "Dulang (nampan pemisah pasir-emas)"]
+    },
+    "outcome": "Setelah menikah, Raja menganugerahkan tanah di Bokaka. Dontu mengajak kerabat (utat) dari Bakan (a.l. Aki Bagoa) meneruskan penambangan tradisional di lokasi Patende (antara Bakan-Tungou) dan Sirang (antara Batu Pinupul-Bakan)."
+  },
+  "village_founding_1901": {
+    "year": 1901,
+    "event": "KonTAMBUNAN dibuka menjadi kampung",
+    "founders": [
+      {
+        "new_village": "Kotabunan (bagian barat)",
+        "founder_lineage": "keturunan Bakan (garis Mongondow, Pobundayan, Motoboi Kecil)",
+        "note": "Wilayah pesisir/timur sudah dikuasai suku Bugis-Buton lebih dulu; orang Bugis menyebut mereka 'Tambahan'"
+      },
+      {
+        "new_village": "Buyat",
+        "founder_lineage": "keturunan Ongkobu (garis Bungko', Kopandakan)"
+      },
+      {
+        "new_village": "Tutuyan",
+        "founder_lineage": "keturunan Pancurang (garis Mongkonai')"
+      }
+    ],
+    "first_administrator": {
+      "title_local": "Major Kadato",
+      "modern_equivalent": "Camat pertama Kotabunan",
+      "name": "Y.C. Manoppo"
+    },
+    "unifying_philosophy": {
+      "phrase_local": "Inanakan Mo Gutat bo Tolu Adi'",
+      "meaning": "satu garis persaudaraan (tiga bersaudara) -- persatuan Bakan, Pancurang, Ongkobu yang menjadi Kampung Doup dan kemudian Kecamatan Kotabunan"
+    },
+    "toponym_origin": {
+      "name": "KonTAMBUNAN -> Kotabunan",
+      "meaning": "konon berarti tempat bertelur burung Maleo"
+    }
+  },
+  "intercultural_contact": {
+    "groups": ["penduduk Doup/Panang (asal pedalaman Mongondow)", "penduduk pesisir KonTAMBUNAN (Bugis-Bone-Buton)"],
+    "interaction": "barter (belum ada mata uang) berkembang menjadi hubungan baik dan perkawinan antarsuku"
+  },
+  "mining_context_separated": {
+    "note": "Ringkasan saja -- ini sejarah ekonomi/agraria abad ke-20, BUKAN sejarah persebaran penduduk. Detail penuh di arsip_verbatim/15_blog_panang_kotabunan_sejarah_boltim.md",
+    "timeline_summary": [
+      "1800-an: tambang Panang/Doup dikuasai Portugis-Belanda",
+      "1928-1989 (dengan jeda Perang Dunia II & masa Jepang): Maskapai Tapa'i Beken",
+      "1963-1988: penambangan tradisional rakyat (Talang Papan, Batu Rep, Dulang+Mercury)",
+      "akhir 1980an-1990an: konflik agraria dengan PT. Aneka Tambang (Antam), pembakaran base camp, era pengamanan Brimob, sistem 'jatah' ke aparat",
+      "era modern: klaim IUP oleh PT. Arafura Surya Alam / J-Resources Bolaang Mongondow (JRBM), ±4000 Ha"
+    ]
+  },
+  "unresolved_gaps": [
+    {
+      "gap": "dodotu (batu penumbuk padi tradisional) di kawasan Garini, Kotabunan",
+      "status": "TIDAK disebutkan dalam sumber ini",
+      "recommendation": "perlu wawancara lisan tetua adat setempat + dokumentasi foto lapangan"
+    },
+    {
+      "gap": "sisa-sisa pondasi rumah kuno di kawasan Garini, Kotabunan",
+      "status": "TIDAK disebutkan dalam sumber ini",
+      "recommendation": "perlu observasi lapangan / kemungkinan arsip Balai Pelestarian Cagar Budaya (BPCB) Sulawesi Utara"
+    }
+  ],
+  "narrators_cited_by_original_author": [
+    "Yacobus Cornelius Manoppo", "Mores Butod Manoppo", "Inde' Siti Paputungan",
+    "Damo Damopolii", "G.B. Damopolii", "La'asar Tuela", "Deong Yakobus Manoppo",
+    "H.B. Damopolii", "Ba'ai Bina Latojo", "Laki Nais Ginoga", "Laki Budu Sariambapu",
+    "Laki Husen Mamonto", "Laki Hayat Beeg", "Bangki' Damopolii", "Lee Ing Se",
+    "Aki Ambulo Mokoginta", "Lombu' Paputungan", "Saya Potabuga", "Jhon Sestra Lapian",
+    "Limbalo Sariambapu"
+  ]
+}

@@ -62,8 +62,25 @@ export default async function KnowledgeCategoryPage({ params }: Props) {
 
   if (!category) return notFound();
 
+  const collectionJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "@id": `https://mongondowpedia.com/knowledge/${slug}#collection`,
+    "url": `https://mongondowpedia.com/knowledge/${slug}`,
+    "name": `${category.name} — Knowledge Base MongondowPedia`,
+    "description": category.description ?? `Artikel pengetahuan Bolaang Mongondow kategori ${category.name}.`,
+    "isPartOf": { "@id": "https://mongondowpedia.com/#website" },
+    "inLanguage": "id-ID",
+    "hasPart": articles.map((a) => ({
+      "@type": "Article",
+      "headline": a.title,
+      "url": `https://mongondowpedia.com/knowledge/${slug}/${a.slug}`,
+    })),
+  };
+
   return (
     <div className="min-h-screen bg-[#0d0e12] text-white p-6 md:p-12 font-sans">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }} />
       <div className="max-w-4xl mx-auto w-full space-y-8">
         <Link href="/knowledge" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#171821] hover:bg-[#222433] text-gray-300 hover:text-white border border-[#2b2d3e] text-xs font-semibold transition-all">
           <ArrowLeft className="w-4 h-4" /> <span>Kembali ke Knowledge Base</span>

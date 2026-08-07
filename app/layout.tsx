@@ -36,6 +36,43 @@ export const metadata: Metadata = {
   }
 };
 
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "@id": "https://mongondowpedia.com/#organization",
+  "name": "MongondowPedia",
+  "legalName": "MongondowPedia (Ginza Project)",
+  "url": "https://mongondowpedia.com",
+  "logo": "https://mongondowpedia.com/logo.webp",
+  "description": "MongondowPedia adalah platform ensiklopedia dan portal informasi terpadu seputar sejarah, adat budaya, bahasa, dan aksara Mongondow, didukung oleh asisten AI Bogani AI.",
+  "knowsAbout": [
+    "Sejarah Bolaang Mongondow",
+    "Bahasa Mongondow",
+    "Aksara Mongondow",
+    "Adat & Budaya Mongondow",
+    "Ensiklopedia Budaya Mongondow",
+  ],
+};
+
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "@id": "https://mongondowpedia.com/#website",
+  "url": "https://mongondowpedia.com",
+  "name": "MongondowPedia",
+  "description": "Ensiklopedia dan portal informasi terpadu Bolaang Mongondow.",
+  "publisher": { "@id": "https://mongondowpedia.com/#organization" },
+  "inLanguage": "id-ID",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": {
+      "@type": "EntryPoint",
+      "urlTemplate": "https://mongondowpedia.com/kamus?q={search_term_string}",
+    },
+    "query-input": "required name=search_term_string",
+  },
+};
+
 export default function RootLayout({
   children,
 }: {
@@ -52,6 +89,14 @@ export default function RootLayout({
         <link
           href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
           rel="stylesheet"
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
       </head>
       <body suppressHydrationWarning>

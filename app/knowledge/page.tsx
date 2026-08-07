@@ -45,8 +45,25 @@ export default async function KnowledgePage() {
     dbReady = true;
   }
 
+  const collectionJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "@id": "https://mongondowpedia.com/knowledge#collection",
+    "url": "https://mongondowpedia.com/knowledge",
+    "name": "Knowledge Base MongondowPedia — Ensiklopedia Bolaang Mongondow",
+    "description": "Pusat pengetahuan sejarah, adat budaya, bahasa, dan seni Bolaang Mongondow — disusun komunitas & diverifikasi.",
+    "isPartOf": { "@id": "https://mongondowpedia.com/#website" },
+    "inLanguage": "id-ID",
+    "hasPart": categories.map((cat) => ({
+      "@type": "CollectionPage",
+      "name": cat.name,
+      "url": `https://mongondowpedia.com/knowledge/${cat.slug}`,
+    })),
+  };
+
   return (
     <div className="min-h-screen bg-[#0d0e12] text-white p-6 md:p-12 font-sans flex flex-col justify-between">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }} />
       <div className="max-w-5xl mx-auto w-full space-y-8">
         <div className="flex items-center justify-between border-b border-[#212330] pb-6">
           <Link href="/" className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#171821] hover:bg-[#222433] text-gray-300 hover:text-white border border-[#2b2d3e] text-xs font-semibold transition-all">

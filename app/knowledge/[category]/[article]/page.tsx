@@ -158,10 +158,13 @@ function stripLeadingH1Title(content: string): string {
   return content.replace(/^\s*#\s+[^\n]+\n+/, "");
 }
 
+const SITE_URL = "https://mongondowpedia.com";
+
 export default async function KnowledgeArticlePage({ params }: Props) {
   const { category: categorySlug, article: articleSlug } = await params;
 
-  let article: { id?: string; title: string; summary?: string | null; content: string; view_count?: number } | null = null;
+  let article: { id?: string; title: string; summary?: string | null; content: string; view_count?: number; created_at?: string; updated_at?: string } | null = null;
+  let categoryName: string | null = null;
 
   if (supabaseAdmin) {
     const { data } = await supabaseAdmin.from("knowledge_articles").select("*").eq("slug", articleSlug).eq("status", "published").maybeSingle();
@@ -169,6 +172,8 @@ export default async function KnowledgeArticlePage({ params }: Props) {
       article = data;
       await supabaseAdmin.from("knowledge_articles").update({ view_count: (data.view_count ?? 0) + 1 }).eq("id", data.id);
       await logMetricEvent({ type: "knowledge_view", targetId: data.id, targetText: data.title });
+      const { data: cat } = await supabaseAdmin.from("knowledge_categories").select("name").eq("id", data.category_id).maybeSingle();
+      categoryName = cat?.name ?? null;
     }
   }
 
@@ -179,9 +184,38 @@ export default async function KnowledgeArticlePage({ params }: Props) {
   if (!article) return notFound();
 
   const cleanBodyContent = stripLeadingH1Title(article.content);
+  const articleUrl = `${SITE_URL}/knowledge/${categorySlug}/${articleSlug}`;
+
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "@id": `${articleUrl}#article`,
+    "mainEntityOfPage": { "@type": "WebPage", "@id": articleUrl },
+    "headline": article.title,
+    "description": article.summary ?? undefined,
+    "articleSection": categoryName ?? categorySlug,
+    "inLanguage": "id-ID",
+    "datePublished": article.created_at ?? undefined,
+    "dateModified": article.updated_at ?? article.created_at ?? undefined,
+    "author": { "@id": `${SITE_URL}/#organization` },
+    "publisher": { "@id": `${SITE_URL}/#organization` },
+    "isPartOf": { "@id": `${SITE_URL}/#website` },
+  };
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Knowledge Base", "item": `${SITE_URL}/knowledge` },
+      { "@type": "ListItem", "position": 2, "name": categoryName ?? categorySlug, "item": `${SITE_URL}/knowledge/${categorySlug}` },
+      { "@type": "ListItem", "position": 3, "name": article.title, "item": articleUrl },
+    ],
+  };
 
   return (
     <div className="min-h-screen bg-[#0d0e12] text-white p-6 md:p-12 font-sans">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }} />
       <div className="max-w-3xl mx-auto w-full space-y-8">
         <Link href={`/knowledge/${categorySlug}`} className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#171821] hover:bg-[#222433] text-gray-300 hover:text-white border border-[#2b2d3e] text-xs font-semibold transition-all">
           <ArrowLeft className="w-4 h-4" /> <span>Kembali ke Kategori</span>

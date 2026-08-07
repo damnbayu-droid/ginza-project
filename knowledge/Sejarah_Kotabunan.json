@@ -1,0 +1,72 @@
+{
+  "title": "Sejarah Kotabunan",
+  "type": "sintesis_naratif",
+  "description": "Sari pati/makna dari naskah teater 'Panang Lipu' Ku', disusun jadi 3 fase sejarah Kotabunan, disilangkan dgn sumber blog sejarah Boltim.",
+  "sources": [
+    { "type": "naskah_teater", "title": "Panang Lipu' Ku", "author": "Wahyudin Damopolii - Manoppo", "full_text_ref": "arsip_verbatim/16_naskah_teater_panang_lipu_ku.md" },
+    { "type": "blog", "title": "Masa Lalu, Sekarang dan Masa Yang Akan Datang", "author": "Bayu Damopolii", "url": "https://panang-kotabunan.blogspot.com/2014/11/sejarah-kotabunan.html", "synthesis_ref": "Sejarah_Bolaang_Mongondow_Timur_Boltim_Kotabunan.md" },
+    { "type": "dokumentasi_foto", "title": "Aksi Hari HAM Sedunia, Dusun 5 Panang", "date": "2022-12-09/10", "ref": "Graphify_Naskah_Teater_Panang_Lipu_Ku_dan_Aksi_HAM_Panang.md#4" }
+  ],
+  "phases": [
+    {
+      "id": "fase-1",
+      "title": "Sejarah Awal: Migrasi dan Lahirnya Permukiman",
+      "period": "± abad ke-19 -- 1901",
+      "summary": "Pertemuan dua arus migrasi -- pedalaman Mongondow (Aki Dontu, dari Simbalang ke Iloba lalu Panang/Doup, penemuan emas) dan pesisir Bugis-Bone-Buton (pelarian Perang Arung Palakka di KonTAMBUNAN) -- membentuk Kotabunan lewat barter emas, akulturasi & kawin campur (lahirnya 'Tambahan'), berpuncak pada penamaan resmi 'Kotabunan' tahun 1901 dalam jamuan panen durian oleh para guhanga.",
+      "key_events": [
+        "Migrasi Aki Dontu: Simbalang -> Iloba -> Panang/Doup",
+        "Penemuan emas & pengenalan sistem tukar",
+        "Eksodus akibat kekeringan ke Panang",
+        "Kontak & barter dengan pemukim Bone pesisir",
+        "Kawin campur, lahirnya pemukiman 'Tambahan'",
+        "Penamaan resmi 'Kotabunan', 1901"
+      ],
+      "status_note": "Kerangka migrasi & penamaan 1901 dikuatkan 2 sumber independen. Personifikasi 'Doup' sbg individu adalah elemen dramatisasi naskah teater."
+    },
+    {
+      "id": "fase-2",
+      "title": "Zaman Penjajahan: Emas, Kolonialisme, dan Perlawanan",
+      "period": "Era kolonial (Portugis, Belanda dst.)",
+      "summary": "Kekayaan emas Panang menarik eksploitasi kolonial skala industri (Maskapai Tapa'i Beken), disertai kekerasan & pengusiran penduduk asli. Perlawanan dipersonifikasikan lewat tokoh Ginza (mencuri & membagikan emas ke warga tertindas). Panang tetap jadi penopang ekonomi lintas krisis: Permesta 1960, kemarau 1972 & 1982, krismon 1998, Covid-19 2020.",
+      "key_events": [
+        "Survei & masuknya Portugis, lalu Kerajaan Mongondow bekerja sama dgn asing",
+        "Berdirinya Maskapai Tapa'i Beken sbg zona tambang industri",
+        "Kekerasan & pengusiran penduduk asli Doup",
+        "Perlawanan tokoh Ginza thd Portugis",
+        "Panang sbg jaring pengaman ekonomi lintas krisis nasional"
+      ],
+      "status_note": "Maskapai Tapa'i Beken & peran ekonomi Panang dikuatkan sumber blog secara independen & lebih rinci. Tokoh Ginza murni dari naskah teater, perlu digali lbh jauh."
+    },
+    {
+      "id": "fase-3",
+      "title": "Sejarah Modern Pasca Belanda: Orde Baru hingga Perjuangan Tanah Adat Kini",
+      "period": "Kemerdekaan -- kontemporer (2022+)",
+      "summary": "Pola eksploitasi berulang di era Orde Baru lewat PT. Antam & Brimob (izin Bupati Jambat Asyad Damopolii), berujung kekerasan thd penambang rakyat & puncaknya demo + pembakaran base camp PT. Antam tahun 1989 (Camat Lexie Giroth disandera). Sengketa status lahan (HGU/WIUP/IUP) berlanjut hingga kini, dibuktikan lewat Aksi Hari HAM Sedunia 9-10 Desember 2022 oleh Masyarakat Adat Dusun 5 Panang.",
+      "key_events": [
+        "Eksplorasi PT. ANTAM Tbk. era Bupati Jambat Asyad Damopolii (1980-an)",
+        "Kerja sama PT. Antam dgn Brimob sbg pengamanan, kekerasan thd penambang",
+        "Demo & pembakaran Base Camp PT. Antam, 1989; Brimob diusir",
+        "Sengketa HGU/WIUP/IUP berlanjut lintas perusahaan (PT. Avocet dst.)",
+        "Aksi Hari HAM Sedunia, 9-10 Desember 2022, Dusun 5 Panang: tuntutan kehidupan layak, air bersih, energi/listrik"
+      ],
+      "status_note": "Era PT. Antam-Brimob & pembakaran 1989 dikuatkan sangat rinci oleh sumber blog. Aksi HAM 2022 terdokumentasi foto langsung -- tingkat kepastian tertinggi."
+    }
+  ],
+  "themes": [
+    {
+      "id": "tema-1",
+      "title": "Pertemuan menjadi identitas",
+      "summary": "Kotabunan lahir dari pertemuan & percampuran migrasi pedalaman Mongondow dan pesisir Bugis-Bone-Buton -- identitasnya sejak awal adalah identitas hasil pertemuan, bukan tunggal."
+    },
+    {
+      "id": "tema-2",
+      "title": "Emas sebagai berkat sekaligus kutukan",
+      "summary": "Kekayaan tambang Panang berulang kali menyelamatkan Kotabunan dari krisis, tapi juga berulang kali mengundang perampasan kendali oleh kekuatan luar -- pola berulang di era kolonial, Orde Baru, dan berpotensi di era sekarang."
+    },
+    {
+      "id": "tema-3",
+      "title": "Perlawanan bukan hal baru",
+      "summary": "Dari Ginza, ke pembakaran base camp 1989, ke petisi Hari HAM 2022 -- tradisi panjang warga Kotabunan menolak diam ketika tanah & penghidupan terancam. 'Plot Hole' penutup naskah menandakan fase penyelesaian sengketa tanah adat belum tertulis tuntas."
+    }
+  ]
+}
