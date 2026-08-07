@@ -711,17 +711,17 @@ export default function MyAIChat({
         user={user}
       />
 
-      {/* ─── Mobile Quick Menu Floating Trigger & Individual Floating Buttons (Mobile Only) ─── */}
+      {/* ─── Mobile Quick Menu Floating Trigger & Individual Floating Buttons (Hanya di Home Page, tersembunyi saat mode chat) ─── */}
       {/* 1. Backdrop for Click-Outside Hiding (100% CLEAR, no blur, no dimming) */}
-      {isMobileQuickMenuOpen && (
+      {isMobileQuickMenuOpen && !hasMessages && (
         <div
           onClick={() => setIsMobileQuickMenuOpen(false)}
           className="fixed inset-0 z-40 bg-transparent md:hidden"
         />
       )}
 
-      {/* 2. Floating Round Trigger Button (Visible only when closed) */}
-      {!isMobileQuickMenuOpen && (
+      {/* 2. Floating Round Trigger Button (Visible only on Home Page when closed and not in chat mode) */}
+      {!isMobileQuickMenuOpen && !hasMessages && (
         <button
           type="button"
           onClick={() => setIsMobileQuickMenuOpen(true)}
@@ -732,8 +732,8 @@ export default function MyAIChat({
         </button>
       )}
 
-      {/* 3. Individual Floating Buttons (Photo 2 - CLEAR background, smooth pop-up) */}
-      {isMobileQuickMenuOpen && (
+      {/* 3. Individual Floating Buttons (Only on Home Page when opened) */}
+      {isMobileQuickMenuOpen && !hasMessages && (
         <div
           className="fixed bottom-3 left-0 right-0 z-50 md:hidden pointer-events-none px-4 pb-2 pt-2 animate-pop-up-smooth"
           style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom, 0.75rem))' }}

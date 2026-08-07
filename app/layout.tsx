@@ -26,8 +26,8 @@ export const metadata: Metadata = {
     ],
   },
   title: {
-    default: "MongondowPedia — Ensiklopedia Bolaang Mongondow",
-    template: "%s — MongondowPedia"
+    default: "MongondowPedia | Culture. Language. Future | AI Powered",
+    template: "%s | MongondowPedia"
   },
   description: "MongondowPedia adalah ensiklopedia digital dan portal informasi terpadu tentang sejarah, bahasa, aksara, adat-istiadat, dan budaya Bolaang Mongondow (BMR). Didukung oleh Bogani AI — asisten kecerdasan buatan berbasis MyAI OS.",
   keywords: [
@@ -71,7 +71,7 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "MongondowPedia — Ensiklopedia Bolaang Mongondow",
+    title: "MongondowPedia | Culture. Language. Future | AI Powered",
     description: "Ensiklopedia digital, kamus bahasa, aksara, sejarah, dan portal informasi Bolaang Mongondow. Didukung Bogani AI (MyAI OS).",
     url: "https://mongondowpedia.com",
     siteName: "MongondowPedia",
@@ -82,14 +82,14 @@ export const metadata: Metadata = {
         url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: "MongondowPedia — Ensiklopedia & Portal Informasi Bolaang Mongondow",
+        alt: "MongondowPedia | Culture. Language. Future | AI Powered",
         type: "image/png",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "MongondowPedia — Ensiklopedia Bolaang Mongondow",
+    title: "MongondowPedia | Culture. Language. Future | AI Powered",
     description: "Ensiklopedia digital Bolaang Mongondow: bahasa, aksara, sejarah, adat-istiadat, dan Bogani AI.",
     images: ["/og-image.png"],
     creator: "@mongondowpedia",
