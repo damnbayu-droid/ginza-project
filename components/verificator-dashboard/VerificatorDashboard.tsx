@@ -18,7 +18,9 @@ import {
   AlertCircle,
   Award,
   Sparkles,
-  Globe
+  Globe,
+  FileText,
+  Upload
 } from "lucide-react";
 import type { Profile } from "@/lib/ginza-db";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser-auth";
@@ -371,7 +373,7 @@ function KtpApplicationScreen({ profile }: { profile: Profile }) {
 
 // ── Tools Lengkap Verifikator (role 'verificator' / 'admin') ─────────────
 
-type VerificatorTab = "voting" | "voice" | "usage" | "logs" | "pengaturan" | "privasi";
+type VerificatorTab = "voting" | "voice" | "usage" | "artikel" | "logs" | "pengaturan" | "privasi";
 
 function VerificatorTools({ profile }: { profile: Profile }) {
   const [tab, setTab] = useState<VerificatorTab>("voting");
@@ -380,6 +382,7 @@ function VerificatorTools({ profile }: { profile: Profile }) {
     { key: "voting", label: "Voting Usulan Kata", icon: Vote },
     { key: "voice", label: "Pelatihan Suara AI", icon: Mic },
     { key: "usage", label: "Token & Insentif", icon: Coins },
+    { key: "artikel", label: "Tulis & Kelola Artikel", icon: FileText },
     { key: "logs", label: "Logs Verifikasi", icon: History },
     { key: "pengaturan", label: "Pengaturan", icon: Settings },
     { key: "privasi", label: "Privasi & Keamanan", icon: Lock },
@@ -443,6 +446,7 @@ function VerificatorTools({ profile }: { profile: Profile }) {
         {tab === "voting" && <VotingTab profile={profile} />}
         {tab === "voice" && <VoiceTrainingTab profile={profile} />}
         {tab === "usage" && <UsageTab />}
+        {tab === "artikel" && <VerificatorArtikelTab />}
         {tab === "logs" && <VerificatorLogsTab />}
         {tab === "pengaturan" && <VerificatorSettingsTab />}
         {tab === "privasi" && <VerificatorPrivacyTab profile={profile} />}
@@ -697,6 +701,226 @@ function VerificatorPrivacyTab({ profile }: { profile: Profile }) {
           Data kredensial dan foto verifikasi Anda tersimpan dengan pengamanan enkripsi privat.
         </p>
       </div>
+    </div>
+  );
+}
+
+function VerificatorArtikelTab() {
+  const [title, setTitle] = useState("");
+  const [category, setCategory] = useState("Pengetahuan & Sejarah");
+  const [region, setRegion] = useState("Umum");
+  const [excerpt, setExcerpt] = useState("");
+  const [content, setContent] = useState("");
+  const [coverImage, setCoverImage] = useState("");
+  const [compressing, setCompressing] = useState(false);
+
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string; slug?: string } | null>(null);
+
+  function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setCompressing(true);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX_WIDTH = 1200;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > MAX_WIDTH) {
+          height = Math.round((height * MAX_WIDTH) / width);
+          width = MAX_WIDTH;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(img, 0, 0, width, height);
+
+        const webpBase64 = canvas.toDataURL("image/webp", 0.82);
+        setCoverImage(webpBase64);
+        setCompressing(false);
+      };
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!title.trim() || !content.trim()) {
+      setMessage({ type: "error", text: "Judul dan Isi artikel tidak boleh kosong." });
+      return;
+    }
+
+    setSubmitting(true);
+    setMessage(null);
+
+    try {
+      const res = await fetch("/api/articles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: title.trim(),
+          category,
+          region,
+          excerpt: excerpt.trim() || title.trim(),
+          content: content.trim(),
+          cover_image: coverImage,
+        }),
+      });
+
+      const data = await res.json();
+      setSubmitting(false);
+
+      if (res.ok && data.success) {
+        setMessage({
+          type: "success",
+          text: "Artikel Anda berhasil dipublikasikan secara langsung!",
+          slug: data.slug,
+        });
+        setTitle("");
+        setExcerpt("");
+        setContent("");
+        setCoverImage("");
+      } else {
+        setMessage({ type: "error", text: data.error || "Gagal memposting artikel." });
+      }
+    } catch (err: any) {
+      setSubmitting(false);
+      setMessage({ type: "error", text: `Gagal memposting artikel: ${err.message}` });
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-bold text-bento-text-primary flex items-center gap-2">
+          <FileText className="h-5 w-5 text-purple-400" />
+          <span>Publikasi Artikel Verifikator</span>
+        </h2>
+        <p className="text-xs text-bento-text-secondary mt-1">
+          Publikasikan hasil kajian, artikel kebudayaan, naskah riset, atau wawasan adat secara langsung ke portal publik <code className="text-purple-400">/artikel</code>.
+        </p>
+      </div>
+
+      {message && (
+        <div
+          className={`p-4 rounded-2xl border text-xs font-semibold flex items-center justify-between gap-3 ${
+            message.type === "success"
+              ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
+              : "bg-red-500/10 border-red-500/20 text-red-400"
+          }`}
+        >
+          <span>{message.text}</span>
+          {message.slug && (
+            <a
+              href={`/artikel/${message.slug}`}
+              target="_blank"
+              rel="noreferrer"
+              className="px-3 py-1.5 bg-purple-600 text-white font-bold text-xs rounded-xl shadow-md"
+            >
+              Lihat Artikel ➔
+            </a>
+          )}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="bg-bento-surface border border-bento-border rounded-2xl p-6 space-y-5">
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-bento-text-primary">Judul Artikel *</label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Judul artikel atau naskah kajian..."
+            className="w-full bg-bento-bg border border-bento-border text-xs text-bento-text-primary placeholder-bento-text-secondary p-3 rounded-xl focus:outline-none focus:border-purple-500"
+            required
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-bento-text-primary">Kategori Artikel</label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full bg-bento-bg border border-bento-border text-xs text-bento-text-primary p-3 rounded-xl focus:outline-none focus:border-purple-500"
+            >
+              <option value="Pengetahuan & Sejarah">📚 Pengetahuan & Sejarah</option>
+              <option value="Musik, Seni & Budaya">🎵 Musik, Seni & Budaya</option>
+              <option value="Teori & Tesis">🎓 Teori & Tesis</option>
+            </select>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-bento-text-primary">Wilayah Daerah</label>
+            <select
+              value={region}
+              onChange={(e) => setRegion(e.target.value)}
+              className="w-full bg-bento-bg border border-bento-border text-xs text-bento-text-primary p-3 rounded-xl focus:outline-none focus:border-purple-500"
+            >
+              <option value="Umum">📍 Umum / Lintas Daerah</option>
+              <option value="Boltim">📍 Bolaang Mongondow Timur (Boltim)</option>
+              <option value="Bolsel">📍 Bolaang Mongondow Selatan (Bolsel)</option>
+              <option value="Bolmut">📍 Bolaang Mongondow Utara (Bolmut)</option>
+              <option value="Bolmong">📍 Bolaang Mongondow (Bolmong)</option>
+              <option value="Kotamobagu">📍 Kota Kotamobagu</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-bento-text-primary">Gambar Sampul (Otomatis Kompresi WebP)</label>
+          <div className="flex items-center gap-3">
+            <label className="cursor-pointer px-4 py-2.5 bg-bento-bg border border-bento-border hover:border-purple-500 rounded-xl text-xs font-bold text-purple-300 flex items-center gap-2 transition-all">
+              <Upload className="h-4 w-4" />
+              <span>{compressing ? "Mengompresi Gambar..." : "Pilih File Gambar..."}</span>
+              <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+            </label>
+            {coverImage && (
+              <span className="text-[11px] text-emerald-400 font-semibold">
+                ✓ Gambar terkompresi ke WebP
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-bento-text-primary">Ringkasan Singkat (Excerpt)</label>
+          <input
+            type="text"
+            value={excerpt}
+            onChange={(e) => setExcerpt(e.target.value)}
+            placeholder="Ringkasan 1-2 kalimat gambaran umum artikel..."
+            className="w-full bg-bento-bg border border-bento-border text-xs text-bento-text-primary placeholder-bento-text-secondary p-3 rounded-xl focus:outline-none focus:border-purple-500"
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-bento-text-primary">Isi Konten Artikel * (Mendukung Markdown)</label>
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            rows={10}
+            placeholder="Tuliskan isi artikel..."
+            className="w-full bg-bento-bg border border-bento-border text-xs text-bento-text-primary placeholder-bento-text-secondary p-3 rounded-xl focus:outline-none focus:border-purple-500 font-mono leading-relaxed"
+            required
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={submitting || compressing}
+          className="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs shadow-lg shadow-purple-600/25 transition-all disabled:opacity-50"
+        >
+          {submitting ? "Mempublikasikan Artikel..." : "🚀 Publikasikan Artikel Verifikator"}
+        </button>
+      </form>
     </div>
   );
 }

@@ -8,6 +8,7 @@ const STATIC_ROUTES: { path: string; priority: number; changeFrequency: Metadata
   { path: "/knowledge", priority: 0.9, changeFrequency: "daily" },
   { path: "/kamus", priority: 0.9, changeFrequency: "daily" },
   { path: "/aksara-mongondow", priority: 0.8, changeFrequency: "weekly" },
+  { path: "/artikel", priority: 0.7, changeFrequency: "daily" },
   { path: "/aksara", priority: 0.6, changeFrequency: "weekly" },
   { path: "/panduan", priority: 0.5, changeFrequency: "monthly" },
   { path: "/dokumentasi", priority: 0.5, changeFrequency: "monthly" },
