@@ -94,7 +94,13 @@ function buildPromptWithHistory(history: HomeChatMessage[], prompt: string): str
 
 function simulateReply(prompt: string, lang: Language, isFirstMessage: boolean = true): string {
   const lower = prompt.toLowerCase();
-  const greeting = isFirstMessage ? "Niondon Utat! " : "";
+  const variations = [
+    "Niondon Utat! ",
+    "Dega Niondon Utat! ",
+    "Niondon kon MongondowPedia, Utat! ",
+    "Salam hangat kekeluargaan, Utat! "
+  ];
+  const greeting = isFirstMessage ? variations[Math.floor(Math.random() * variations.length)] : "";
 
   if (lang === 'en') {
     const enGreeting = isFirstMessage ? "Niondon! " : "";
