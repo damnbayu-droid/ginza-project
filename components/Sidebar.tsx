@@ -104,7 +104,9 @@ export default function Sidebar({ lang, theme, adminEmail, activePanel, onSelect
               {adminEmail ? adminEmail.substring(0, 2).toUpperCase() : "AD"}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-semibold truncate leading-none mb-1 text-bento-text-primary">Founder / Owner</p>
+              <p className="text-xs font-semibold truncate leading-none mb-1 text-bento-text-primary">
+                {adminEmail.toLowerCase() === "damnbayu@gmail.com" ? "Founder / Owner" : "Admin Panel"}
+              </p>
               <p className="text-[10px] text-bento-text-secondary truncate opacity-80">{adminEmail}</p>
             </div>
           </div>

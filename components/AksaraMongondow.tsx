@@ -374,7 +374,7 @@ export default function AksaraMongondow({ statusMap = {} }: AksaraMongondowProps
 
           <button
             onClick={() => setShowInfo((v) => !v)}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#171822] hover:bg-[#202230] text-gray-300 hover:text-white border border-[#2b2d3e] text-xs font-semibold transition-all shadow-sm"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#171822] hover:bg-[#202230] text-gray-300 hover:text-white border border-[#2b2d3e] text-xs font-semibold transition-all shadow-sm active:scale-95 shrink-0"
           >
             <Info className="w-4 h-4 text-blue-400" />
             <span>{showInfo ? "Sembunyikan Pedoman" : "Pedoman & Status Akademis"}</span>

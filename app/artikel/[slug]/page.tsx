@@ -73,6 +73,32 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
   const [commentError, setCommentError] = useState<string | null>(null);
   const [requiresAuth, setRequiresAuth] = useState(false);
 
+  const [currentUser, setCurrentUser] = useState<{ id?: string; email?: string; role?: string } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.authenticated && data.user) {
+          setCurrentUser(data.user);
+        }
+      })
+      .catch(() => null);
+  }, []);
+
+  const canEdit = Boolean(
+    currentUser &&
+    article &&
+    (
+      currentUser.email === article.author_id ||
+      currentUser.id === article.author_id ||
+      currentUser.email === article.author_name ||
+      currentUser.role === "admin" ||
+      currentUser.role === "owner" ||
+      currentUser.role === "developer"
+    )
+  );
+
   useEffect(() => {
     fetchArticle();
   }, [slug]);
@@ -229,13 +255,15 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
             <span>Kembali ke Daftar Artikel</span>
           </Link>
 
-          <Link
-            href={`/u/tulis-artikel?edit=${slug}`}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 border border-purple-500/30 text-xs font-bold transition-all shadow-sm active:scale-95"
-          >
-            <Edit3 className="w-4 h-4 text-purple-400" />
-            <span>Edit Artikel Ini</span>
-          </Link>
+          {canEdit && (
+            <Link
+              href={`/u/tulis-artikel?edit=${slug}`}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 border border-purple-500/30 text-xs font-bold transition-all shadow-sm active:scale-95 shrink-0"
+            >
+              <Edit3 className="w-4 h-4 text-purple-400" />
+              <span>Edit Artikel Ini</span>
+            </Link>
+          )}
         </div>
 
         {/* Article Container */}

@@ -106,6 +106,8 @@ export default function WriteArticleClient({ userEmail, userRole }: Props) {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [forbiddenEdit, setForbiddenEdit] = useState(false);
+
   // Prefill jika mode edit (?edit=[slug])
   useEffect(() => {
     if (editSlug) {
@@ -115,12 +117,24 @@ export default function WriteArticleClient({ userEmail, userRole }: Props) {
         .then((res) => res.json())
         .then((data) => {
           if (data.article) {
-            setTitle(data.article.title || "");
-            setCategory(data.article.category || "Pengetahuan & Sejarah");
-            setRegion(data.article.region || "Umum");
-            setExcerpt(data.article.excerpt || "");
-            setCoverImage(data.article.cover_image || "");
-            setContent(data.article.content || "");
+            const isAuthor =
+              data.article.author_id === userEmail ||
+              data.article.author_name === userEmail ||
+              data.article.author_email === userEmail ||
+              data.article.profiles?.email === userEmail;
+            const isAdmin = userRole === "admin" || userRole === "owner" || userRole === "developer";
+
+            if (!isAuthor && !isAdmin) {
+              setError("Akses ditolak: Hanya penulis asli (publisher) yang berhak mengedit artikel ini.");
+              setForbiddenEdit(true);
+            } else {
+              setTitle(data.article.title || "");
+              setCategory(data.article.category || "Pengetahuan & Sejarah");
+              setRegion(data.article.region || "Umum");
+              setExcerpt(data.article.excerpt || "");
+              setCoverImage(data.article.cover_image || "");
+              setContent(data.article.content || "");
+            }
           } else {
             setError("Artikel yang ingin diedit tidak ditemukan.");
           }
@@ -128,7 +142,7 @@ export default function WriteArticleClient({ userEmail, userRole }: Props) {
         .catch((err) => setError("Gagal memuat data artikel untuk diedit."))
         .finally(() => setLoadingInitial(false));
     }
-  }, [editSlug]);
+  }, [editSlug, userEmail, userRole]);
 
   // Handler Upload Foto dengan Otomatis Konversi ke WebP Jernih Ukuran Kecil
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -432,7 +446,7 @@ export default function WriteArticleClient({ userEmail, userRole }: Props) {
 
             <button
               type="submit"
-              disabled={submitting || success}
+              disabled={submitting || success || forbiddenEdit}
               className="px-6 py-3.5 rounded-xl bg-purple-600 hover:bg-purple-500 active:scale-95 text-white font-bold text-xs md:text-sm flex items-center gap-2 shadow-lg shadow-purple-600/30 transition-all disabled:opacity-50"
             >
               <Send className="w-4 h-4" />

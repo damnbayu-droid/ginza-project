@@ -235,27 +235,28 @@ export default function KamusPage() {
     <div className="min-h-screen bg-[#090a0f] text-white p-4 md:p-8 font-sans flex flex-col justify-between selection:bg-emerald-500 selection:text-black">
       <div className="max-w-6xl mx-auto w-full space-y-10">
         
-        {/* Navigation Bar */}
-        <div className="flex items-center justify-between border-b border-[#1c1e2a] pb-4">
+        {/* Top Navigation Bar */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#1f2233] pb-4">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#14151e] hover:bg-[#1d1f2c] text-gray-300 hover:text-white border border-[#232536] text-xs font-semibold transition-all shadow-sm group"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#14151e] hover:bg-[#1d1f2c] text-gray-300 hover:text-white border border-[#232536] text-xs font-semibold transition-all shadow-sm group active:scale-95 shrink-0"
           >
             <ArrowLeft className="w-4 h-4 text-emerald-400 group-hover:-translate-x-1 transition-transform" />
             <span>Kembali ke Homepage</span>
           </Link>
           
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5">
             <Link
               href="/aksara-mongondow"
-              className="px-4 py-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 text-xs font-bold flex items-center gap-2 shadow-sm transition-all active:scale-95 cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 text-xs font-bold shadow-sm transition-all active:scale-95 shrink-0 cursor-pointer"
             >
               <ScrollText className="w-4 h-4 text-blue-400" />
               <span>Aksara Mongondow</span>
             </Link>
+
             <button
               onClick={() => setShowFrasaModal(true)}
-              className="px-4 py-2 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold flex items-center gap-2 shadow-sm transition-all active:scale-95 cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-bold shadow-sm transition-all active:scale-95 shrink-0 cursor-pointer"
             >
               <MessageSquareQuote className="w-4 h-4 text-emerald-400" />
               <span>Frasa &amp; Kalimat Pendek</span>
@@ -378,53 +379,53 @@ export default function KamusPage() {
               </p>
             </div>
 
-            {/* Sider AI Cards Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Sider AI Cards Grid 2 di Mobile */}
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-5">
               {featuredCards.map((card, idx) => (
                 <div
                   key={`${card.word}-${idx}`}
                   onClick={() => openCardDetail(card)}
-                  className="p-6 rounded-3xl bg-[#11131b] hover:bg-[#161824] border border-[#202332] hover:border-emerald-500/40 transition-all duration-300 cursor-pointer shadow-xl flex flex-col justify-between space-y-5 group relative overflow-hidden"
+                  className="p-4 md:p-6 rounded-3xl bg-[#11131b] hover:bg-[#161824] border border-[#202332] hover:border-emerald-500/40 transition-all duration-300 cursor-pointer shadow-xl flex flex-col justify-between space-y-4 group relative overflow-hidden"
                 >
                   {/* Top Tag & Phonetic */}
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     {card.tag && (
-                      <span className="text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 rounded-full inline-block">
+                      <span className="text-[9px] md:text-[10px] font-mono font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full inline-block truncate max-w-full">
                         {card.tag}
                       </span>
                     )}
 
-                    <h3 className="text-2xl font-bold text-white group-hover:text-emerald-400 transition-colors pt-1">
+                    <h3 className="text-lg md:text-2xl font-bold text-white group-hover:text-emerald-400 transition-colors pt-0.5 truncate">
                       {card.word}
                     </h3>
                     
-                    <p className="text-xs font-mono text-gray-400 italic">
+                    <p className="text-[11px] md:text-xs font-mono text-gray-400 italic truncate">
                       {card.phonetic}
                     </p>
                   </div>
 
                   {/* Divider line */}
-                  <div className="w-12 h-0.5 bg-[#252839] group-hover:w-full group-hover:bg-emerald-500/30 transition-all" />
+                  <div className="w-10 h-0.5 bg-[#252839] group-hover:w-full group-hover:bg-emerald-500/30 transition-all" />
 
                   {/* Origin & Short Meaning */}
-                  <div className="space-y-2 text-xs text-gray-300 leading-relaxed">
-                    <p className="text-[11px] text-gray-400 italic">
+                  <div className="space-y-1.5 text-xs text-gray-300 leading-relaxed">
+                    <p className="text-[10px] md:text-[11px] text-gray-400 italic truncate">
                       <strong className="text-gray-300 not-italic">Asal:</strong> {card.origin}
                     </p>
-                    <p className="line-clamp-3">
+                    <p className="line-clamp-3 text-[11px] md:text-xs">
                       {card.meaning}
                     </p>
                   </div>
 
                   {/* Center Emoji Circle — Sider AI Style */}
-                  <div className="py-2 flex justify-center">
-                    <div className="w-12 h-12 rounded-full bg-[#191b26] border border-[#2a2d40] group-hover:border-emerald-500/40 flex items-center justify-center text-2xl shadow-inner transition-transform group-hover:scale-110">
+                  <div className="py-1 flex justify-center">
+                    <div className="w-9 h-9 md:w-12 md:h-12 rounded-full bg-[#191b26] border border-[#2a2d40] group-hover:border-emerald-500/40 flex items-center justify-center text-lg md:text-2xl shadow-inner transition-transform group-hover:scale-110">
                       {card.emoji}
                     </div>
                   </div>
 
                   {/* Philosophical Quote Footer */}
-                  <div className="pt-3 border-t border-[#1a1c28] text-[11px] text-gray-400 italic leading-snug">
+                  <div className="pt-2 border-t border-[#1a1c28] text-[10px] md:text-[11px] text-gray-400 italic leading-snug line-clamp-2">
                     &ldquo;{card.quote}&rdquo;
                   </div>
                 </div>

@@ -410,20 +410,30 @@ export default function ChatSidebar({
           {/* User Data Account Section (No logo per user request) */}
           <div className="pt-2 mt-1 border-t border-[#262626] px-2 py-2">
             {user ? (
-              /* Logged In User State (Bayu Admin) */
+              /* Logged In User State */
               <div className="flex items-center justify-between bg-[#212121] p-2 rounded-xl border border-[#333]">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-md">
-                    B
+                    {(user.name || user.email).substring(0, 1).toUpperCase()}
                   </div>
                   <div className="truncate text-left">
                     <p className="text-xs font-semibold text-white flex items-center gap-1 truncate">
-                      Bayu (Admin)
-                      <ShieldCheck className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                      {user.name || user.email.split("@")[0]}
+                      {user.role === "admin" || user.role === "owner" || user.role === "developer" ? (
+                        <ShieldCheck className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+                      ) : user.role === "verificator" ? (
+                        <UserCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      ) : null}
                     </p>
                     <p className="text-[10px] text-emerald-400 flex items-center gap-1 font-mono">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                      Administrator
+                      {user.role === "owner" || user.role === "developer"
+                        ? "Founder / Developer"
+                        : user.role === "admin"
+                        ? "Administrator"
+                        : user.role === "verificator"
+                        ? "Verifikator Adat"
+                        : "Anggota (User)"}
                     </p>
                   </div>
                 </div>
