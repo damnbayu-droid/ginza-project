@@ -165,7 +165,7 @@ export default function ArtikelPage() {
           {/* Filter Daerah */}
           <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 custom-scrollbar">
             <span className="text-xs font-bold text-gray-400 flex items-center gap-1 shrink-0 mr-1">
-              <MapPin className="w-3.5 h-3.5 text-purple-400" /> Daerah:
+              <MapPin className="w-3.5 h-3.5 text-purple-400" />
             </span>
             {REGIONS.map((r) => (
               <button

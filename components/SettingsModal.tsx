@@ -800,10 +800,11 @@ export default function SettingsModal({
                 </div>
 
                 <a
-                  href="#"
-                  onClick={(e) => e.preventDefault()}
-                  className="py-2 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs shrink-0 transition-all shadow-lg shadow-emerald-500/20 flex items-center gap-1.5"
-                  title="Link Download Aplikasi Mobile Android (Segera Hadir)"
+                  href={process.env.NEXT_PUBLIC_MOBILE_APP_URL || "https://drive.google.com/file/d/1MnSLh7KszG4XgfYbuicdtKuTZc-eIZrc/view?usp=sharing"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="py-2 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold text-xs shrink-0 transition-all shadow-lg shadow-emerald-500/20 flex items-center gap-1.5 cursor-pointer"
+                  title="Download Aplikasi Mobile Android MongondowPedia (APK)"
                 >
                   <Download className="w-4 h-4" />
                   <span>Download App</span>

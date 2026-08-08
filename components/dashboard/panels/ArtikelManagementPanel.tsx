@@ -196,7 +196,7 @@ export default function ArtikelManagementPanel() {
             </button>
           ))}
 
-          <span className="font-semibold text-bento-text-secondary ml-4">Daerah:</span>
+          <span className="font-semibold text-bento-text-secondary ml-4">*</span>
           <select
             value={regionFilter}
             onChange={(e) => setRegionFilter(e.target.value)}
