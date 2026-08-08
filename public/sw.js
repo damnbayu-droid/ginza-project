@@ -8,9 +8,9 @@
  * - Auth & Chat API: Network Only → tidak pernah di-cache
  */
 
-const CACHE_NAME = 'mongondowpedia-v2';
-const STATIC_CACHE = 'mp-static-v2';
-const API_CACHE = 'mp-api-v2';
+const CACHE_NAME = 'mongondowpedia-v3';
+const STATIC_CACHE = 'mp-static-v3';
+const API_CACHE = 'mp-api-v3';
 
 // Asset statis yang di-cache saat install
 const PRECACHE_ASSETS = [
@@ -95,11 +95,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 3. CACHE FIRST: Aset statis Next.js (_next/static, fonts, icons)
+  // 3. CACHE FIRST: Aset statis Next.js (_next/static, css, js, fonts, icons)
   if (
     pathname.startsWith('/_next/static/') ||
     pathname.startsWith('/fonts/') ||
-    /\.(png|jpg|jpeg|ico|svg|webp|woff|woff2|ttf|otf)$/.test(pathname) ||
+    /\.(png|jpg|jpeg|ico|svg|webp|woff|woff2|ttf|otf|css|js)$/.test(pathname) ||
     pathname === '/manifest.json'
   ) {
     event.respondWith(cacheFirst(request, STATIC_CACHE));

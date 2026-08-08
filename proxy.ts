@@ -50,8 +50,8 @@ const PUBLIC_PATHS = [
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Izinkan gambar statis & berkas media langsung
-  if (/\.(png|jpg|jpeg|webp|svg|ico|gif)$/i.test(pathname)) {
+  // Izinkan gambar statis, berkas media, CSS, JS, dan font langsung
+  if (/\.(png|jpg|jpeg|webp|svg|ico|gif|css|js|woff|woff2|ttf|otf)$/i.test(pathname)) {
     return NextResponse.next();
   }
 
