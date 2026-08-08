@@ -225,7 +225,7 @@ export default function ArtikelPage() {
               >
                 <div className="space-y-3">
                   {/* Cover Image / Thumbnail */}
-                  {art.cover_image ? (
+                  {art.cover_image && art.cover_image.trim() ? (
                     <div className="h-40 w-full rounded-2xl overflow-hidden border border-[#262838] bg-[#0c0d14]">
                       <img src={art.cover_image} alt={art.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                     </div>
@@ -261,7 +261,7 @@ export default function ArtikelPage() {
                   {/* Author Row */}
                   <div className="flex items-center gap-2">
                     <div className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-300 text-[10px] font-bold flex items-center justify-center overflow-hidden shrink-0">
-                      {art.author_avatar ? (
+                      {art.author_avatar && art.author_avatar.trim() ? (
                         <img src={art.author_avatar} alt={art.author_name} className="w-full h-full object-cover" />
                       ) : (
                         art.author_name.substring(0, 2).toUpperCase()

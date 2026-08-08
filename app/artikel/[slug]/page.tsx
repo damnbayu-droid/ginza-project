@@ -287,7 +287,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
             <div className="flex items-center justify-between text-xs text-gray-400 pt-2">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-purple-500/20 text-purple-300 font-bold flex items-center justify-center overflow-hidden border border-purple-500/30">
-                  {article.author_avatar ? (
+                  {article.author_avatar && article.author_avatar.trim() ? (
                     <img src={article.author_avatar} alt={article.author_name} className="w-full h-full object-cover" />
                   ) : (
                     article.author_name.substring(0, 2).toUpperCase()
@@ -307,7 +307,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
           </div>
 
           {/* Cover Image */}
-          {article.cover_image && (
+          {Boolean(article.cover_image && article.cover_image.trim()) && (
             <div className="w-full rounded-2xl overflow-hidden border border-[#262838] bg-[#0c0d14] max-h-96">
               <img src={article.cover_image} alt={article.title} className="w-full h-full object-cover" />
             </div>
@@ -315,7 +315,17 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
 
           {/* Article Body Content */}
           <div className="prose prose-invert max-w-none text-gray-200 text-sm md:text-base leading-relaxed space-y-4 pt-2">
-            <ReactMarkdown>{article.content}</ReactMarkdown>
+            <ReactMarkdown
+              components={{
+                img: ({ src, alt, ...props }) => {
+                  const imgSrc = typeof src === "string" ? src : "";
+                  if (!imgSrc || !imgSrc.trim()) return null;
+                  return <img src={imgSrc} alt={alt || ""} {...props} className="rounded-xl border border-[#262838] max-h-[500px] w-auto mx-auto my-4" />;
+                }
+              }}
+            >
+              {article.content}
+            </ReactMarkdown>
           </div>
 
           {/* Interaction Bar (Viewer, Like, Dislike, Share) */}
@@ -427,7 +437,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-300 font-bold text-[10px] flex items-center justify-center overflow-hidden">
-                        {c.user_avatar ? (
+                        {c.user_avatar && c.user_avatar.trim() ? (
                           <img src={c.user_avatar} alt={c.user_name} className="w-full h-full object-cover" />
                         ) : (
                           c.user_name.substring(0, 2).toUpperCase()
