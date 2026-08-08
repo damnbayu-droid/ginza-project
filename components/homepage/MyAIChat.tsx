@@ -687,14 +687,16 @@ export default function MyAIChat({
             </div>
           </form>
 
-          <p className="text-[11px] text-gray-500 text-center mt-2 font-sans">
-            (Ginza Project) MongondowPedia Inc. All rights reserved.
-          </p>
+          {!isMobileQuickMenuOpen && (
+            <p className="text-[11px] text-gray-500 text-center mt-2 font-sans transition-opacity duration-200">
+              (Ginza Project) MongondowPedia Inc. All rights reserved.
+            </p>
+          )}
         </div>
       )}
 
-      {!hasMessages && (
-        <p className="text-[10px] sm:text-[11px] text-gray-500 text-center px-4 font-sans shrink-0" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 1rem))' }}>
+      {!hasMessages && !isMobileQuickMenuOpen && (
+        <p className="text-[10px] sm:text-[11px] text-gray-500 text-center px-4 font-sans shrink-0 transition-opacity duration-200" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 1rem))' }}>
           (Ginza Project) MongondowPedia Inc. All rights reserved.
         </p>
       )}
