@@ -1,27 +1,39 @@
 'use client';
 
-import { useState, useEffect, use } from "react";
+import { use, useEffect, useState } from "react";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
 import {
-  FileText,
   ArrowLeft,
+  Calendar,
+  Eye,
   ThumbsUp,
   ThumbsDown,
   Share2,
-  Eye,
   MessageSquare,
   Send,
-  Lock,
-  CheckCircle2,
   AlertCircle,
   MapPin,
-  Calendar,
-  User
+  Sparkles,
+  CheckCircle2,
+  Edit3
 } from "lucide-react";
-import ReactMarkdown from "react-markdown";
+
+interface CommentItem {
+  id: string;
+  text: string;
+  created_at: string;
+  likes_count?: number;
+  dislikes_count?: number;
+  user_id?: string;
+  user_name: string;
+  user_avatar?: string;
+  user_role?: string;
+}
 
 interface ArticleDetail {
   id: string;
+  author_id: string;
   title: string;
   slug: string;
   category: string;
@@ -30,21 +42,14 @@ interface ArticleDetail {
   content: string;
   cover_image?: string;
   views_count: number;
-  shares_count: number;
   likes_count: number;
   dislikes_count: number;
+  shares_count: number;
   created_at: string;
   author_name: string;
   author_avatar?: string;
   author_role?: string;
-  comments: {
-    id: string;
-    text: string;
-    created_at: string;
-    user_name: string;
-    user_avatar?: string;
-    user_role?: string;
-  }[];
+  comments: CommentItem[];
 }
 
 export default function ArticleDetailPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -139,13 +144,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
       const data = await res.json();
       setSubmittingComment(false);
 
-      if (res.status === 401 || data.requiresAuth) {
-        setRequiresAuth(true);
-        setCommentError("Hanya pengguna yang sudah login yang dapat memberikan komentar.");
-        return;
-      }
-
-      if (res.ok && data.comment) {
+      if (res.ok && data.success && data.comment) {
         setCommentText("");
         if (article) {
           setArticle({
@@ -154,18 +153,52 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
           });
         }
       } else {
-        setCommentError(data.error || "Gagal mengirim komentar.");
+        if (res.status === 401 || data.requiresAuth) {
+          setRequiresAuth(true);
+          setCommentError("Hanya pengguna terdaftar (login) yang dapat memposting komentar.");
+        } else {
+          setCommentError(data.error || "Gagal mengirim komentar.");
+        }
       }
-    } catch (err: any) {
+    } catch {
       setSubmittingComment(false);
-      setCommentError(`Gagal mengirim komentar: ${err.message}`);
+      setCommentError("Terjadi kesalahan jaringan.");
+    }
+  }
+
+  async function handleCommentInteract(commentId: string, action: "like_comment" | "dislike_comment") {
+    if (!article) return;
+
+    setArticle({
+      ...article,
+      comments: article.comments.map((c) => {
+        if (c.id === commentId) {
+          return {
+            ...c,
+            likes_count: action === "like_comment" ? (c.likes_count || 0) + 1 : c.likes_count || 0,
+            dislikes_count: action === "dislike_comment" ? (c.dislikes_count || 0) + 1 : c.dislikes_count || 0,
+          };
+        }
+        return c;
+      }),
+    });
+
+    try {
+      await fetch(`/api/articles/${slug}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, comment_id: commentId }),
+      });
+    } catch {
+      // ignore
     }
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] text-white flex items-center justify-center text-sm text-gray-400">
-        Memuat artikel...
+      <div className="min-h-screen bg-[#0a0a0f] text-white p-6 flex flex-col items-center justify-center space-y-4">
+        <div className="w-8 h-8 rounded-full border-2 border-purple-500 border-t-transparent animate-spin" />
+        <p className="text-xs text-gray-400 font-mono">Memuat konten artikel...</p>
       </div>
     );
   }
@@ -186,14 +219,24 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
     <main className="min-h-screen bg-[#0a0a0f] text-white p-4 md:p-10 font-sans selection:bg-purple-500 selection:text-white">
       <div className="max-w-3xl mx-auto space-y-8">
 
-        {/* Top Back Navigation */}
-        <Link
-          href="/artikel"
-          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#14151f] hover:bg-[#1f2130] text-gray-300 hover:text-white border border-[#262838] text-xs font-semibold transition-all shadow-sm"
-        >
-          <ArrowLeft className="w-4 h-4 text-purple-400" />
-          <span>Kembali ke Daftar Artikel</span>
-        </Link>
+        {/* Top Navigation Row & Edit Button */}
+        <div className="flex items-center justify-between gap-3">
+          <Link
+            href="/artikel"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#14151f] hover:bg-[#1f2130] text-gray-300 hover:text-white border border-[#262838] text-xs font-semibold transition-all shadow-sm"
+          >
+            <ArrowLeft className="w-4 h-4 text-purple-400" />
+            <span>Kembali ke Daftar Artikel</span>
+          </Link>
+
+          <Link
+            href={`/u/tulis-artikel?edit=${slug}`}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 border border-purple-500/30 text-xs font-bold transition-all shadow-sm active:scale-95"
+          >
+            <Edit3 className="w-4 h-4 text-purple-400" />
+            <span>Edit Artikel Ini</span>
+          </Link>
+        </div>
 
         {/* Article Container */}
         <article className="bg-[#14151f] border border-[#262838] rounded-3xl p-6 md:p-8 space-y-6 shadow-2xl">
@@ -260,7 +303,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
                 }`}
               >
                 <ThumbsUp className="w-4 h-4 text-emerald-400" />
-                <span>Suka ({likesCount})</span>
+                <span>{likesCount} Suka</span>
               </button>
 
               {/* Dislike Button */}
@@ -273,29 +316,31 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
                 }`}
               >
                 <ThumbsDown className="w-4 h-4 text-red-400" />
-                <span>Kurang Suka ({dislikesCount})</span>
+                <span>{dislikesCount} Tidak Suka</span>
               </button>
             </div>
 
-            <div className="flex items-center gap-3 text-xs font-mono text-gray-400">
-              <span className="flex items-center gap-1.5 bg-[#181928] px-3 py-1.5 rounded-xl border border-[#2b2d42]">
-                <Eye className="w-4 h-4 text-blue-400" /> {article.views_count + 1} Pembaca
+            <div className="flex items-center gap-4 text-xs text-gray-400 font-mono">
+              <span className="flex items-center gap-1.5 bg-[#181928] px-3 py-1.5 rounded-xl border border-[#262838]">
+                <Eye className="w-4 h-4 text-blue-400" />
+                <span>{article.views_count || 1} Dibaca</span>
               </span>
 
               <button
                 onClick={() => handleInteract("share")}
-                className="flex items-center gap-1.5 bg-[#181928] hover:bg-[#202236] px-3.5 py-1.5 rounded-xl border border-[#2b2d42] text-purple-300 font-bold transition-all"
+                className="flex items-center gap-1.5 bg-[#181928] hover:bg-[#202235] px-3.5 py-1.5 rounded-xl border border-[#262838] text-gray-300 hover:text-white transition-all active:scale-95"
               >
                 <Share2 className="w-4 h-4 text-purple-400" />
-                <span>Bagikan ({sharesCount})</span>
+                <span>{sharesCount} Bagikan</span>
               </button>
             </div>
           </div>
 
           {sharedNotice && (
-            <p className="text-xs text-emerald-400 font-medium bg-emerald-500/10 p-2.5 rounded-xl border border-emerald-500/20 text-center animate-fadeIn">
-              Tautan artikel telah disalin ke clipboard! Terima kasih telah membagikan pengetahuan ini.
-            </p>
+            <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-300 text-xs font-bold flex items-center gap-2 animate-fade-in">
+              <CheckCircle2 className="w-4 h-4 text-purple-400" />
+              <span>Tautan artikel berhasil disalin ke clipboard! Siap dibagikan.</span>
+            </div>
           )}
         </article>
 
@@ -304,7 +349,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
           <div className="flex items-center justify-between border-b border-[#232536] pb-4">
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
               <MessageSquare className="w-5 h-5 text-purple-400" />
-              <span>Diskusi & Komentar Pembaca ({article.comments.length})</span>
+              <span>Diskusi &amp; Komentar Pembaca ({article.comments.length})</span>
             </h2>
           </div>
 
@@ -325,7 +370,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
                   <span>{commentError}</span>
                 </span>
                 {requiresAuth && (
-                  <Link href="/login" className="px-3 py-1 bg-purple-600 text-white font-bold text-xs rounded-lg shrink-0">
+                  <Link href={`/login?next=/artikel/${slug}`} className="px-3 py-1 bg-purple-600 text-white font-bold text-xs rounded-lg shrink-0">
                     Masuk Akun
                   </Link>
                 )}
@@ -350,7 +395,7 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
               <p className="text-xs text-gray-500 text-center py-6">Belum ada komentar. Berikan tanggapan pertama Anda!</p>
             ) : (
               article.comments.map((c) => (
-                <div key={c.id} className="bg-[#181928] border border-[#262838] rounded-2xl p-4 space-y-2">
+                <div key={c.id} className="bg-[#181928] border border-[#262838] rounded-2xl p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-300 font-bold text-[10px] flex items-center justify-center overflow-hidden">
@@ -372,6 +417,29 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
                   </div>
 
                   <p className="text-xs text-gray-300 leading-relaxed pl-8">{c.text}</p>
+
+                  {/* Comment Like / Dislike Bar */}
+                  <div className="pl-8 pt-1 flex items-center gap-3 text-[11px] text-gray-400">
+                    <button
+                      type="button"
+                      onClick={() => handleCommentInteract(c.id, "like_comment")}
+                      className="hover:text-emerald-400 transition-colors flex items-center gap-1 font-mono active:scale-95"
+                      title="Sukai Komentar"
+                    >
+                      <ThumbsUp className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>{c.likes_count || 0}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleCommentInteract(c.id, "dislike_comment")}
+                      className="hover:text-red-400 transition-colors flex items-center gap-1 font-mono active:scale-95"
+                      title="Tidak Suka Komentar"
+                    >
+                      <ThumbsDown className="w-3.5 h-3.5 text-red-400" />
+                      <span>{c.dislikes_count || 0}</span>
+                    </button>
+                  </div>
                 </div>
               ))
             )}

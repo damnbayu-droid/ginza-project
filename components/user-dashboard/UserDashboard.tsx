@@ -35,7 +35,8 @@ import {
   ThumbsDown,
   ExternalLink,
   BarChart2,
-  Smartphone
+  Smartphone,
+  Edit3
 } from "lucide-react";
 import type { Profile } from "@/lib/ginza-db";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser-auth";
@@ -1639,6 +1640,14 @@ function ArtikelTab() {
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
+                      <a
+                        href={`/u/tulis-artikel?edit=${art.slug}`}
+                        className="px-3 py-1 rounded-full bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 border border-purple-500/40 text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95 shadow-sm"
+                        title="Edit Artikel Ini"
+                      >
+                        <Edit3 className="w-3.5 h-3.5 text-purple-400" />
+                        <span>Edit Artikel</span>
+                      </a>
                       <span className="px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 text-xs font-bold">
                         🏆 #{art.fyp_rank} FYP
                       </span>
