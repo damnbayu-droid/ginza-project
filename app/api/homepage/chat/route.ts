@@ -11,7 +11,7 @@ import { searchManadoPhrases, getFeaturedManadoPhrases } from "@/lib/manado-voca
 import { AI_NAME, WEBSITE_NAME, PROJECT_NAME, BOGANI_PERSONA_ID, BOGANI_PERSONA_EN } from "@/lib/bogani-persona";
 import { getKnowledgeContext } from "@/lib/knowledge-retrieval";
 import { getCurrentUserProfile } from "@/lib/supabase-auth-server";
-import { saveConversation, logMetricEvent, listUserMemory, upsertUserMemory, type Profile, type UserMemoryRow } from "@/lib/ginza-db";
+import { saveConversation, logMetricEvent, listUserMemory, upsertUserMemory, listInstantReplies, type Profile, type UserMemoryRow, type InstantReplyRow } from "@/lib/ginza-db";
 import {
   checkGuestQuota,
   checkUserQuota,
@@ -23,7 +23,16 @@ import {
 const SYSTEM_PROMPT_ID = BOGANI_PERSONA_ID;
 const SYSTEM_PROMPT_EN = BOGANI_PERSONA_EN;
 
-const GATEWAY_FIELD = "chatbot_myai_home";
+const GATEWAY_FIELD = "bogani_ai";
+
+// Gateway tidak mendukung streaming (satu JSON utuh dikirim setelah LLM
+// selesai) -- diukur langsung ke console.myai.nexus, jawaban Bogani yang
+// berbobot (dgn konteks RAG) bisa makan waktu >15 detik. Timeout SEBELUMNYA
+// cuma 2 detik, jadi HAMPIR SEMUA pertanyaan nyata timeout duluan sebelum
+// Gateway sempat menjawab, dan diam-diam jatuh ke simulateReply() (balasan
+// template kosong tanpa isi) -- itulah kenapa Bogani AI terasa "tidak paham
+// konteks" di production, padahal Gateway-nya sendiri menjawab dgn benar.
+const GATEWAY_TIMEOUT_MS = 45_000;
 
 function getKamusContext(userPrompt: string): string {
   try {
@@ -177,6 +186,51 @@ function buildPromptWithHistory(history: HomeChatMessage[], prompt: string, memo
   return `${personaHeader}${historyText}\n\nUser: ${fullPrompt}`;
 }
 
+// ── Balasan instan (sapaan pendek, tanpa panggil AI apa pun) ──────────────
+// Dikonfigurasi dari Admin Dashboard (Ai Master -> Balasan Instan) & tersimpan
+// di tabel bogani_instant_replies. Di-cache di memori proses (per-instance
+// serverless) supaya sapaan tetap kilat tanpa query DB tiap pesan; cache
+// pendek (5 menit) supaya edit dari dashboard cukup cepat terasa.
+let instantReplyCache: { rows: InstantReplyRow[]; fetchedAt: number } | null = null;
+const INSTANT_REPLY_CACHE_TTL_MS = 5 * 60 * 1000;
+
+async function getActiveInstantReplies(): Promise<InstantReplyRow[]> {
+  const now = Date.now();
+  if (instantReplyCache && now - instantReplyCache.fetchedAt < INSTANT_REPLY_CACHE_TTL_MS) {
+    return instantReplyCache.rows;
+  }
+  try {
+    const rows = await listInstantReplies({ activeOnly: true });
+    instantReplyCache = { rows, fetchedAt: now };
+    return rows;
+  } catch (e) {
+    console.warn("[homepage-chat] Failed loading instant replies:", e);
+    return instantReplyCache?.rows ?? [];
+  }
+}
+
+// Cuma cocok utk pesan PENDEK (maks 5 kata) yang persis atau diawali kata
+// pemicu -- sengaja ketat supaya "halo, boleh tanya soal sejarah..." TETAP
+// dijawab AI sungguhan, bukan template ini.
+function matchInstantReply(prompt: string, rows: InstantReplyRow[]): string | null {
+  const normalized = prompt.toLowerCase().trim().replace(/[!.,?;:]+$/g, "").replace(/\s+/g, " ").trim();
+  if (!normalized) return null;
+  if (normalized.split(" ").length > 5) return null;
+
+  for (const row of rows) {
+    for (const rawKeyword of row.trigger_keywords) {
+      const keyword = rawKeyword.toLowerCase().trim();
+      if (!keyword) continue;
+      if (normalized === keyword || normalized.startsWith(keyword + " ")) {
+        const variants = row.reply_variants.filter(Boolean);
+        if (variants.length === 0) continue;
+        return variants[Math.floor(Math.random() * variants.length)];
+      }
+    }
+  }
+  return null;
+}
+
 function simulateReply(prompt: string, lang: Language, isFirstMessage: boolean = true): string {
   const lower = prompt.toLowerCase();
   const variations = [
@@ -238,7 +292,7 @@ async function callGateway(req: NextRequest, fullPrompt: string, fileData?: stri
           messages: [{ role: "user", content: fullPrompt }],
           file: fileData || undefined,
         }),
-        signal: AbortSignal.timeout(2000), // Fast 2.0s timeout to prevent hanging on unreachable gateways
+        signal: AbortSignal.timeout(GATEWAY_TIMEOUT_MS),
       });
 
       if (res.ok) {
@@ -504,6 +558,11 @@ function createTextStreamResponse(fullText: string, provider: string = "gemini")
   });
 }
 
+// Perlu diperpanjang dari default platform (Vercel: 10s di Hobby) supaya
+// tidak mematikan function ini sebelum GATEWAY_TIMEOUT_MS di atas selesai
+// menunggu jawaban Gateway yang nyata.
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
 
@@ -549,7 +608,35 @@ export async function POST(req: NextRequest) {
   }
 
   const conversationId: string | null = typeof body.conversationId === "string" ? body.conversationId : null;
+  const isVoiceMode = body.isVoiceMode || body.isVoiceInput || prompt.includes("[voice]");
   const profile = await profilePromise;
+
+  // Balasan instan (sapaan pendek spt "halo"/"assalamualaikum"/"selamat
+  // pagi") -- SEBELUM cek kuota & SEBELUM panggil Gateway/AI apa pun, supaya
+  // benar2 instan (tanpa nunggu ~15-20 detik) dan TIDAK memakan jatah kuota
+  // harian user/tamu. Tidak berlaku utk file/voice mode -- lihat
+  // matchInstantReply() utk syarat pesan pendeknya.
+  if (!parsedFileData && !isVoiceMode) {
+    const instantReplyRows = await getActiveInstantReplies();
+    const instantText = matchInstantReply(prompt, instantReplyRows);
+    if (instantText) {
+      if (profile) {
+        const now = new Date().toISOString();
+        const historyMessages = [
+          ...history.map((m) => ({ role: m.role, content: m.content, timestamp: m.timestamp })),
+          { role: "user", content: prompt, timestamp: now },
+          { role: "assistant", content: instantText, timestamp: now },
+        ];
+        void saveConversation(profile.id, conversationId || undefined, prompt.slice(0, 60), historyMessages).catch((e) =>
+          console.warn("[homepage-chat] Failed saving instant-reply conversation:", e)
+        );
+      }
+      if (wantStream) {
+        return createTextStreamResponse(instantText, "instant");
+      }
+      return NextResponse.json({ text: instantText, provider_used: "instant" }, { headers: { "X-Provider-Used": "instant" } });
+    }
+  }
 
   // Kontrol pemakaian AI (lihat lib/ai-usage-quota.ts): tamu dapat jatah
   // kecil sekali-pakai (wajib login/daftar sesudahnya), User biasa dapat
@@ -574,8 +661,6 @@ export async function POST(req: NextRequest) {
     if (guestId) setGuestCookieHeader(blocked, guestId);
     return blocked;
   }
-
-  const isVoiceMode = body.isVoiceMode || body.isVoiceInput || prompt.includes("[voice]");
 
   // 1. Preferred: route through the AI Gateway (myai.nexus or local) as a registered client app.
   const gatewayResult = await callGateway(req, fullPrompt, fileInput, isVoiceMode);

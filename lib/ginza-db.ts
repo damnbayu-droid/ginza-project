@@ -1074,3 +1074,57 @@ export async function updateFeedbackSubmissionStatus(id: string, status: Feedbac
   if (error) throw error;
   return data as FeedbackSubmissionRow;
 }
+
+// ── Balasan Instan Bogani AI (sapaan singkat, tanpa panggil AI) ─────────
+
+export interface InstantReplyRow {
+  id: string;
+  label: string;
+  trigger_keywords: string[];
+  reply_variants: string[];
+  is_active: boolean;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function listInstantReplies(opts: { activeOnly?: boolean } = {}) {
+  const db = assertDb();
+  let q = db.from("bogani_instant_replies").select("*").order("sort_order", { ascending: true });
+  if (opts.activeOnly) q = q.eq("is_active", true);
+  const { data, error } = await q;
+  if (error) throw error;
+  return (data ?? []) as InstantReplyRow[];
+}
+
+export async function upsertInstantReply(entry: {
+  id?: string;
+  label: string;
+  trigger_keywords: string[];
+  reply_variants: string[];
+  is_active?: boolean;
+  sort_order?: number;
+}) {
+  const db = assertDb();
+  const payload = {
+    ...(entry.id ? { id: entry.id } : {}),
+    label: entry.label.trim(),
+    trigger_keywords: entry.trigger_keywords.map((k) => k.trim().toLowerCase()).filter(Boolean),
+    reply_variants: entry.reply_variants.map((r) => r.trim()).filter(Boolean),
+    is_active: entry.is_active ?? true,
+    sort_order: entry.sort_order ?? 0,
+  };
+  const { data, error } = await db
+    .from("bogani_instant_replies")
+    .upsert(payload, { onConflict: "id" })
+    .select()
+    .single();
+  if (error) throw error;
+  return data as InstantReplyRow;
+}
+
+export async function deleteInstantReply(id: string) {
+  const db = assertDb();
+  const { error } = await db.from("bogani_instant_replies").delete().eq("id", id);
+  if (error) throw error;
+}

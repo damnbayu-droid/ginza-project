@@ -67,7 +67,7 @@ export async function GET() {
           Authorization: `Bearer ${gatewayKey}`,
         },
         body: JSON.stringify({
-          field: "chatbot_myai_home",
+          field: "bogani_ai",
           messages: [{ role: "user", content: "Ping status check" }],
         }),
       });

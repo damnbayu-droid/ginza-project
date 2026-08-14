@@ -5,6 +5,11 @@ import { parseUploadedFile, type ParsedFileResult } from "@/lib/file-parser";
 import fs from "fs";
 import path from "path";
 
+// Dipanggil sbg fallback dari app/api/homepage/chat/route.ts saat Gateway
+// remote gagal -- perlu durasi lebih dari default platform krn ini juga
+// menunggu panggilan LLM provider yg nyata (bisa >15s tanpa streaming).
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest) {
   if (!supabaseAdmin) {
     return NextResponse.json({ error: "Database not configured" }, { status: 503 });

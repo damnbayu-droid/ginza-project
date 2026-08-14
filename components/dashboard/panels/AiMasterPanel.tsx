@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { PanelHeader, Card, LoadingState, Badge, Button } from "@/components/dashboard/ui";
 import { Bot, Send, Sparkles, Plus, Trash2, CheckCircle2, XCircle, Sliders, MessageSquare, RefreshCw, Zap, ShieldAlert, Edit2, Check, X, Brain, ShieldCheck, Users, ThumbsUp, AlertCircle } from "lucide-react";
+import InstantRepliesTab from "@/components/dashboard/panels/InstantRepliesTab";
 
 interface AdminRule {
   id: string;
@@ -131,7 +132,7 @@ const DEFAULT_AI_MEMORIES: AiMemoryItem[] = [
 ];
 
 export default function AiMasterPanel() {
-  const [activeTab, setActiveTab] = useState<"playground" | "memory">("playground");
+  const [activeTab, setActiveTab] = useState<"playground" | "memory" | "instant-replies">("playground");
   const [memorySubTab, setMemorySubTab] = useState<"admin" | "community">("admin");
   const [health, setHealth] = useState<any>(null);
 
@@ -449,6 +450,18 @@ export default function AiMasterPanel() {
         >
           <Brain className="w-4 h-4 text-purple-300" />
           <span>Memori AI ({memories.filter((m) => m.isActive && m.status === "approved").length} Approved &amp; Aktif)</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab("instant-replies")}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
+            activeTab === "instant-replies"
+              ? "bg-bento-accent text-white shadow-md"
+              : "bg-bento-surface text-bento-text-secondary hover:text-bento-text-primary border border-bento-border"
+          }`}
+        >
+          <Zap className="w-4 h-4 text-amber-300" />
+          <span>Balasan Instan (Sapaan)</span>
         </button>
       </div>
 
@@ -1026,6 +1039,11 @@ export default function AiMasterPanel() {
           </div>
         </div>
       )}
+
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      {/* TAB 3: BALASAN INSTAN (SAPAAN TANPA PANGGIL AI) */}
+      {/* ════════════════════════════════════════════════════════════════════ */}
+      {activeTab === "instant-replies" && <InstantRepliesTab />}
     </div>
   );
 }
