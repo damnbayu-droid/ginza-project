@@ -163,6 +163,16 @@ function extractMemoryCandidates(prompt: string): { content: string; category: U
   return results.slice(0, 2); // maks 2 fakta baru per giliran, jaga2 supaya tidak spam
 }
 
+// Riwayat percakapan dikirim client TANPA batas (HomeApp.tsx mengirim seluruh
+// existingMessages sesi, bisa puluhan giliran) -- dulu semuanya digabung
+// mentah2 ke prompt, jadi makin panjang sesi obrolan, makin panjang & makin
+// lama diproses AI di SETIAP giliran berikutnya (biaya & latensi naik terus,
+// tanpa batas). Fakta penting lintas-sesi sudah dijaga terpisah lewat
+// listUserMemory()/formatMemoryContext() di atas, jadi aman memotong riwayat
+// mentah ke N giliran terakhir -- konsisten dgn playground AiMasterPanel.tsx
+// yg sudah lebih dulu membatasi ke -8 pesan.
+const MAX_HISTORY_MESSAGES = 20;
+
 function buildPromptWithHistory(history: HomeChatMessage[], prompt: string, memoryCtx: string = ""): string {
   const kamusCtx = getKamusContext(prompt);
   const languageMixCtx = getLanguageMixContext(prompt);
@@ -178,7 +188,8 @@ function buildPromptWithHistory(history: HomeChatMessage[], prompt: string, memo
 
   if (!Array.isArray(history) || history.length === 0) return personaHeader + fullPrompt;
 
-  const historyText = history
+  const recentHistory = history.slice(-MAX_HISTORY_MESSAGES);
+  const historyText = recentHistory
     .filter((m) => m.role === 'user' || m.role === 'assistant')
     .map((m) => `${m.role === 'user' ? 'User' : AI_NAME}: ${m.content}`)
     .join("\n\n");
