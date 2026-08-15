@@ -9,7 +9,6 @@ import {
   Copy,
   Check,
   RotateCcw,
-  Sparkles,
   Menu,
   ChevronDown,
   ChevronLeft,
@@ -32,6 +31,7 @@ import {
 import ReactMarkdown from "react-markdown";
 import Link from "next/link";
 import MyAILogo from "./MyAILogo";
+import BoganiThinkingIndicator from "./BoganiThinkingIndicator";
 import LoginModal from "@/components/LoginModal";
 import SettingsModal from "@/components/SettingsModal";
 import FeedbackModal from "@/components/FeedbackModal";
@@ -466,6 +466,18 @@ export default function MyAIChat({
               const msgProviderKey = msg.providerUsed?.toLowerCase() || 'gemini';
               const msgModelConfig = modelConfigs[msgProviderKey] || modelConfigs.gemini;
 
+              // Placeholder balasan Bogani AI yg belum terisi sama sekali
+              // (baru dibuat, masih menunggu Gateway) -- tampilkan indikator
+              // berpikir SEBAGAI PENGGANTI bubble kosong ini (bukan elemen
+              // terpisah di bawahnya), supaya cuma 1 bubble & 1 logo yg
+              // kelihatan selama loading. Begitu chunk pertama jawaban asli
+              // masuk (content tidak kosong lagi), baris ini otomatis balik
+              // jadi bubble normal -- serah-terima mulus tanpa perlu logic
+              // tambahan di sini.
+              if (!isUser && msg.content === '' && isLoading) {
+                return <BoganiThinkingIndicator key={msg.id} />;
+              }
+
               return (
                 <div
                   key={msg.id}
@@ -534,16 +546,6 @@ export default function MyAIChat({
                 </div>
               );
             })}
-
-            {isLoading && (
-              <div className="flex gap-3 text-sm justify-start animate-pulse">
-                <MyAILogo size="sm" />
-                <div className="p-4 rounded-2xl bg-[#212121] border border-[#2d2d2d] rounded-tl-none text-gray-400 flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-blue-400 animate-spin" />
-                  <span className="text-xs">{lang === 'id' ? 'Bogani AI sedang memproses secara real-time...' : 'Bogani AI is generating real-time response...'}</span>
-                </div>
-              </div>
-            )}
 
             <div ref={messagesEndRef} />
           </div>

@@ -185,8 +185,21 @@ function buildPromptWithHistory(history: HomeChatMessage[], prompt: string, memo
 
   const personaHeader = `[SYSTEM INSTRUCTION BOGANI AI]:\n${SYSTEM_PROMPT_ID}\n\n`;
   const fullPrompt = prompt + kamusCtx + languageMixCtx + memoryCtx + knowledgeCtx;
+  const isFirstTurn = !Array.isArray(history) || history.length === 0;
 
-  if (!Array.isArray(history) || history.length === 0) return personaHeader + fullPrompt;
+  // Sinyal eksplisit & terstruktur ttg posisi giliran ini -- diletakkan
+  // SEDEKAT MUNGKIN ke titik AI mulai menjawab (bukan cuma disebut sekali di
+  // persona yg panjang di atas), krn instruksi dekat titik-generate jauh
+  // lebih dipatuhi LLM drpd instruksi yg terkubur jauh di awal system
+  // prompt. Perbaikan atas laporan Boss Bayu: AI tetap mengulang "Niondon"
+  // di balasan lanjutan walau persona sudah eksplisit melarangnya (lihat
+  // lib/bogani-persona.ts) -- ini penegasan tambahan, bukan pengganti aturan
+  // yg sudah ada di sana.
+  const turnStatus = isFirstTurn
+    ? `[STATUS SESI: Ini pesan PERTAMA di sesi obrolan ini -- boleh buka dgn sapaan "Niondon"/"Dega Niondon" SEKALI saja sesuai aturan persona di atas.]`
+    : `[STATUS SESI: Sesi obrolan ini SUDAH BERJALAN (bukan pesan pertama) -- JANGAN gunakan kata "Niondon" atau "Dega Niondon" sama sekali di balasan ini. Langsung tanggapi tanpa sapaan pembuka.]`;
+
+  if (isFirstTurn) return `${personaHeader}${turnStatus}\n\n${fullPrompt}`;
 
   const recentHistory = history.slice(-MAX_HISTORY_MESSAGES);
   const historyText = recentHistory
@@ -194,7 +207,7 @@ function buildPromptWithHistory(history: HomeChatMessage[], prompt: string, memo
     .map((m) => `${m.role === 'user' ? 'User' : AI_NAME}: ${m.content}`)
     .join("\n\n");
 
-  return `${personaHeader}${historyText}\n\nUser: ${fullPrompt}`;
+  return `${personaHeader}${historyText}\n\n${turnStatus}\n\nUser: ${fullPrompt}`;
 }
 
 // ── Balasan instan (sapaan pendek, tanpa panggil AI apa pun) ──────────────
