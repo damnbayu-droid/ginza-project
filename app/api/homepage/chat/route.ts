@@ -281,7 +281,7 @@ function simulateReply(prompt: string, lang: Language, isFirstMessage: boolean =
 /**
  * Preferred path: call Gateway AI (MYAI_OS_GATEWAY_URL or local /api/v1/chat/completions)
  */
-async function callGateway(req: NextRequest, fullPrompt: string, fileData?: string | null, isVoiceMode?: boolean): Promise<{ text: string; provider: string } | null> {
+async function callGateway(req: NextRequest, fullPrompt: string, fileData?: string | null, isVoiceMode?: boolean): Promise<{ text: string; provider: string; visionUnavailable?: boolean } | null> {
   const gatewayKey = process.env.MYAI_OS_GATEWAY_API_KEY || process.env.HOMEPAGE_GATEWAY_API_KEY;
   if (!gatewayKey) return null;
 
@@ -321,6 +321,27 @@ async function callGateway(req: NextRequest, fullPrompt: string, fileData?: stri
       } else {
         const errBody = await res.json().catch(() => ({}));
         console.warn(`[homepage-chat] Gateway (${gatewayUrl}) failed (${res.status}): ${errBody.error || "Unknown"}`);
+
+        if (res.status === 422) {
+          // Gambar dikirim tapi Gateway tidak punya provider vision di pool
+          // field ini saat ini -- bukan kegagalan yg bisa diperbaiki dgn coba
+          // URL Gateway lain (pool-nya sama). Tandai supaya pemanggil bisa
+          // kasih pesan jujur ke user kalau callProviderDirect (fallback
+          // berikutnya, provider vision langsung) juga tidak berhasil --
+          // bukan diam2 jatuh ke simulateReply() yg buta terhadap gambar.
+          return { text: "", provider: "", visionUnavailable: true };
+        }
+        if (res.status === 400) {
+          // Fatal -- request ini sendiri yg salah (bukan soal server/provider
+          // sedang down), mengulang body yg PERSIS SAMA ke URL fallback
+          // (lokal) cuma akan gagal identik. Hentikan loop di sini, bukan
+          // buang waktu retry sia-sia.
+          break;
+        }
+        // 401/429/502/503 dll: lanjut coba URL berikutnya seperti biasa --
+        // ini genuinely retry-able atau setidaknya tidak rugi dicoba di
+        // endpoint lain (mis. 401 di Gateway remote ≠ 401 di local clone,
+        // beda auth store).
       }
     } catch (err) {
       console.warn(`[homepage-chat] Gateway (${gatewayUrl}) unreachable:`, err);
@@ -725,7 +746,13 @@ Jawab secara lisan dengan hangat, natural, dan ringkas (maksimal 2–3 kalimat).
 
   // 3. Fallback simulation if no API key is set
   const isFirstMsg = !history || history.length === 0;
-  const simulatedText = simulateReply(prompt, lang, isFirstMsg);
+  // simulateReply() buta terhadap gambar (murni pattern-match teks) -- kalau
+  // ada file yg diupload dan sampai di sini artinya TIDAK ADA jalur (Gateway
+  // maupun provider langsung) yg berhasil memprosesnya. Jujur ke user drpd
+  // pura2 jawab teks generik yg tidak menyinggung gambarnya sama sekali.
+  const simulatedText = parsedFileData
+    ? "Mohon maaf Utat, saat ini belum ada AI dengan kemampuan membaca gambar yang tersedia untuk memproses file yang dikirim. Coba lagi beberapa saat lagi, atau kirim pertanyaannya dalam bentuk teks ya."
+    : simulateReply(prompt, lang, isFirstMsg);
   void logChatTurn({ profile, prompt, responseText: simulatedText, provider: "simulated", history, guestId, ip, conversationId });
   // Non-blocking sync to MyAI OS Master Data Center
   (async () => {
