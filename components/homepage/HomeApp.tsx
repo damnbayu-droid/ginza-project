@@ -32,7 +32,11 @@ export default function HomeApp() {
   // lib/ai-usage-quota.ts) -- guestQuestionCount di atas cuma indikator
   // tampilan lokal (localStorage), gampang "disiasati" & tidak tahu kalau
   // jatah sudah kepakai lewat fitur lain (mis. AI-define Kamus, sebab
-  // pool-nya SAMA). quotaBlock diisi hanya dari respons 403 asli server.
+  // pool-nya SAMA). quotaBlock diisi hanya dari respons 403 asli server, dan
+  // dibersihkan lagi begitu ada respons sukses (lihat handleSendMessage) --
+  // SENGAJA tidak dipakai sbg short-circuit utk skip fetch berikutnya (bug
+  // lama: sekali ke-set, macet selamanya di tab itu meski kuota sudah reset
+  // 24 jam di server -- Voice Mode jadi kelihatan "cuma jawab 1x lalu diam").
   const [quotaBlock, setQuotaBlock] = useState<{ message: string; requiresAuth: boolean } | null>(null);
 
   useEffect(() => {
@@ -227,12 +231,6 @@ export default function HomeApp() {
   };
 
   const handleSendMessage = async (text: string, isVoiceInput: boolean = false, fileData?: string): Promise<string> => {
-    // Jatah AI (tamu maupun User) sudah habis sesuai server -- lihat
-    // penanganan status 403 quotaExceeded di bawah, tempat quotaBlock diisi.
-    if (quotaBlock) {
-      return "";
-    }
-
     let currentId = activeSessionId;
     let targetSession = chatSessions.find(s => s.id === currentId);
 
@@ -347,6 +345,12 @@ export default function HomeApp() {
         }
         throw new Error(errBody.error || "Gagal menerima balasan dari Bogani AI");
       }
+
+      // Server baru saja mengizinkan giliran ini (bukan 403) -- kalau ada
+      // quotaBlock lama yg nyangkut (mis. dari kemarin, sebelum kuota 24 jam
+      // reset), bersihkan sekarang. Server selalu jadi sumber kebenaran,
+      // bukan flag client yg bisa basi.
+      if (quotaBlock) setQuotaBlock(null);
 
       const providerUsedHeader = response.headers.get("x-provider-used") || "gemini";
 
