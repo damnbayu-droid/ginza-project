@@ -5,23 +5,25 @@ import { THINKING_PHASES, buildPhaseQueue } from "@/lib/bogani-thinking-phrases"
 
 // Diperlambat 2x atas permintaan Boss Bayu: draf awal 32ms/900ms -> +40%
 // (45ms/1260ms) -> +20% lagi dari situ (nilai final di bawah).
-const TYPE_CHAR_MS = 54; // kecepatan efek ketik per karakter
+const TYPE_CHAR_MS = 54; // kecepatan efek ketik per karakter (kata Mongondow)
 const HOLD_AFTER_TYPED_MS = 1512; // jeda setelah kata selesai diketik, sebelum ganti
 
-// Sumber ditampilkan SATU PER SATU bergantian (bukan semua sekaligus --
-// terkesan datar/membosankan) -- mirip AI lain (Claude dkk) yg "membaca"
-// tiap sumber sekilas satu-satu. Kecepatan berbasis POSISI PERSENTASE dlm
-// satu putaran daftar sumber (bukan tick tetap/settle ke nilai lambat) --
-// tiap putaran SELALU terasa cepat & dinamis, tidak pernah menetap lambat:
-// 30% awal super cepat, 20% berikutnya paling cepat, 20% berikutnya agak
-// lebih pelan (masih cepat), 30% sisanya cepat lagi.
-function getSourceDelayMs(indexInCycle: number, totalSources: number): number {
+// Jeda antar-huruf efek ketik utk SUMBER (Kamus/Knowledge/dst) -- SENGAJA
+// efek TYPE (ketik karakter-demi-karakter), BUKAN pop-in/scale spt draf
+// sebelumnya (Boss Bayu: "muncul dari bawah ke atas, frame membesar-mengecil,
+// tidak enak dipandang"). Kecepatan per-KARAKTER (bukan per-item) berbasis
+// POSISI PERSENTASE dlm satu putaran daftar sumber -- setiap item ketiknya
+// beda kecepatan tergantung posisinya, jadi ritmenya terasa hidup/dinamis:
+// 30% pertama 35ms/huruf, 15% berikutnya 220ms/huruf, 35% berikutnya
+// 150ms/huruf, 25% sisanya 80ms/huruf.
+const HOLD_AFTER_SOURCE_TYPED_MS = 260;
+function getSourceCharDelayMs(indexInCycle: number, totalSources: number): number {
   if (totalSources <= 0) return 35;
   const position = (indexInCycle % totalSources) / totalSources; // 0..1 dlm satu putaran
-  if (position < 0.3) return 25;
-  if (position < 0.5) return 20;
-  if (position < 0.7) return 90;
-  return 35;
+  if (position < 0.30) return 35;
+  if (position < 0.45) return 220;
+  if (position < 0.80) return 150;
+  return 80;
 }
 
 export type RealPhase = 'berpikir' | 'mencari_jawaban';
@@ -34,45 +36,71 @@ const PHASE_INDEX: Record<RealPhase, number> = {
 export interface BoganiThinkingDisplay {
   /** Teks kata Mongondow yg sedang "diketik" (efek ketik karakter demi karakter). */
   displayWord: string;
-  /** true selagi efek ketik masih berjalan (dipakai utk kursor berkedip). */
+  /** true selagi efek ketik kata Mongondow masih berjalan (dipakai utk kursor berkedip). */
   isTyping: boolean;
-  /** Label sumber yg sedang tampil (Kamus/Knowledge/Data Percakapan), null kalau tidak ada. */
-  currentSource: string | null;
+  /** Label sumber yg sedang "diketik" (efek ketik, bukan pop-in) -- string kosong kalau belum mulai/tidak ada sumber. */
+  displaySource: string;
+  /** true selagi efek ketik sumber masih berjalan. */
+  isSourceTyping: boolean;
 }
 
 /**
- * Hook bersama utk tampilan "sedang berpikir" Bogani AI (kata Mongondow yg
- * diketik + sumber yg dipakai, bergantian cepat) -- dipakai baik oleh
- * components/homepage/BoganiThinkingIndicator.tsx (chat teks) MAUPUN
- * components/homepage/VoiceModeOverlay.tsx (Voice Mode), supaya perilakunya
- * identik & tidak duplikat kode. `phase`/`sources` datang dari event SSE
- * server (lihat app/api/homepage/chat/route.ts#runChatPipeline) -- BUKAN
- * timer kosmetik.
+ * Hook bersama utk tampilan "sedang berpikir" Bogani AI (kata Mongondow +
+ * sumber yg dipakai, dua-duanya efek KETIK karakter-demi-karakter) --
+ * dipakai baik oleh components/homepage/BoganiThinkingIndicator.tsx (chat
+ * teks) MAUPUN components/homepage/VoiceModeOverlay.tsx (Voice Mode), supaya
+ * perilakunya identik & tidak duplikat kode. `phase`/`sources` datang dari
+ * event SSE server (lihat app/api/homepage/chat/route.ts#runChatPipeline) --
+ * BUKAN timer kosmetik.
  */
 export function useBoganiThinkingDisplay(phase: RealPhase | null, sources: string[]): BoganiThinkingDisplay {
   const [displayWord, setDisplayWord] = useState("");
   const [isTyping, setIsTyping] = useState(true);
-  const [sourceIndex, setSourceIndex] = useState(0);
+  const [displaySource, setDisplaySource] = useState("");
+  const [isSourceTyping, setIsSourceTyping] = useState(false);
 
   const activePhase: RealPhase = phase ?? 'berpikir';
   const sourcesKey = sources.join("|");
 
   useEffect(() => {
-    setSourceIndex(0);
-    if (sources.length <= 1) return;
+    if (sources.length === 0) {
+      setDisplaySource("");
+      return;
+    }
     let cancelled = false;
-    let tick = 0;
+    let sourceIndex = 0;
     let timeoutId: ReturnType<typeof setTimeout>;
 
-    function scheduleNext() {
-      timeoutId = setTimeout(() => {
+    function typeSource(text: string, charDelayMs: number, onDone: () => void) {
+      let i = 0;
+      setIsSourceTyping(true);
+      setDisplaySource("");
+      const step = () => {
         if (cancelled) return;
-        tick++;
-        setSourceIndex((i) => (i + 1) % sources.length);
-        scheduleNext();
-      }, getSourceDelayMs(tick, sources.length));
+        i++;
+        setDisplaySource(text.slice(0, i));
+        if (i < text.length) {
+          timeoutId = setTimeout(step, charDelayMs);
+        } else {
+          setIsSourceTyping(false);
+          timeoutId = setTimeout(() => {
+            if (!cancelled) onDone();
+          }, HOLD_AFTER_SOURCE_TYPED_MS);
+        }
+      };
+      step();
     }
-    scheduleNext();
+
+    async function run() {
+      while (!cancelled) {
+        const charDelay = getSourceCharDelayMs(sourceIndex, sources.length);
+        const text = sources[sourceIndex % sources.length];
+        await new Promise<void>((resolve) => typeSource(text, charDelay, resolve));
+        sourceIndex++;
+      }
+    }
+
+    run();
 
     return () => {
       cancelled = true;
@@ -126,9 +154,5 @@ export function useBoganiThinkingDisplay(phase: RealPhase | null, sources: strin
     };
   }, [activePhase]);
 
-  return {
-    displayWord,
-    isTyping,
-    currentSource: sources.length > 0 ? sources[sourceIndex] : null,
-  };
+  return { displayWord, isTyping, displaySource, isSourceTyping };
 }

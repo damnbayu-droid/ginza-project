@@ -35,7 +35,7 @@ interface BoganiThinkingIndicatorProps {
  * otomatis (digantikan bubble teks sungguhan).
  */
 export default function BoganiThinkingIndicator({ phase, sources }: BoganiThinkingIndicatorProps) {
-  const { displayWord, isTyping, currentSource } = useBoganiThinkingDisplay(phase, sources);
+  const { displayWord, isTyping, displaySource, isSourceTyping } = useBoganiThinkingDisplay(phase, sources);
 
   return (
     <div className="flex gap-3 text-sm justify-start">
@@ -47,15 +47,16 @@ export default function BoganiThinkingIndicator({ phase, sources }: BoganiThinki
         </span>
 
         {/* Sumber sungguhan yg dipakai giliran ini (Kamus/Knowledge Base/
-            kosakata) -- SEMUA ikut diputar (bukan sampel), tapi SATU PER
-            SATU bergantian cepat supaya kelihatan AI benar-benar sedang
-            menyusuri tiap sumber, bukan tampilan datar statis. key=currentSource
-            memicu ulang animasi pop-in tiap ganti. */}
-        {currentSource && (
+            kosakata/Data Percakapan) -- SEMUA ikut diputar (bukan sampel),
+            diketik karakter-demi-karakter (BUKAN pop-in/scale -- itu bikin
+            kotak terkesan membesar-mengecil, laporan Boss Bayu) supaya
+            terlihat natural, mirip terminal yg sedang mengetik. */}
+        {displaySource && (
           <div className="flex items-center gap-1.5 text-[10px] leading-tight text-gray-500">
             <span className="opacity-60 shrink-0">📄</span>
-            <span key={currentSource} className="animate-pop-up-smooth truncate max-w-[260px]" title={currentSource}>
-              {currentSource}
+            <span className="truncate max-w-[260px]" title={displaySource}>
+              {displaySource}
+              <span className={`inline-block w-[2px] h-2.5 ml-0.5 bg-gray-500 align-middle ${isSourceTyping ? "opacity-100" : "opacity-0"}`} />
             </span>
           </div>
         )}

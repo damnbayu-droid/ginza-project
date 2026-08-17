@@ -77,7 +77,7 @@ export default function VoiceModeOverlay({
   // alur rekam+kirim inti tidak terganggu sama sekali.
   const [liveTranscript, setLiveTranscript] = useState("");
   const speechRecognitionRef = useRef<any>(null);
-  const { displayWord: thinkingWord, isTyping: thinkingIsTyping, currentSource: thinkingSource } = useBoganiThinkingDisplay(currentPhase, currentSources);
+  const { displayWord: thinkingWord, isTyping: thinkingIsTyping, displaySource: thinkingSource, isSourceTyping: thinkingSourceIsTyping } = useBoganiThinkingDisplay(currentPhase, currentSources);
 
   // Perekaman suara pengguna (Google Cloud STT, lihat app/api/voice/stt).
   // CATATAN JUJUR soal batasan: ini BUKAN transkripsi live kata-per-kata --
@@ -691,12 +691,15 @@ export default function VoiceModeOverlay({
           </p>
 
           {/* Sumber (Kamus/Knowledge/Data Percakapan) yg benar2 dipakai
-              giliran ini, bergantian cepat -- sama persis dgn BoganiThinkingIndicator
-              di chat teks (lib/use-bogani-thinking.ts). */}
+              giliran ini, diketik karakter-demi-karakter -- sama persis dgn
+              BoganiThinkingIndicator di chat teks (lib/use-bogani-thinking.ts). */}
           {status === 'processing' && thinkingSource && (
             <p className="text-[11px] text-gray-500 flex items-center justify-center gap-1.5">
               <span className="opacity-60 shrink-0">📄</span>
-              <span key={thinkingSource} className="animate-pop-up-smooth truncate max-w-[280px]">{thinkingSource}</span>
+              <span className="truncate max-w-[280px]">
+                {thinkingSource}
+                <span className={`inline-block w-[2px] h-2.5 ml-0.5 bg-gray-500 align-middle ${thinkingSourceIsTyping ? "opacity-100" : "opacity-0"}`} />
+              </span>
             </p>
           )}
 
