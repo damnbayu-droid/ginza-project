@@ -24,6 +24,16 @@ export default function HomeApp() {
   const [chatSessions, setChatSessions] = useState<HomeChatSession[]>([]);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [isAiResponding, setIsAiResponding] = useState(false);
+  // Fase NYATA giliran chat yg sedang berjalan (berpikir/mencari_jawaban),
+  // dikirim server lewat event SSE `phase` (lihat app/api/homepage/chat/route.ts)
+  // -- dipakai BoganiThinkingIndicator utk menampilkan kata Mongondow yg
+  // sesuai tahap sungguhan, bukan timer kosmetik tetap spt sebelumnya.
+  const [currentPhase, setCurrentPhase] = useState<'berpikir' | 'mencari_jawaban' | null>(null);
+  // Sumber (Kamus/Knowledge Base/kosakata) yg BENAR-BENAR dipakai menyusun
+  // jawaban giliran ini, dikirim server lewat event SSE `sources` -- lihat
+  // app/api/homepage/chat/route.ts#buildPromptWithHistory. Ditampilkan
+  // sekilas di BoganiThinkingIndicator selagi AI berpikir.
+  const [currentSources, setCurrentSources] = useState<string[]>([]);
   const [folders, setFolders] = useState<ChatFolder[]>([]);
 
   const [user, setUser] = useState<{ name: string; email: string; role: string } | null>(null);
@@ -310,7 +320,28 @@ export default function HomeApp() {
     }
 
     setIsAiResponding(true);
+    setCurrentPhase(null);
+    setCurrentSources([]);
     let accumulatedText = "";
+
+    function applyToSession(patch: Partial<HomeChatSession>) {
+      setChatSessions(prev =>
+        prev.map(s => (s.id === currentId ? { ...s, updated_at: new Date().toISOString(), ...patch } : s))
+      );
+    }
+
+    function updateAiMessage(content: string, providerUsed?: string) {
+      setChatSessions(prev =>
+        prev.map(s => {
+          if (s.id !== currentId) return s;
+          return {
+            ...s,
+            updated_at: new Date().toISOString(),
+            messages: s.messages.map(m => (m.id === aiMsgId ? { ...m, content, ...(providerUsed ? { providerUsed } : {}) } : m)),
+          };
+        })
+      );
+    }
 
     try {
       const response = await fetch("/api/homepage/chat", {
@@ -325,6 +356,8 @@ export default function HomeApp() {
           isVoiceInput: isVoiceInput,
           file: fileData || undefined,
           conversationId: conversationIdForApi,
+          contextSummary: targetSession?.contextSummary || "",
+          summarizedThroughCount: targetSession?.summarizedThroughCount || 0,
         })
       });
 
@@ -333,14 +366,7 @@ export default function HomeApp() {
         if (response.status === 403 && errBody.quotaExceeded) {
           const quotaMsg: string = errBody.error || "Batas pemakaian AI tercapai.";
           setQuotaBlock({ message: quotaMsg, requiresAuth: !!errBody.requiresAuth });
-          setChatSessions(prev =>
-            prev.map(s => {
-              if (s.id === currentId) {
-                return { ...s, messages: s.messages.map(m => (m.id === aiMsgId ? { ...m, content: quotaMsg } : m)) };
-              }
-              return s;
-            })
-          );
+          updateAiMessage(quotaMsg);
           return quotaMsg;
         }
         throw new Error(errBody.error || "Gagal menerima balasan dari Bogani AI");
@@ -353,65 +379,82 @@ export default function HomeApp() {
       if (quotaBlock) setQuotaBlock(null);
 
       const providerUsedHeader = response.headers.get("x-provider-used") || "gemini";
+      let providerUsedFinal = providerUsedHeader;
 
-      if (response.body && (response.headers.get("content-type")?.includes("text/event-stream") || response.headers.get("content-type")?.includes("text/plain"))) {
+      if (response.body && response.headers.get("content-type")?.includes("text/event-stream")) {
+        // Parser SSE ringan: server mengirim event `phase` (fase NYATA giliran
+        // ini -- lihat app/api/homepage/chat/route.ts), `delta` (potongan teks
+        // jawaban), `done` (metadata akhir termasuk ringkasan compacting), dan
+        // `error`. Setiap event dipisah baris kosong ganda ("\n\n").
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
+        let buffer = "";
+        let streamError: string | null = null;
 
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-          const chunk = decoder.decode(value, { stream: true });
-          accumulatedText += chunk;
+          buffer += decoder.decode(value, { stream: true });
 
-          setChatSessions(prev =>
-            prev.map(s => {
-              if (s.id === currentId) {
-                return {
-                  ...s,
-                  updated_at: new Date().toISOString(),
-                  messages: s.messages.map(m => m.id === aiMsgId ? { ...m, content: accumulatedText, providerUsed: providerUsedHeader } : m)
-                };
+          const blocks = buffer.split("\n\n");
+          buffer = blocks.pop() || ""; // sisa blok belum lengkap, simpan utk chunk berikutnya
+
+          for (const block of blocks) {
+            if (!block.trim()) continue;
+            let eventName = "message";
+            let dataStr = "";
+            for (const line of block.split("\n")) {
+              if (line.startsWith("event:")) eventName = line.slice(6).trim();
+              else if (line.startsWith("data:")) dataStr += line.slice(5).trim();
+            }
+            let data: any = null;
+            try { data = JSON.parse(dataStr); } catch { /* baris data tidak lengkap/rusak, abaikan */ }
+            if (!data) continue;
+
+            if (eventName === "phase" && (data.phase === "berpikir" || data.phase === "mencari_jawaban")) {
+              setCurrentPhase(data.phase);
+            } else if (eventName === "sources" && Array.isArray(data.sources)) {
+              setCurrentSources(data.sources.filter((s: unknown): s is string => typeof s === "string"));
+            } else if (eventName === "delta" && typeof data.text === "string") {
+              accumulatedText += data.text;
+              updateAiMessage(accumulatedText);
+            } else if (eventName === "done") {
+              if (typeof data.provider === "string") providerUsedFinal = data.provider;
+              if (typeof data.contextSummary === "string" || typeof data.summarizedThroughCount === "number") {
+                applyToSession({
+                  contextSummary: typeof data.contextSummary === "string" ? data.contextSummary : targetSession?.contextSummary,
+                  summarizedThroughCount: typeof data.summarizedThroughCount === "number" ? data.summarizedThroughCount : targetSession?.summarizedThroughCount,
+                });
               }
-              return s;
-            })
-          );
+            } else if (eventName === "error" && typeof data.message === "string") {
+              streamError = data.message;
+            }
+          }
         }
+
+        if (streamError) throw new Error(streamError);
+        updateAiMessage(accumulatedText, providerUsedFinal);
       } else {
         const data = await response.json();
         accumulatedText = data.text || "Maaf, Bogani AI tidak menghasilkan respon.";
-
-        setChatSessions(prev =>
-          prev.map(s => {
-            if (s.id === currentId) {
-              return {
-                ...s,
-                updated_at: new Date().toISOString(),
-                messages: s.messages.map(m => m.id === aiMsgId ? { ...m, content: accumulatedText, providerUsed: providerUsedHeader } : m)
-              };
-            }
-            return s;
-          })
-        );
+        if (typeof data.provider_used === "string") providerUsedFinal = data.provider_used;
+        updateAiMessage(accumulatedText, providerUsedFinal);
+        if (typeof data.contextSummary === "string" || typeof data.summarizedThroughCount === "number") {
+          applyToSession({
+            contextSummary: typeof data.contextSummary === "string" ? data.contextSummary : targetSession?.contextSummary,
+            summarizedThroughCount: typeof data.summarizedThroughCount === "number" ? data.summarizedThroughCount : targetSession?.summarizedThroughCount,
+          });
+        }
       }
     } catch (err: any) {
       console.error("Error calling chat API:", err);
       const errorMsgText = `⚠️ Terjadi kesalahan: ${err.message || "Gagal menghubungi Bogani AI Gateway"}`;
       accumulatedText = errorMsgText;
-
-      setChatSessions(prev =>
-        prev.map(s => {
-          if (s.id === currentId) {
-            return {
-              ...s,
-              messages: s.messages.map(m => m.id === aiMsgId ? { ...m, content: errorMsgText } : m)
-            };
-          }
-          return s;
-        })
-      );
+      updateAiMessage(errorMsgText);
     } finally {
       setIsAiResponding(false);
+      setCurrentPhase(null);
+      setCurrentSources([]);
     }
 
     return accumulatedText;
@@ -461,6 +504,8 @@ export default function HomeApp() {
         onToggleSidebarMobile={() => setIsMobileSidebarOpen(true)}
         lang={lang}
         isLoading={isAiResponding}
+        currentPhase={currentPhase}
+        currentSources={currentSources}
         user={user}
         guestCount={guestQuestionCount}
         quotaBlock={quotaBlock}

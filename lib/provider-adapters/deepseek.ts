@@ -29,7 +29,11 @@ export const deepseekAdapter: ProviderAdapter = {
             { role: "user", content: prompt },
           ],
           temperature: options.temperature ?? 0.7,
-          max_tokens: options.max_tokens ?? 2000,
+          // Dulu 2000 -- terbukti dari insiden nyata (giliran chat detail
+          // multi-topik terpotong mid-kalimat) itu terlalu pas-pasan utk
+          // jawaban budaya/sejarah yg memang panjang. Dinaikkan, bukan
+          // dihapus batasnya sama sekali (jaga2 biaya/latensi tetap wajar).
+          max_tokens: options.max_tokens ?? 4096,
         }),
       });
 

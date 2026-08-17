@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
     //     bukan hanya tebakan model.
     let knowledgeCtx = "";
     try {
-      knowledgeCtx = getKnowledgeContext(word, 4000, 5);
+      knowledgeCtx = getKnowledgeContext(word, 4000, 5).text;
     } catch (e) {
       console.warn("[kamus-ai-define] Failed retrieving knowledge context:", e);
     }

@@ -34,7 +34,13 @@ const GATEWAY_FIELD = "bogani_ai";
 // konteks" di production, padahal Gateway-nya sendiri menjawab dgn benar.
 const GATEWAY_TIMEOUT_MS = 45_000;
 
-function getKamusContext(userPrompt: string): string {
+/** Blok teks siap-sisip ke prompt AI + daftar sumber (kata Kamus/file Knowledge/dst) yg BENAR-BENAR terpakai -- lihat components/homepage/BoganiThinkingIndicator.tsx utk bagaimana `sources` ditampilkan sekilas ke user selagi AI berpikir. */
+interface ContextResult {
+  text: string;
+  sources: string[];
+}
+
+function getKamusContext(userPrompt: string): ContextResult {
   try {
     const tokens = userPrompt.split(/\s+/).filter((t) => t.length >= 2);
     const matchedWords = new Set<string>();
@@ -46,7 +52,7 @@ function getKamusContext(userPrompt: string): string {
       }
       if (matchedWords.size >= 25) break;
     }
-    if (matchedWords.size === 0) return "";
+    if (matchedWords.size === 0) return { text: "", sources: [] };
 
     // Kata yang cocok dengan salah satu Featured Sider Card sudah punya
     // makna+contoh kalimat asli (bukan tebakan) -- sertakan itu, jangan cuma
@@ -74,11 +80,11 @@ function getKamusContext(userPrompt: string): string {
       ctx += `Kata lain yang terhubung (belum ada gloss/makna tersimpan -- jangan mengarang artinya):\n${plainWords.join(", ")}\n`;
     }
     ctx += `--- AKHIR KONTEKS KAMUS ---`;
-    return ctx;
+    return { text: ctx, sources: Array.from(matchedWords).map((w) => `Kamus: ${w}`) };
   } catch (e) {
     console.warn("[homepage-chat] Failed retrieving kamus context:", e);
   }
-  return "";
+  return { text: "", sources: [] };
 }
 
 /**
@@ -92,7 +98,7 @@ function getKamusContext(userPrompt: string): string {
  * dengan pesan pengguna, supaya obrolan singkat pun tetap kebagian warna
  * lokal -- tapi HANYA dari daftar terverifikasi ini, tidak pernah dikarang.
  */
-function getLanguageMixContext(userPrompt: string): string {
+function getLanguageMixContext(userPrompt: string): ContextResult {
   try {
     const manadoMatches = searchManadoPhrases(userPrompt, 6);
     const manado = manadoMatches.length > 0 ? manadoMatches : getFeaturedManadoPhrases().slice(0, 4);
@@ -100,7 +106,7 @@ function getLanguageMixContext(userPrompt: string): string {
     const mongondowMatches = searchMongondowVerifiedWords(userPrompt, 8);
     const mongondow = mongondowMatches.length > 0 ? mongondowMatches : getFeaturedMongondowWords().slice(0, 4);
 
-    if (manado.length === 0 && mongondow.length === 0) return "";
+    if (manado.length === 0 && mongondow.length === 0) return { text: "", sources: [] };
 
     let ctx = `\n\n--- KOSAKATA MANADO & MONGONDOW UNTUK CAMPURAN BAHASA (boleh dipakai apa adanya, JANGAN dikarang di luar daftar ini) ---\n`;
     if (manado.length > 0) {
@@ -110,11 +116,20 @@ function getLanguageMixContext(userPrompt: string): string {
       ctx += `Mongondow ✔:\n${mongondow.map((w) => `- ${w.mongondow} = ${w.meaning}${w.example ? ` (${w.example})` : ""}`).join("\n")}\n`;
     }
     ctx += `--- AKHIR KOSAKATA CAMPURAN BAHASA ---`;
-    return ctx;
+
+    // Sumber cuma dilaporkan kalau ini kecocokan NYATA thd pertanyaan
+    // (searchManadoPhrases/searchMongondowVerifiedWords) -- bukan set
+    // "featured" default yg selalu disisipkan walau tak ada kecocokan
+    // (bukan benar2 "sumber yg dipakai utk pertanyaan ini").
+    const sources: string[] = [];
+    if (manadoMatches.length > 0) sources.push(...manadoMatches.map((m) => `Kosakata Manado: ${m.indonesia}`));
+    if (mongondowMatches.length > 0) sources.push(...mongondowMatches.map((w) => `Kosakata Mongondow: ${w.mongondow}`));
+
+    return { text: ctx, sources };
   } catch (e) {
     console.warn("[homepage-chat] Failed retrieving language-mix context:", e);
   }
-  return "";
+  return { text: "", sources: [] };
 }
 
 /**
@@ -173,6 +188,69 @@ function extractMemoryCandidates(prompt: string): { content: string; category: U
 // yg sudah lebih dulu membatasi ke -8 pesan.
 const MAX_HISTORY_MESSAGES = 20;
 
+/**
+ * Peringkasan konteks (mirip "compacting" Claude): begitu histori sebuah
+ * sesi lebih panjang dari MAX_HISTORY_MESSAGES, giliran-giliran yang
+ * "jatuh" dari jendela di atas dulu HILANG TOTAL dari yang dilihat AI --
+ * sekarang, sebelum dibuang, digabung jadi satu ringkasan padat (1 panggilan
+ * AI murah lewat Gateway) lalu tetap disisipkan ke prompt. Ringkasan
+ * disimpan & dikirim balik ke client (contextSummary + summarizedThroughCount
+ * di body/­event `done`), client menaruhnya di state sesi & mengirim balik di
+ * giliran berikutnya -- INKREMENTAL: cuma bagian yang BARU jatuh dari jendela
+ * yang diringkas tiap kali, bukan mengulang meringkas seluruh histori lama
+ * setiap giliran (itu akan makin lambat & mahal seiring sesi memanjang).
+ * Sengaja stateless di server (tidak disimpan ke DB) -- kalau state klien
+ * hilang (reload tab tamu, dst), sistem cuma mulai meringkas ulang dari 0,
+ * BUKAN kehilangan data (histori mentah lengkap tetap selalu dikirim utuh
+ * oleh client, cuma "cache" ringkasannya yang reset, self-healing).
+ */
+async function compactOverflowIfNeeded(opts: {
+  history: HomeChatMessage[];
+  existingSummary: string;
+  summarizedThroughCount: number;
+  req: NextRequest;
+}): Promise<{ summary: string; summarizedThroughCount: number }> {
+  const { history, existingSummary, summarizedThroughCount, req } = opts;
+  // Pesan di indeks [0, overflowEnd) sudah TIDAK masuk jendela mentah
+  // MAX_HISTORY_MESSAGES lagi -- itu yang perlu diringkas (kalau belum).
+  const overflowEnd = Math.max(0, history.length - MAX_HISTORY_MESSAGES);
+  if (overflowEnd <= summarizedThroughCount) {
+    return { summary: existingSummary, summarizedThroughCount };
+  }
+
+  const newlyOverflowed = history.slice(summarizedThroughCount, overflowEnd);
+  if (newlyOverflowed.length === 0) {
+    return { summary: existingSummary, summarizedThroughCount };
+  }
+
+  const summaryPrompt = buildSummarizationPrompt(existingSummary, newlyOverflowed);
+  try {
+    const result = await callGateway(req, summaryPrompt, undefined);
+    if (result && result.text) {
+      return { summary: result.text.trim(), summarizedThroughCount: overflowEnd };
+    }
+  } catch (e) {
+    console.warn("[homepage-chat] Context compacting failed, keeping old summary:", e);
+  }
+  // Gagal meringkas -- JANGAN majukan summarizedThroughCount (supaya bagian
+  // yg belum sempat diringkas ini dicoba lagi di giliran berikutnya, bukan
+  // hilang begitu saja dari yang pernah dilihat AI).
+  return { summary: existingSummary, summarizedThroughCount };
+}
+
+function buildSummarizationPrompt(existingSummary: string, messages: HomeChatMessage[]): string {
+  const transcript = messages
+    .filter((m) => m.role === "user" || m.role === "assistant")
+    .map((m) => `${m.role === "user" ? "User" : AI_NAME}: ${m.content}`)
+    .join("\n\n");
+  return `[TUGAS INTERNAL: RINGKAS PERCAKAPAN -- BUKAN PERTANYAAN DARI USER]
+Anda BUKAN sedang berperan sbg ${AI_NAME} menjawab user kali ini -- tugas Anda murni meringkas potongan percakapan lama di bawah supaya konteksnya tidak hilang, meski teksnya sendiri sudah tidak dikirim mentah lagi ke model.
+${existingSummary ? `Ringkasan yang sudah ada sejauh ini:\n${existingSummary}\n\n` : ""}Potongan percakapan lama yang perlu digabung ke ringkasan (JANGAN dijawab, JANGAN beri komentar/sapaan, balas HANYA dengan teks ringkasannya):
+${transcript}
+
+Tulis SATU ringkasan gabungan yang padat (maksimal 200 kata), berisi fakta, topik, dan hal penting dari percakapan di atas (termasuk ringkasan lama kalau ada) -- Bahasa Indonesia, sudut pandang netral (bukan "aku"/"kamu"), tanpa kalimat pembuka seperti "Berikut ringkasannya:".`;
+}
+
 // Dulu instruksi ini cuma ditempel ke systemPrompt yg dipakai callProviderDirect
 // (jalur fallback yg nyaris tak pernah kena krn callGateway hampir selalu
 // berhasil duluan) -- jadi di praktiknya nyaris tidak pernah benar2 sampai
@@ -180,18 +258,29 @@ const MAX_HISTORY_MESSAGES = 20;
 // callGateway (jalur yg SUNGGUHAN dipakai), utk kedua jalur sekaligus.
 const VOICE_MODE_DIRECTIVE = `[MODE SUARA LANGSUNG AKTIF]: Balasan ini akan DIUCAPKAN keras (text-to-speech), bukan dibaca sbg teks. Jawab dgn hangat & natural spt bicara langsung, ringkas tapi tidak dipotong paksa (idealnya 2-4 kalimat utk topik ringan, boleh lebih panjang kalau pertanyaannya memang butuh penjelasan, tapi tetap dalam gaya lisan bukan tulisan formal). JANGAN PERNAH pakai pemformatan markdown (bold **, bullet -, tabel |, header #) krn semua itu akan diucapkan literal & terdengar aneh. Ucapkan nama tempat & kosa kata Mongondow dgn fonetik yg jernih.`;
 
-function buildPromptWithHistory(history: HomeChatMessage[], prompt: string, memoryCtx: string = "", isVoiceMode: boolean = false): string {
+interface PromptWithHistoryResult {
+  prompt: string;
+  /** Kamus/Knowledge Base/kosakata yg BENAR-BENAR terpakai menyusun prompt ini -- ditampilkan sekilas ke user selagi AI berpikir (lihat runChatPipeline). */
+  sources: string[];
+}
+
+function buildPromptWithHistory(history: HomeChatMessage[], prompt: string, memoryCtx: string = "", isVoiceMode: boolean = false, compactSummary: string = ""): PromptWithHistoryResult {
   const kamusCtx = getKamusContext(prompt);
   const languageMixCtx = getLanguageMixContext(prompt);
-  let knowledgeCtx = "";
+  let knowledgeCtx: ContextResult = { text: "", sources: [] };
   try {
     knowledgeCtx = getKnowledgeContext(prompt);
   } catch (e) {
     console.warn("[homepage-chat] Failed retrieving knowledge context:", e);
   }
+  const sources: string[] = [
+    ...kamusCtx.sources,
+    ...languageMixCtx.sources,
+    ...knowledgeCtx.sources.map((s) => `Knowledge: ${prettifyKnowledgeSource(s)}`),
+  ];
 
   const personaHeader = `[SYSTEM INSTRUCTION BOGANI AI]:\n${SYSTEM_PROMPT_ID}${isVoiceMode ? `\n\n${VOICE_MODE_DIRECTIVE}` : ""}\n\n`;
-  const fullPrompt = prompt + kamusCtx + languageMixCtx + memoryCtx + knowledgeCtx;
+  const fullPrompt = prompt + kamusCtx.text + languageMixCtx.text + memoryCtx + knowledgeCtx.text;
   const isFirstTurn = !Array.isArray(history) || history.length === 0;
 
   // Sinyal eksplisit & terstruktur ttg posisi giliran ini -- diletakkan
@@ -202,11 +291,17 @@ function buildPromptWithHistory(history: HomeChatMessage[], prompt: string, memo
   // di balasan lanjutan walau persona sudah eksplisit melarangnya (lihat
   // lib/bogani-persona.ts) -- ini penegasan tambahan, bukan pengganti aturan
   // yg sudah ada di sana.
+  // Penegasan resolusi konteks/ambiguitas JUGA ditaruh di sini (bukan cuma
+  // di persona), sesuai prinsip yg sama: dekat titik-generate = lebih
+  // dipatuhi. Insiden nyata yg jadi alasan ini: pertanyaan lanjutan yg
+  // memakai rujukan ke giliran sebelumnya ("kalau bagitu siapa...") --
+  // model WAJIB baca riwayat/ringkasan di atas & selesaikan rujukannya
+  // dulu sebelum menjawab, bukan menjawab seolah pertanyaan berdiri sendiri.
   const turnStatus = isFirstTurn
     ? `[STATUS SESI: Ini pesan PERTAMA di sesi obrolan ini -- boleh buka dgn sapaan "Niondon"/"Dega Niondon" SEKALI saja sesuai aturan persona di atas.]`
-    : `[STATUS SESI: Sesi obrolan ini SUDAH BERJALAN (bukan pesan pertama) -- JANGAN gunakan kata "Niondon" atau "Dega Niondon" sama sekali di balasan ini. Langsung tanggapi tanpa sapaan pembuka.]`;
+    : `[STATUS SESI: Sesi obrolan ini SUDAH BERJALAN (bukan pesan pertama) -- JANGAN gunakan kata "Niondon" atau "Dega Niondon" sama sekali di balasan ini. Langsung tanggapi tanpa sapaan pembuka. WAJIB baca riwayat percakapan (& ringkasan, kalau ada) di atas dan selesaikan dulu rujukan/kata ganti apa pun di pertanyaan berikut sebelum menjawab -- kalau tetap ambigu setelah dibaca, tanya balik singkat drpd menebak.]`;
 
-  if (isFirstTurn) return `${personaHeader}${turnStatus}\n\n${fullPrompt}`;
+  if (isFirstTurn) return { prompt: `${personaHeader}${turnStatus}\n\n${fullPrompt}`, sources };
 
   const recentHistory = history.slice(-MAX_HISTORY_MESSAGES);
   const historyText = recentHistory
@@ -214,7 +309,32 @@ function buildPromptWithHistory(history: HomeChatMessage[], prompt: string, memo
     .map((m) => `${m.role === 'user' ? 'User' : AI_NAME}: ${m.content}`)
     .join("\n\n");
 
-  return `${personaHeader}${historyText}\n\n${turnStatus}\n\nUser: ${fullPrompt}`;
+  // Ringkasan (kalau ada) mewakili bagian percakapan yang LEBIH LAMA dari
+  // recentHistory di atas -- jadi ditaruh SEBELUM histori mentah, spy urutan
+  // waktunya tetap masuk akal buat AI (lama -> baru -> pertanyaan sekarang).
+  const summaryBlock = compactSummary
+    ? `\n\n--- RINGKASAN PERCAKAPAN SEBELUMNYA (lebih lama, sudah dipadatkan -- tetap relevan utk konteks) ---\n${compactSummary}\n--- AKHIR RINGKASAN ---\n`
+    : "";
+
+  return { prompt: `${personaHeader}${summaryBlock}${historyText}\n\n${turnStatus}\n\nUser: ${fullPrompt}`, sources };
+}
+
+/**
+ * Nama file Knowledge Base (mis. "knowledge/arsip_download/hasil_ocr_123.md")
+ * jadi label yg enak dibaca ("Hasil Ocr 123") -- ditampilkan APA ADANYA ke
+ * user sbg sumber yg dipakai (lihat BoganiThinkingIndicator.tsx), jadi tidak
+ * boleh menyisakan path teknis mentah.
+ */
+function prettifyKnowledgeSource(sourcePath: string): string {
+  const base = sourcePath.split("/").pop() || sourcePath;
+  const withoutExt = base.replace(/\.md$/i, "");
+  return withoutExt
+    .replace(/[_-]+/g, " ")
+    .trim()
+    .split(" ")
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
 }
 
 // ── Balasan instan (sapaan pendek, tanpa panggil AI apa pun) ──────────────
@@ -283,6 +403,14 @@ function simulateReply(prompt: string, lang: Language, isFirstMessage: boolean =
     if (lower.includes("hi") || lower.includes("hello")) {
       return `${enGreeting}Hello and welcome to **${WEBSITE_NAME}**! I am **${AI_NAME}** (Abo), glad to accompany you. What would you like to explore together today?`;
     }
+    // Giliran lanjutan (bukan sapaan pertama) yg sampai kesini artinya
+    // Gateway MAUPUN provider langsung dua-duanya gagal total (bukan cuma
+    // "belum dikonfigurasi") -- lihat versi Indonesia di bawah utk insiden
+    // nyata yg jadi alasan perbedaan ini. Jujur ke user drpd pura2 basa-basi
+    // kosong yg terlihat spt jawaban tapi tidak menjawab apa pun.
+    if (!isFirstMessage) {
+      return `Sorry Utat, I'm having trouble answering right now (a temporary connection issue on our end) -- I don't want to give you an empty non-answer pretending to help. Please try asking again in a moment.`;
+    }
     return `${enGreeting}Thank you for reaching out to **${AI_NAME}** on **${WEBSITE_NAME}**! Regarding *"${prompt}"*, I am ready to help you explore, analyze, and learn more. How can I assist you further?`;
   }
 
@@ -295,12 +423,113 @@ function simulateReply(prompt: string, lang: Language, isFirstMessage: boolean =
   if (lower.includes("fitur") || lower.includes("suara") || lower.includes("voice")) {
     return `${greeting}**${AI_NAME}** mendukung mode **Teks Percakapan**, **Mode Suara Langsung**, dan **Unggah Dokumen/Gambar** untuk membantu penelitian dan pembelajaran kebudayaan Mongondow.`;
   }
+  // PENTING -- insiden nyata (Boss Bayu, 17 Agt 2026): giliran lanjutan yg
+  // sampai ke sini artinya Gateway DAN provider langsung dua-duanya gagal
+  // total utk pertanyaan itu (bukan sekadar "belum dikonfigurasi", yg cuma
+  // realistis di giliran PERTAMA sblm ada API key sama sekali). Versi lama
+  // di sini membalas template basa-basi ("mari kita pelajari bersama...")
+  // yg TERLIHAT spt jawaban tapi kosong isinya -- user sampai harus
+  // bertanya "loh kenapa tak dijawab?" krn sistem sendiri tidak pernah
+  // bilang jujur bahwa itu gagal. Utk giliran pertama (isFirstMessage),
+  // template lama TETAP dipakai (skenario paling umum: belum ada API key
+  // dikonfigurasi sama sekali di dev/testing, bukan kegagalan sesaat).
+  if (!isFirstMessage) {
+    return `Maaf Utat, Abo lagi ada kendala teknis sesaat untuk menjawab pertanyaan ini (bukan sengaja diabaikan) -- daripada kasih jawaban kosong yang pura-pura, lebih baik jujur: coba tanyakan lagi sebentar lagi ya.`;
+  }
   return `${greeting}Terima kasih telah menghubungi **${AI_NAME}** di **${WEBSITE_NAME}**. Mengenai pertanyaan Utat tentang *"${prompt}"*, mari kita pelajari bersama informasi dan etimologinya secara mendalam. Ada topik spesifik yang ingin Utat tanyakan lebih lanjut?`;
 }
 
 /**
  * Preferred path: call Gateway AI (MYAI_OS_GATEWAY_URL or local /api/v1/chat/completions)
  */
+type GatewayAttemptResult =
+  | { kind: "success"; text: string; provider: string }
+  | { kind: "vision_unavailable" }
+  | { kind: "fatal" } // request itself is broken (400) -- retrying anywhere is pointless
+  | { kind: "retryable" }; // network error, or a status worth trying again elsewhere
+
+/**
+ * Satu percobaan mentah ke satu URL Gateway. Diekstrak dari callGateway()
+ * supaya bisa dipakai baik utk loop [primaryUrl, localUrl] normal MAUPUN
+ * satu retry tambahan ke primaryUrl kalau keduanya gagal (lihat komentar di
+ * callGateway) -- insiden nyata (giliran chat jatuh ke simulateReply() tanpa
+ * AI sama sekali) menunjukkan kegagalan sesaat itu nyata, bukan teoretis.
+ */
+async function attemptGatewayCall(
+  gatewayUrl: string,
+  gatewayKey: string,
+  fullPrompt: string,
+  fileData?: string | null
+): Promise<GatewayAttemptResult> {
+  try {
+    const res = await fetch(gatewayUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${gatewayKey}`,
+      },
+      body: JSON.stringify({
+        // Dulu voice mode dialihkan ke field "chatbot_general" -- artinya
+        // persona Bogani AI (gaya Manado/Mongondow, aturan Niondon, dst)
+        // TIDAK pernah dipakai sama sekali di mode suara, field itu punya
+        // persona server-side sendiri yg beda. Disamakan ke GATEWAY_FIELD
+        // spy mode suara benar2 Bogani AI, bukan AI generik lain.
+        field: GATEWAY_FIELD,
+        messages: [{ role: "user", content: fullPrompt }],
+        file: fileData || undefined,
+      }),
+      signal: AbortSignal.timeout(GATEWAY_TIMEOUT_MS),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const providerUsed = data.provider_used || res.headers.get("x-provider-used") || "gpt";
+      const replyText = typeof data.result === "string"
+        ? data.result
+        : typeof data.result === "object"
+        ? JSON.stringify(data.result, null, 2)
+        : null;
+
+      if (replyText) return { kind: "success", text: replyText, provider: providerUsed };
+      // 200 tapi tanpa teks yg bisa dipakai -- anggap sama spt kegagalan
+      // retry-able (bukan fatal), Gateway-nya sendiri secara teknis
+      // menjawab OK jadi bukan kesalahan bentuk request kita.
+      console.warn(`[homepage-chat] Gateway (${gatewayUrl}) returned 200 tanpa teks terpakai. promptLen=${fullPrompt.length} body=${JSON.stringify(data).slice(0, 500)}`);
+      return { kind: "retryable" };
+    }
+
+    const errBody = await res.json().catch(() => ({}));
+    // Diagnostik lengkap (status + body mentah + panjang prompt) -- insiden
+    // nyata sebelumnya butuh gali transkrip ekspor + query DB manual krn
+    // log lama cuma nyimpen status+error singkat, tidak cukup utk tahu
+    // apakah ini penolakan level-request atau kegagalan provider sungguhan.
+    console.warn(`[homepage-chat] Gateway (${gatewayUrl}) failed (${res.status}). promptLen=${fullPrompt.length} body=${JSON.stringify(errBody).slice(0, 800)}`);
+
+    if (res.status === 422) {
+      // Gambar dikirim tapi Gateway tidak punya provider vision di pool
+      // field ini saat ini -- bukan kegagalan yg bisa diperbaiki dgn coba
+      // URL Gateway lain (pool-nya sama). Tandai supaya pemanggil bisa
+      // kasih pesan jujur ke user kalau callProviderDirect (fallback
+      // berikutnya, provider vision langsung) juga tidak berhasil --
+      // bukan diam2 jatuh ke simulateReply() yg buta terhadap gambar.
+      return { kind: "vision_unavailable" };
+    }
+    if (res.status === 400) {
+      // Fatal -- request ini sendiri yg salah (mis. context terlalu
+      // panjang), mengulang body yg PERSIS SAMA ke URL/percobaan lain cuma
+      // akan gagal identik. Jangan retry di sini sama sekali.
+      return { kind: "fatal" };
+    }
+    // 401/429/502/503 dll: genuinely retry-able atau setidaknya tidak rugi
+    // dicoba lagi (mis. 401 di Gateway remote ≠ 401 di local clone, beda
+    // auth store).
+    return { kind: "retryable" };
+  } catch (err) {
+    console.warn(`[homepage-chat] Gateway (${gatewayUrl}) unreachable. promptLen=${fullPrompt.length}:`, err);
+    return { kind: "retryable" };
+  }
+}
+
 async function callGateway(req: NextRequest, fullPrompt: string, fileData?: string | null): Promise<{ text: string; provider: string; visionUnavailable?: boolean } | null> {
   const gatewayKey = process.env.MYAI_OS_GATEWAY_API_KEY || process.env.HOMEPAGE_GATEWAY_API_KEY;
   if (!gatewayKey) return null;
@@ -308,70 +537,22 @@ async function callGateway(req: NextRequest, fullPrompt: string, fileData?: stri
   const primaryUrl = process.env.MYAI_OS_GATEWAY_URL || "https://console.myai.nexus/api/v1/chat/completions";
   const localUrl = `${req.nextUrl.origin}/api/v1/chat/completions`;
 
-  const urlsToTry = [primaryUrl, localUrl];
-
-  for (const gatewayUrl of urlsToTry) {
-    try {
-      const res = await fetch(gatewayUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${gatewayKey}`,
-        },
-        body: JSON.stringify({
-          // Dulu voice mode dialihkan ke field "chatbot_general" -- artinya
-          // persona Bogani AI (gaya Manado/Mongondow, aturan Niondon, dst)
-          // TIDAK pernah dipakai sama sekali di mode suara, field itu punya
-          // persona server-side sendiri yg beda. Disamakan ke GATEWAY_FIELD
-          // spy mode suara benar2 Bogani AI, bukan AI generik lain.
-          field: GATEWAY_FIELD,
-          messages: [{ role: "user", content: fullPrompt }],
-          file: fileData || undefined,
-        }),
-        signal: AbortSignal.timeout(GATEWAY_TIMEOUT_MS),
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        const providerUsed = data.provider_used || res.headers.get("x-provider-used") || "gpt";
-        const replyText = typeof data.result === "string"
-          ? data.result
-          : typeof data.result === "object"
-          ? JSON.stringify(data.result, null, 2)
-          : null;
-
-        if (replyText) {
-          return { text: replyText, provider: providerUsed };
-        }
-      } else {
-        const errBody = await res.json().catch(() => ({}));
-        console.warn(`[homepage-chat] Gateway (${gatewayUrl}) failed (${res.status}): ${errBody.error || "Unknown"}`);
-
-        if (res.status === 422) {
-          // Gambar dikirim tapi Gateway tidak punya provider vision di pool
-          // field ini saat ini -- bukan kegagalan yg bisa diperbaiki dgn coba
-          // URL Gateway lain (pool-nya sama). Tandai supaya pemanggil bisa
-          // kasih pesan jujur ke user kalau callProviderDirect (fallback
-          // berikutnya, provider vision langsung) juga tidak berhasil --
-          // bukan diam2 jatuh ke simulateReply() yg buta terhadap gambar.
-          return { text: "", provider: "", visionUnavailable: true };
-        }
-        if (res.status === 400) {
-          // Fatal -- request ini sendiri yg salah (bukan soal server/provider
-          // sedang down), mengulang body yg PERSIS SAMA ke URL fallback
-          // (lokal) cuma akan gagal identik. Hentikan loop di sini, bukan
-          // buang waktu retry sia-sia.
-          break;
-        }
-        // 401/429/502/503 dll: lanjut coba URL berikutnya seperti biasa --
-        // ini genuinely retry-able atau setidaknya tidak rugi dicoba di
-        // endpoint lain (mis. 401 di Gateway remote ≠ 401 di local clone,
-        // beda auth store).
-      }
-    } catch (err) {
-      console.warn(`[homepage-chat] Gateway (${gatewayUrl}) unreachable:`, err);
-    }
+  for (const gatewayUrl of [primaryUrl, localUrl]) {
+    const result = await attemptGatewayCall(gatewayUrl, gatewayKey, fullPrompt, fileData);
+    if (result.kind === "success") return { text: result.text, provider: result.provider };
+    if (result.kind === "vision_unavailable") return { text: "", provider: "", visionUnavailable: true };
+    if (result.kind === "fatal") return null; // jangan lanjut coba apa pun lagi, termasuk retry di bawah
+    // "retryable" -- lanjut ke URL berikutnya seperti biasa.
   }
+
+  // Kedua URL gagal (retry-able, bukan fatal) -- satu percobaan ulang lagi
+  // ke primaryUrl sebelum benar2 menyerah. Insiden nyata (satu giliran jatuh
+  // total ke simulateReply() tanpa AI sama sekali, provider sebelum/sesudah
+  // giliran itu TETAP SAMA -- bukan pergantian tier) menunjukkan kegagalan
+  // sesaat spt ini genuinely terjadi, bukan cuma teori.
+  const retryResult = await attemptGatewayCall(primaryUrl, gatewayKey, fullPrompt, fileData);
+  if (retryResult.kind === "success") return { text: retryResult.text, provider: retryResult.provider };
+  if (retryResult.kind === "vision_unavailable") return { text: "", provider: "", visionUnavailable: true };
 
   return null;
 }
@@ -568,49 +749,242 @@ async function logChatTurn(opts: {
 }
 
 /**
- * Helper function utk animasi "ketik" di client. CATATAN JUJUR: ini BUKAN
- * streaming token asli dari provider AI -- teks yang masuk ke sini (fullText)
- * SUDAH lengkap (upstream sudah selesai dipanggil dgn await). Ini cuma
- * memutar ulang string yang sudah jadi, kata per kata, ke client.
- *
- * Sebelumnya delay antar-kata tetap 12ms terlepas dari panjang teks --
- * untuk balasan panjang (misal 300 kata) itu nambah ~3.6 detik LATENSI
- * MURNI di atas waktu tunggu provider AI, padahal teksnya sudah selesai
- * dan cuma menunggu jadwal setTimeout. Sekarang total waktu animasi
- * dibatasi (ANIMATION_BUDGET_MS) apa pun panjang balasannya -- balasan
- * pendek tetap terasa "diketik", balasan panjang tidak kena pajak waktu
- * tambahan yang tidak perlu.
- *
- * Perbaikan yang SEBENARNYA (streaming token asli dari provider, lewat
- * `stream: true` + SSE per-provider di lib/provider-adapters/) belum
- * dikerjakan di sini -- itu perubahan lebih besar & butuh diuji langsung
- * di browser/deploy nyata (sandbox ini tak punya API key provider utk
- * dites live), jadi sengaja belum disentuh biar tidak dikirim buta.
+ * Fase NYATA giliran chat, dikirim sbg event SSE `phase` SEBELUM teks
+ * jawaban mulai mengalir -- dipakai components/homepage/BoganiThinkingIndicator.tsx
+ * utk menampilkan kata Mongondow yang sesuai TAHAP SUNGGUHAN (bukan timer
+ * kosmetik tetap 33/33/33 spt sebelumnya). "berpikir" = menyiapkan konteks
+ * (kamus/pengetahuan/memori, termasuk compacting kalau lagi kena giliran itu
+ * -- makin lama proses ini beneran, makin lama juga fase ini tampil, JUJUR).
+ * "mencari_jawaban" = sedang menunggu Gateway/provider AI (bagian paling
+ * lama). "menampilkan" cuma penanda transisi -- begitu event ini terkirim,
+ * delta teks asli langsung menyusul, jadi indikator otomatis diganti teks
+ * sungguhan (tidak perlu kata Mongondow tersendiri utk fase ini).
  */
-function createTextStreamResponse(fullText: string, provider: string = "gemini"): Response {
-  const encoder = new TextEncoder();
+type ChatPhase = "berpikir" | "mencari_jawaban" | "menampilkan";
+type PhaseCallback = (phase: ChatPhase) => void;
+
+/** Error terkontrol dari runChatPipeline() -- membawa status HTTP yg benar (dipakai jalur non-stream & jalur stream utk kirim event `error`). */
+class ChatPipelineError extends Error {
+  status: number;
+  constructor(message: string, status: number = 500) {
+    super(message);
+    this.status = status;
+  }
+}
+
+function sendSseEvent(controller: ReadableStreamDefaultController, encoder: TextEncoder, event: string, data: unknown) {
+  controller.enqueue(encoder.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`));
+}
+
+/**
+ * Emit teks yg SUDAH lengkap (upstream sudah selesai dipanggil dgn await)
+ * sbg deretan event `delta`, kata per kata -- animasi "ketik" di client,
+ * BUKAN streaming token asli dari provider (lihat catatan lebih lengkap di
+ * git history commit sebelumnya). Total waktu animasi dibatasi
+ * (ANIMATION_BUDGET_MS) apa pun panjang balasannya spy balasan panjang tidak
+ * kena pajak waktu tambahan yg tidak perlu.
+ */
+async function streamTextAsDeltas(controller: ReadableStreamDefaultController, encoder: TextEncoder, fullText: string) {
   const words = fullText.match(/\S+|\s+/g) || [fullText];
   const ANIMATION_BUDGET_MS = 500;
   const perWordDelayMs = words.length > 0 ? Math.min(12, ANIMATION_BUDGET_MS / words.length) : 0;
+  for (const word of words) {
+    sendSseEvent(controller, encoder, "delta", { text: word });
+    if (perWordDelayMs > 0) {
+      await new Promise((resolve) => setTimeout(resolve, perWordDelayMs));
+    }
+  }
+}
 
+/** Dipakai jalur cepat (balasan instan) -- tidak ada fase nyata utk ditunggu, langsung delta+done. */
+function createInstantStreamResponse(fullText: string, provider: string): Response {
+  const encoder = new TextEncoder();
   const stream = new ReadableStream({
     async start(controller) {
-      for (const word of words) {
-        controller.enqueue(encoder.encode(word));
-        if (perWordDelayMs > 0) {
-          await new Promise((resolve) => setTimeout(resolve, perWordDelayMs));
-        }
-      }
+      await streamTextAsDeltas(controller, encoder, fullText);
+      sendSseEvent(controller, encoder, "done", { provider });
       controller.close();
     },
   });
-
   return new Response(stream, {
     headers: {
       "Content-Type": "text/event-stream; charset=utf-8",
       "Cache-Control": "no-cache, no-transform",
       "Connection": "keep-alive",
       "X-Provider-Used": provider,
+    },
+  });
+}
+
+interface ChatPipelineOpts {
+  req: NextRequest;
+  prompt: string;
+  history: HomeChatMessage[];
+  memoryRows: UserMemoryRow[];
+  isVoiceMode: boolean;
+  fileInput?: string;
+  parsedFileData?: { mimeType: string; base64Data: string } | null;
+  lang: Language;
+  profile: Profile | null;
+  guestId: string | null;
+  ip: string;
+  conversationId: string | null;
+  existingSummary: string;
+  summarizedThroughCount: number;
+  onPhase?: PhaseCallback;
+  /** Dipanggil SEKALI per giliran dgn daftar Kamus/Knowledge Base/kosakata yg benar2 dipakai menyusun prompt -- kosong kalau tidak ada yg cocok. */
+  onSources?: (sources: string[]) => void;
+}
+
+interface ChatPipelineResult {
+  text: string;
+  provider: string;
+  contextSummary: string;
+  summarizedThroughCount: number;
+  sources: string[];
+}
+
+/**
+ * Logika INTI satu giliran chat: siapkan konteks (+ compacting kalau perlu)
+ * -> coba Gateway -> coba provider langsung -> simulasi terakhir. Diekstrak
+ * dari POST handler supaya SATU sumber kebenaran dipakai baik oleh jalur
+ * streaming (createLiveChatStream, lewat onPhase utk event SSE `phase` nyata)
+ * MAUPUN jalur JSON non-stream -- dua jalur itu dulu berisiko diverge kalau
+ * ditulis terpisah.
+ */
+async function runChatPipeline(opts: ChatPipelineOpts): Promise<ChatPipelineResult> {
+  const { req, prompt, history, memoryRows, isVoiceMode, fileInput, parsedFileData, lang, profile, guestId, ip, conversationId } = opts;
+
+  opts.onPhase?.("berpikir");
+  const { summary: contextSummary, summarizedThroughCount } = await compactOverflowIfNeeded({
+    history,
+    existingSummary: opts.existingSummary,
+    summarizedThroughCount: opts.summarizedThroughCount,
+    req,
+  });
+  const { prompt: fullPrompt, sources } = buildPromptWithHistory(history, prompt, formatMemoryContext(memoryRows), isVoiceMode, contextSummary);
+  opts.onSources?.(sources);
+
+  opts.onPhase?.("mencari_jawaban");
+
+  // 1. Preferred: route through the AI Gateway (myai.nexus or local) as a registered client app.
+  const gatewayResult = await callGateway(req, fullPrompt, fileInput);
+  if (gatewayResult && gatewayResult.text) {
+    void logChatTurn({ profile, prompt, responseText: gatewayResult.text, provider: gatewayResult.provider, history, guestId, ip, conversationId });
+    return { text: gatewayResult.text, provider: gatewayResult.provider, contextSummary, summarizedThroughCount, sources };
+  }
+
+  let systemPrompt = lang === 'en' ? SYSTEM_PROMPT_EN : SYSTEM_PROMPT_ID;
+  if (isVoiceMode) {
+    systemPrompt += `\n\n--- INSTRUKSI KHUSUS MODE SUARA LANGSUNG (VOICE DIRECTIVE) ---
+Jawab secara lisan dengan hangat, natural, dan ringkas (maksimal 2–3 kalimat). JANGAN PERNAH gunakan pemformatan markdown seperti cetak tebal (**), bullet points (-), tabel (|), atau header (#). Ucapkan nama tempat dan kosa kata Mongondow dengan fonetik yang jernih dan santun.`;
+  }
+
+  const direct = await callProviderDirect(fullPrompt, systemPrompt, parsedFileData);
+  if (direct.error) {
+    throw new ChatPipelineError(`MyAI OS AI Error: ${direct.error}`, direct.status || 500);
+  }
+  if (direct.text) {
+    const provider = direct.provider || "gemini";
+    void logChatTurn({
+      profile, prompt, responseText: direct.text, provider, history,
+      promptTokens: direct.promptTokens, completionTokens: direct.completionTokens,
+      guestId, ip, conversationId,
+    });
+    return { text: direct.text, provider, contextSummary, summarizedThroughCount, sources };
+  }
+
+  // 3. Fallback simulation if no API key is set
+  const isFirstMsg = !history || history.length === 0;
+  // simulateReply() buta terhadap gambar (murni pattern-match teks) -- kalau
+  // ada file yg diupload dan sampai di sini artinya TIDAK ADA jalur (Gateway
+  // maupun provider langsung) yg berhasil memprosesnya. Jujur ke user drpd
+  // pura2 jawab teks generik yg tidak menyinggung gambarnya sama sekali.
+  const simulatedText = parsedFileData
+    ? "Mohon maaf Utat, saat ini belum ada AI dengan kemampuan membaca gambar yang tersedia untuk memproses file yang dikirim. Coba lagi beberapa saat lagi, atau kirim pertanyaannya dalam bentuk teks ya."
+    : simulateReply(prompt, lang, isFirstMsg);
+  void logChatTurn({ profile, prompt, responseText: simulatedText, provider: "simulated", history, guestId, ip, conversationId });
+
+  // Non-blocking sync to MyAI OS Master Data Center
+  (async () => {
+    try {
+      if (supabaseAdmin) {
+        const recordId = crypto.randomUUID();
+        await supabaseAdmin.from("gw_data_center").insert({
+          id: recordId,
+          client_app_id: "c4fa9b89-8cf6-4d9c-a68f-3134664536fd", // MyAI Chat app id
+          field_key: isVoiceMode ? "voice_chat_homepage" : GATEWAY_FIELD,
+          source_type: "chatbot_interaction",
+          document_type: isVoiceMode ? "voice_chat" : "text_chat",
+          extracted_data: {
+            source_app: "myai-chat",
+            field_key: isVoiceMode ? "voice_chat_homepage" : GATEWAY_FIELD,
+            provider_display: direct.provider || "Gemini",
+            user_message: prompt.substring(0, 1000),
+            ai_response: simulatedText.substring(0, 2000),
+            is_voice_mode: isVoiceMode,
+            messages: [
+              ...history.map((m) => ({ role: m.role, content: m.content })),
+              { role: "user", content: prompt },
+              { role: "assistant", content: simulatedText },
+            ],
+            processed_at: new Date().toISOString(),
+          },
+          raw_text: `[${isVoiceMode ? "VOICE CHAT" : "HOMEPAGE CHAT"}] User: ${prompt}\n---\nAI: ${simulatedText.slice(0, 500)}`,
+          language: lang,
+          tags: ["homepage", "myai-chat", isVoiceMode ? "voice_interaction" : "text_chat", lang],
+          created_at: new Date().toISOString(),
+        });
+      }
+    } catch (e) {
+      console.warn("[homepage-chat] Ingestion to Data Center warning:", e);
+    }
+  })();
+
+  return { text: simulatedText, provider: "gemini", contextSummary, summarizedThroughCount, sources };
+}
+
+/** Jalur utama (Gateway/direct/simulated) -- fase SSE dikirim di titik cek nyata di runChatPipeline, bukan timer kosmetik. */
+function createLiveChatStream(pipelineOpts: Omit<ChatPipelineOpts, "onPhase" | "onSources">): Response {
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      try {
+        const result = await runChatPipeline({
+          ...pipelineOpts,
+          onPhase: (phase) => sendSseEvent(controller, encoder, "phase", { phase }),
+          onSources: (sources) => {
+            if (sources.length > 0) sendSseEvent(controller, encoder, "sources", { sources });
+          },
+        });
+        const menampilkanPhase: ChatPhase = "menampilkan";
+        sendSseEvent(controller, encoder, "phase", { phase: menampilkanPhase });
+        await streamTextAsDeltas(controller, encoder, result.text);
+        sendSseEvent(controller, encoder, "done", {
+          provider: result.provider,
+          contextSummary: result.contextSummary,
+          summarizedThroughCount: result.summarizedThroughCount,
+        });
+      } catch (e) {
+        const message = e instanceof ChatPipelineError ? e.message : (e instanceof Error ? e.message : "Gagal memproses balasan Bogani AI");
+        // enqueue() bisa ikut melempar kalau controller sudah tertutup (mis.
+        // klien memutus koneksi di tengah jalan) -- jangan biarkan itu jadi
+        // unhandled rejection kedua, cukup diam saja krn tidak ada lagi yg
+        // mendengarkan.
+        try {
+          sendSseEvent(controller, encoder, "error", { message });
+        } catch { /* koneksi klien sudah putus, tidak ada yg perlu dilakukan */ }
+      }
+      try {
+        controller.close();
+      } catch { /* sudah tertutup/error -- aman diabaikan */ }
+    },
+  });
+  return new Response(stream, {
+    headers: {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-cache, no-transform",
+      "Connection": "keep-alive",
     },
   });
 }
@@ -689,7 +1063,7 @@ export async function POST(req: NextRequest) {
         );
       }
       if (wantStream) {
-        return createTextStreamResponse(instantText, "instant");
+        return createInstantStreamResponse(instantText, "instant");
       }
       return NextResponse.json({ text: instantText, provider_used: "instant" }, { headers: { "X-Provider-Used": "instant" } });
     }
@@ -708,8 +1082,6 @@ export async function POST(req: NextRequest) {
     profile ? listUserMemory(profile.id).catch(() => []) : Promise.resolve([]),
   ]);
 
-  const fullPrompt = buildPromptWithHistory(history, prompt, formatMemoryContext(memoryRows), isVoiceMode);
-
   if (!quota.allowed) {
     const blocked = NextResponse.json(
       { error: quota.message, quotaExceeded: true, requiresAuth: !profile },
@@ -719,112 +1091,37 @@ export async function POST(req: NextRequest) {
     return blocked;
   }
 
-  // 1. Preferred: route through the AI Gateway (myai.nexus or local) as a registered client app.
-  const gatewayResult = await callGateway(req, fullPrompt, fileInput);
-  if (gatewayResult && gatewayResult.text) {
-    void logChatTurn({ profile, prompt, responseText: gatewayResult.text, provider: gatewayResult.provider, history, guestId, ip, conversationId });
-    if (wantStream) {
-      const res = createTextStreamResponse(gatewayResult.text, gatewayResult.provider);
-      if (guestId) setGuestCookieHeader(res, guestId);
-      return res;
-    }
-    const res = NextResponse.json({ text: gatewayResult.text, provider_used: gatewayResult.provider }, { headers: { "X-Provider-Used": gatewayResult.provider } });
-    if (guestId) setGuestCookieHeader(res, guestId);
-    return res;
-  }
+  // Ringkasan percakapan (compacting) dikirim balik client giliran
+  // sebelumnya (lihat event/field `done` -> contextSummary/summarizedThroughCount)
+  // -- lihat compactOverflowIfNeeded() & runChatPipeline().
+  const existingSummary: string = typeof body.contextSummary === "string" ? body.contextSummary : "";
+  const summarizedThroughCount: number = typeof body.summarizedThroughCount === "number" && body.summarizedThroughCount >= 0 ? body.summarizedThroughCount : 0;
 
-  let systemPrompt = lang === 'en' ? SYSTEM_PROMPT_EN : SYSTEM_PROMPT_ID;
-
-  if (isVoiceMode) {
-    systemPrompt += `\n\n--- INSTRUKSI KHUSUS MODE SUARA LANGSUNG (VOICE DIRECTIVE) ---
-Jawab secara lisan dengan hangat, natural, dan ringkas (maksimal 2–3 kalimat). JANGAN PERNAH gunakan pemformatan markdown seperti cetak tebal (**), bullet points (-), tabel (|), atau header (#). Ucapkan nama tempat dan kosa kata Mongondow dengan fonetik yang jernih dan santun.`;
-  }
-
-  const direct = await callProviderDirect(fullPrompt, systemPrompt, parsedFileData);
-
-  if (direct.error) {
-    return NextResponse.json({ error: `MyAI OS AI Error: ${direct.error}` }, { status: direct.status || 500 });
-  }
-  if (direct.text) {
-    const provider = direct.provider || "gemini";
-    void logChatTurn({
-      profile,
-      prompt,
-      responseText: direct.text,
-      provider,
-      history,
-      promptTokens: direct.promptTokens,
-      completionTokens: direct.completionTokens,
-      guestId,
-      ip,
-      conversationId,
-    });
-    if (wantStream) {
-      const res = createTextStreamResponse(direct.text, provider);
-      if (guestId) setGuestCookieHeader(res, guestId);
-      return res;
-    }
-    const res = NextResponse.json({ text: direct.text, provider_used: provider }, { headers: { "X-Provider-Used": provider } });
-    if (guestId) setGuestCookieHeader(res, guestId);
-    return res;
-  }
-
-  // 3. Fallback simulation if no API key is set
-  const isFirstMsg = !history || history.length === 0;
-  // simulateReply() buta terhadap gambar (murni pattern-match teks) -- kalau
-  // ada file yg diupload dan sampai di sini artinya TIDAK ADA jalur (Gateway
-  // maupun provider langsung) yg berhasil memprosesnya. Jujur ke user drpd
-  // pura2 jawab teks generik yg tidak menyinggung gambarnya sama sekali.
-  const simulatedText = parsedFileData
-    ? "Mohon maaf Utat, saat ini belum ada AI dengan kemampuan membaca gambar yang tersedia untuk memproses file yang dikirim. Coba lagi beberapa saat lagi, atau kirim pertanyaannya dalam bentuk teks ya."
-    : simulateReply(prompt, lang, isFirstMsg);
-  void logChatTurn({ profile, prompt, responseText: simulatedText, provider: "simulated", history, guestId, ip, conversationId });
-  // Non-blocking sync to MyAI OS Master Data Center
-  (async () => {
-    try {
-      if (supabaseAdmin) {
-        const isVoice = body.isVoiceMode || prompt.includes("[voice]");
-        const recordId = crypto.randomUUID();
-        const responseText = gatewayResult?.text || direct.text || simulatedText || "";
-
-        await supabaseAdmin.from("gw_data_center").insert({
-          id: recordId,
-          client_app_id: "c4fa9b89-8cf6-4d9c-a68f-3134664536fd", // MyAI Chat app id
-          field_key: isVoice ? "voice_chat_homepage" : GATEWAY_FIELD,
-          source_type: "chatbot_interaction",
-          document_type: isVoice ? "voice_chat" : "text_chat",
-          extracted_data: {
-            source_app: "myai-chat",
-            field_key: isVoice ? "voice_chat_homepage" : GATEWAY_FIELD,
-            provider_display: direct.provider || "Gemini",
-            user_message: prompt.substring(0, 1000),
-            ai_response: responseText.substring(0, 2000),
-            is_voice_mode: isVoice,
-            messages: [
-              ...history.map((m) => ({ role: m.role, content: m.content })),
-              { role: "user", content: prompt },
-              { role: "assistant", content: responseText },
-            ],
-            processed_at: new Date().toISOString(),
-          },
-          raw_text: `[${isVoice ? "VOICE CHAT" : "HOMEPAGE CHAT"}] User: ${prompt}\n---\nAI: ${responseText.slice(0, 500)}`,
-          language: lang,
-          tags: ["homepage", "myai-chat", isVoice ? "voice_interaction" : "text_chat", lang],
-          created_at: new Date().toISOString(),
-        });
-      }
-    } catch (e) {
-      console.warn("[homepage-chat] Ingestion to Data Center warning:", e);
-    }
-  })();
+  const pipelineOpts: Omit<ChatPipelineOpts, "onPhase" | "onSources"> = {
+    req, prompt, history, memoryRows, isVoiceMode, fileInput, parsedFileData, lang,
+    profile, guestId, ip, conversationId, existingSummary, summarizedThroughCount,
+  };
 
   if (wantStream) {
-    const res = createTextStreamResponse(simulatedText, "gemini");
+    const res = createLiveChatStream(pipelineOpts);
     if (guestId) setGuestCookieHeader(res, guestId);
     return res;
   }
-  const res = NextResponse.json({ text: simulatedText, provider_used: "gemini" }, { headers: { "X-Provider-Used": "gemini" } });
-  if (guestId) setGuestCookieHeader(res, guestId);
-  return res;
+
+  try {
+    const result = await runChatPipeline(pipelineOpts);
+    const res = NextResponse.json(
+      { text: result.text, provider_used: result.provider, contextSummary: result.contextSummary, summarizedThroughCount: result.summarizedThroughCount, sources: result.sources },
+      { headers: { "X-Provider-Used": result.provider } }
+    );
+    if (guestId) setGuestCookieHeader(res, guestId);
+    return res;
+  } catch (e) {
+    const status = e instanceof ChatPipelineError ? e.status : 500;
+    const message = e instanceof Error ? e.message : "Gagal memproses balasan Bogani AI";
+    const res = NextResponse.json({ error: message }, { status });
+    if (guestId) setGuestCookieHeader(res, guestId);
+    return res;
+  }
 }
 

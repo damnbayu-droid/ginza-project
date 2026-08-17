@@ -36,7 +36,8 @@ export const glmAdapter: ProviderAdapter = {
           model,
           messages,
           temperature: options.temperature ?? 0.7,
-          max_tokens: options.max_tokens ?? 2048,
+          // Dulu 2048 -- lihat lib/provider-adapters/deepseek.ts utk alasan lengkapnya (insiden jawaban terpotong mid-kalimat).
+          max_tokens: options.max_tokens ?? 4096,
         }),
       });
 

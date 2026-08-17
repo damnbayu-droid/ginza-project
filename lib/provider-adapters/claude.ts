@@ -33,7 +33,8 @@ export const claudeAdapter: ProviderAdapter = {
         },
         body: JSON.stringify({
           model: options.model_name || "claude-3-5-sonnet-20241022",
-          max_tokens: options.max_tokens ?? 2000,
+          // Dulu 2000 -- lihat lib/provider-adapters/deepseek.ts utk alasan lengkapnya (insiden jawaban terpotong mid-kalimat).
+          max_tokens: options.max_tokens ?? 4096,
           system: systemPrompt,
           messages: [{ role: "user", content: contentArray }],
           temperature: options.temperature ?? 0.7,

@@ -19,6 +19,10 @@ export interface HomeChatSession {
   folder_id?: string | null;
   /** true selama sesi lokal (belum dibalas server) belum punya UUID asli dari Supabase */
   isSyncing?: boolean;
+  /** Ringkasan padat percakapan lama yg sudah "jatuh" dari jendela histori mentah (compacting, lihat app/api/homepage/chat/route.ts). */
+  contextSummary?: string;
+  /** Berapa pesan tertua di `messages` yg sudah tercakup dalam contextSummary -- dipakai server utk tahu bagian mana yg BARU perlu diringkas. */
+  summarizedThroughCount?: number;
 }
 
 export interface ChatFolder {

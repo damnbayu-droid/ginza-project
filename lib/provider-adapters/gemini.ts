@@ -26,7 +26,8 @@ export const geminiAdapter: ProviderAdapter = {
         systemInstruction: { parts: [{ text: systemPrompt }] },
         generationConfig: {
           temperature: options.temperature ?? 0.7,
-          maxOutputTokens: options.max_tokens ?? 2000,
+          // Dulu 2000 -- lihat lib/provider-adapters/deepseek.ts utk alasan lengkapnya (insiden jawaban terpotong mid-kalimat).
+          maxOutputTokens: options.max_tokens ?? 4096,
         },
       };
 

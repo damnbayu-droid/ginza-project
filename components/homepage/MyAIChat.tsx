@@ -26,7 +26,8 @@ import {
   Settings,
   Moon,
   Sun,
-  ClipboardList
+  ClipboardList,
+  Download
 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import Link from "next/link";
@@ -51,10 +52,68 @@ interface MyAIChatProps {
   onToggleSidebarMobile: () => void;
   lang: Language;
   isLoading: boolean;
+  /** Fase NYATA giliran yg sedang diproses (event SSE `phase` dari server) -- lihat components/homepage/BoganiThinkingIndicator.tsx */
+  currentPhase: 'berpikir' | 'mencari_jawaban' | null;
+  /** Sumber (Kamus/Knowledge Base/kosakata) yg benar2 dipakai giliran ini (event SSE `sources`) */
+  currentSources: string[];
   user: { name: string; email: string; role: string } | null;
   guestCount: number;
   /** Diisi server (bukan tebakan klien) lewat respons 403 quotaExceeded -- lihat lib/ai-usage-quota.ts. */
   quotaBlock: { message: string; requiresAuth: boolean } | null;
+}
+
+// Export percakapan (.txt / .json) -- SENGAJA cuma isi teks pertanyaan &
+// jawaban (role + content + timestamp), TIDAK menyertakan lampiran/gambar
+// (fileData base64 tidak pernah disimpan di HomeChatMessage sama sekali,
+// cuma dirender sekali saat dikirim) supaya file yg diunduh tetap ringan.
+function slugifyForFilename(title: string): string {
+  const slug = title
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .slice(0, 60);
+  return slug || "obrolan-bogani-ai";
+}
+
+function buildExportTxt(session: HomeChatSession): string {
+  const lines: string[] = [
+    session.title || "Obrolan Bogani AI",
+    `Diekspor: ${new Date().toLocaleString('id-ID')}`,
+    "",
+  ];
+  for (const m of session.messages) {
+    if (!m.content) continue; // lewati placeholder AI yg masih kosong (giliran belum selesai)
+    lines.push(`${m.role === 'user' ? 'User' : 'Bogani AI'}: ${m.content}`, "");
+  }
+  return lines.join("\n");
+}
+
+function buildExportJson(session: HomeChatSession): string {
+  return JSON.stringify(
+    {
+      title: session.title,
+      exported_at: new Date().toISOString(),
+      messages: session.messages
+        .filter((m) => m.content)
+        .map((m) => ({ role: m.role, content: m.content, timestamp: m.timestamp })),
+    },
+    null,
+    2
+  );
+}
+
+function downloadTextFile(filename: string, content: string, mimeType: string) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 interface AttachedFile {
@@ -62,6 +121,76 @@ interface AttachedFile {
   size: string;
   dataUrl: string;
   isImage: boolean;
+}
+
+// Placeholder berganti-ganti di kolom chat layar sambutan (welcome screen,
+// belum ada pesan) -- efek ketik 2 detik per teks, tahan 1 detik, lanjut ke
+// teks berikutnya (3 detik/slot), urutan 1-4 diulang 2x lalu berhenti &
+// menetap di teks pertama (bukan loop selamanya -- ini sapaan awal, bukan
+// iklan berjalan permanen).
+const WELCOME_PLACEHOLDERS_ID = [
+  "Tanyakan apa saja ke Bogani AI...",
+  "Tanyakan tentang sejarah Bolaang Mongondow dan lain-lain.",
+  "Atau tambahkan pengetahuan Bogani AI...",
+  "Bogani AI siap membantu saat dibutuhkan...",
+];
+const WELCOME_PLACEHOLDERS_EN = [
+  "Ask anything to Bogani AI...",
+  "Ask about the history of Bolaang Mongondow and more.",
+  "Or help expand Bogani AI's knowledge...",
+  "Bogani AI is ready to help whenever you need it...",
+];
+const PLACEHOLDER_TYPE_MS = 2000;
+const PLACEHOLDER_SLOT_MS = 3000;
+const PLACEHOLDER_LOOPS = 2;
+
+function useRotatingPlaceholder(lang: Language, paused: boolean): string {
+  const list = lang === 'en' ? WELCOME_PLACEHOLDERS_EN : WELCOME_PLACEHOLDERS_ID;
+  const [text, setText] = useState(list[0]);
+
+  useEffect(() => {
+    if (paused) return;
+    let cancelled = false;
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    function typeSlot(full: string, onDone: () => void) {
+      const perCharMs = full.length > 0 ? PLACEHOLDER_TYPE_MS / full.length : 0;
+      let i = 0;
+      const step = () => {
+        if (cancelled) return;
+        i++;
+        setText(full.slice(0, i));
+        if (i < full.length) {
+          timeoutId = setTimeout(step, perCharMs);
+        } else {
+          timeoutId = setTimeout(() => {
+            if (!cancelled) onDone();
+          }, PLACEHOLDER_SLOT_MS - PLACEHOLDER_TYPE_MS);
+        }
+      };
+      step();
+    }
+
+    async function run() {
+      for (let loop = 0; loop < PLACEHOLDER_LOOPS && !cancelled; loop++) {
+        for (const phrase of list) {
+          if (cancelled) return;
+          await new Promise<void>((resolve) => typeSlot(phrase, resolve));
+        }
+      }
+      // 2 putaran selesai -- berhenti & menetap di teks default pertama.
+      if (!cancelled) setText(list[0]);
+    }
+
+    run();
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [lang, paused]);
+
+  return text;
 }
 
 export default function MyAIChat({
@@ -72,6 +201,8 @@ export default function MyAIChat({
   onToggleSidebarMobile,
   lang,
   isLoading,
+  currentPhase,
+  currentSources,
   user,
   guestCount,
   quotaBlock
@@ -89,6 +220,7 @@ export default function MyAIChat({
   const [attachedFile, setAttachedFile] = useState<AttachedFile | null>(null);
   const [featureNotice, setFeatureNotice] = useState<string | null>(null);
   const [isMobileQuickMenuOpen, setIsMobileQuickMenuOpen] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -100,6 +232,7 @@ export default function MyAIChat({
   // dibagi jg dgn tombol AI definisi Kamus, jadi hitungan lokal murni chat
   // saja tidak lagi akurat sbg penentu gembok.
   const isGuestLocked = !!quotaBlock;
+  const rotatingPlaceholder = useRotatingPlaceholder(lang, isGuestLocked);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -250,6 +383,46 @@ export default function MyAIChat({
 
         {/* Right Action Items */}
         <div className="flex items-center gap-2">
+          {hasMessages && currentSession && (
+            <div className="relative">
+              <button
+                onClick={() => setShowExportMenu(!showExportMenu)}
+                className="flex items-center gap-2 bg-[#21232B] hover:bg-[#2A2D37] text-gray-300 hover:text-white border border-[#2E313D] px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shadow-sm group"
+                title={lang === 'id' ? "Ekspor Percakapan" : "Export Conversation"}
+              >
+                <Download className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
+                <span className="hidden sm:inline">{lang === 'id' ? 'Ekspor' : 'Export'}</span>
+              </button>
+
+              {showExportMenu && (
+                <div className="absolute right-0 top-11 z-50 bg-[#252525] border border-[#3d3d3d] rounded-2xl p-1.5 shadow-2xl flex flex-col gap-1 min-w-[140px] animate-scale-up">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowExportMenu(false);
+                      downloadTextFile(`${slugifyForFilename(currentSession.title)}.txt`, buildExportTxt(currentSession), "text/plain;charset=utf-8");
+                    }}
+                    className="px-3 py-2 rounded-xl hover:bg-[#333] flex items-center gap-2 text-xs text-white transition-colors text-left"
+                  >
+                    <FileText className="w-4 h-4 text-blue-400" />
+                    <span className="font-medium">{lang === 'id' ? 'Unduh .txt' : 'Download .txt'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowExportMenu(false);
+                      downloadTextFile(`${slugifyForFilename(currentSession.title)}.json`, buildExportJson(currentSession), "application/json;charset=utf-8");
+                    }}
+                    className="px-3 py-2 rounded-xl hover:bg-[#333] flex items-center gap-2 text-xs text-white transition-colors text-left"
+                  >
+                    <Database className="w-4 h-4 text-emerald-400" />
+                    <span className="font-medium">{lang === 'id' ? 'Unduh .json' : 'Download .json'}</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           <button
             onClick={() => setShowFeedbackModal(true)}
             className="flex items-center gap-2 bg-[#21232B] hover:bg-[#2A2D37] text-gray-300 hover:text-white border border-[#2E313D] px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shadow-sm group"
@@ -385,7 +558,7 @@ export default function MyAIChat({
                     onChange={(e) => setInputText(e.target.value)}
                     onKeyDown={handleKeyDown}
                     disabled={isGuestLocked}
-                    placeholder={isGuestLocked ? (quotaBlock?.message || "Batas pemakaian AI tercapai.") : (lang === 'id' ? "Tanyakan apa saja ke Bogani AI..." : "Ask anything to Bogani AI...")}
+                    placeholder={isGuestLocked ? (quotaBlock?.message || "Batas pemakaian AI tercapai.") : rotatingPlaceholder}
                     className="flex-1 bg-transparent text-sm text-white placeholder-gray-500 focus:outline-none resize-none py-2 max-h-36 custom-scrollbar disabled:opacity-50"
                   />
 
@@ -475,7 +648,7 @@ export default function MyAIChat({
               // jadi bubble normal -- serah-terima mulus tanpa perlu logic
               // tambahan di sini.
               if (!isUser && msg.content === '' && isLoading) {
-                return <BoganiThinkingIndicator key={msg.id} />;
+                return <BoganiThinkingIndicator key={msg.id} phase={currentPhase} sources={currentSources} />;
               }
 
               return (

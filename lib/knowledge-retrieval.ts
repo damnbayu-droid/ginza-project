@@ -80,17 +80,24 @@ function tokenize(text: string): string[] {
     .filter((t) => t.length >= 3 && !STOPWORDS.has(t));
 }
 
+export interface KnowledgeContextResult {
+  text: string;
+  /** Path file sumber (dedup, urut skor) yg kutipannya benar2 kepakai di `text` -- lihat components/homepage/BoganiThinkingIndicator.tsx utk bagaimana ini ditampilkan ke user. */
+  sources: string[];
+}
+
 /**
  * Cari kutipan paling relevan dari Knowledge Base untuk sebuah query, lalu
  * kembalikan sebagai blok teks siap-sisip ke prompt AI (dengan atribusi
- * sumber file). Mengembalikan string kosong kalau tidak ada yang relevan.
+ * sumber file) SEKALIGUS daftar path file sumbernya secara terpisah --
+ * `text` kosong kalau tidak ada yang relevan.
  */
-export function getKnowledgeContext(query: string, maxChars = 5000, topK = 6): string {
+export function getKnowledgeContext(query: string, maxChars = 5000, topK = 6): KnowledgeContextResult {
   const chunks = loadKnowledgeChunks();
-  if (chunks.length === 0) return "";
+  if (chunks.length === 0) return { text: "", sources: [] };
 
   const queryTokens = Array.from(new Set(tokenize(query)));
-  if (queryTokens.length === 0) return "";
+  if (queryTokens.length === 0) return { text: "", sources: [] };
 
   const scored: (KnowledgeChunk & { score: number })[] = [];
   for (const c of chunks) {
@@ -102,12 +109,13 @@ export function getKnowledgeContext(query: string, maxChars = 5000, topK = 6): s
     if (score > 0) scored.push({ ...c, score });
   }
 
-  if (scored.length === 0) return "";
+  if (scored.length === 0) return { text: "", sources: [] };
   scored.sort((a, b) => b.score - a.score);
 
   const top = scored.slice(0, topK);
   let result = `\n\n--- KONTEKS KNOWLEDGE BASE MONGONDOWPEDIA (${top.length} kutipan relevan, urut skor kecocokan) ---`;
   let used = 0;
+  const usedSources: string[] = [];
 
   for (const t of top) {
     const snippet = t.text.length > 900 ? t.text.slice(0, 900) + "…" : t.text;
@@ -115,10 +123,11 @@ export function getKnowledgeContext(query: string, maxChars = 5000, topK = 6): s
     if (used + block.length > maxChars) break;
     result += block;
     used += block.length;
+    if (!usedSources.includes(t.source)) usedSources.push(t.source);
   }
 
   result += `\n--- AKHIR KONTEKS KNOWLEDGE BASE ---`;
-  return result;
+  return { text: result, sources: usedSources };
 }
 
 /** Dipakai kalau perlu memaksa reload (mis. setelah menambah file knowledge baru saat dev). */
