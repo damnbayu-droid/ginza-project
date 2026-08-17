@@ -264,7 +264,82 @@ interface PromptWithHistoryResult {
   sources: string[];
 }
 
-function buildPromptWithHistory(history: HomeChatMessage[], prompt: string, memoryCtx: string = "", isVoiceMode: boolean = false, compactSummary: string = ""): PromptWithHistoryResult {
+const CONVO_DATA_STOPWORDS = new Set([
+  "yang", "dan", "atau", "dari", "untuk", "dengan", "pada", "dalam", "ini", "itu",
+  "adalah", "juga", "tidak", "akan", "bisa", "saya", "anda", "kamu", "kami", "kita",
+  "apa", "bagaimana", "siapa", "kenapa", "mengapa", "kapan", "dimana", "tentang", "soal",
+]);
+
+function tokenizeForConvoData(text: string): string[] {
+  return text
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[^a-z0-9'\s]/g, " ")
+    .split(/\s+/)
+    .filter((t) => t.length >= 3 && !CONVO_DATA_STOPWORDS.has(t));
+}
+
+/**
+ * Lapisan RAG BARU: "Data Percakapan" -- fakta/topik yg pernah muncul di
+ * chat lain (disimpan lewat syncToDataCenter, source_type "chat_memory_fact")
+ * yg berkaitan dgn pertanyaan sekarang. SENGAJA belum lewat review manusia
+ * (verifikator situs ini sudah kewalahan mengejar Knowledge Base biasa) --
+ * atas permintaan eksplisit Boss Bayu, tetap dipakai AI TAPI SELALU dilabeli
+ * jelas sbg hipotesis/belum terverifikasi, bukan disamakan dgn Kamus/
+ * Knowledge Base yg sudah terverifikasi. Lihat lib/bogani-persona.ts utk
+ * instruksi cara AI memperlakukan label ini.
+ */
+async function getConversationDataContext(userPrompt: string): Promise<ContextResult> {
+  if (!supabaseAdmin) return { text: "", sources: [] };
+  const queryTokens = Array.from(new Set(tokenizeForConvoData(userPrompt)));
+  if (queryTokens.length === 0) return { text: "", sources: [] };
+
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("gw_data_center")
+      .select("id, raw_text, extracted_data, review_status, created_at")
+      .eq("source_type", "chat_memory_fact")
+      .neq("review_status", "rejected")
+      .order("created_at", { ascending: false })
+      .limit(300);
+    if (error || !data || data.length === 0) return { text: "", sources: [] };
+
+    const scored = data
+      .map((row) => {
+        const text = (row.raw_text || "").toString();
+        const lower = text.toLowerCase();
+        let score = 0;
+        for (const t of queryTokens) if (lower.includes(t)) score += 1;
+        return { row, text, score };
+      })
+      .filter((r) => r.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
+
+    if (scored.length === 0) return { text: "", sources: [] };
+
+    // Baris yg sudah disetujui verifikator (review_status "approved") dapat
+    // label sedikit lebih percaya diri drpd yg masih "pending" -- tapi
+    // KEDUANYA tetap eksplisit BUKAN Kamus/Knowledge Base resmi (cuma
+    // ditinjau verifikator, belum benar2 masuk sbg entri resmi tersendiri).
+    const label = (status: string) =>
+      status === "approved" ? "Sudah ditinjau verifikator" : "Belum ditinjau/belum terverifikasi";
+
+    let ctx = `\n\n--- DATA PERCAKAPAN (dari pertanyaan/diskusi pengguna lain sebelumnya, BUKAN Kamus/Knowledge Base resmi) ---\n`;
+    ctx += scored.map((s) => `[${label(s.row.review_status)}] ${s.text.slice(0, 600)}`).join("\n\n");
+    ctx += `\n--- AKHIR DATA PERCAKAPAN (ingat: WAJIB sebut status verifikasinya kalau dipakai di jawaban, jangan disamakan dgn fakta resmi) ---`;
+
+    return {
+      text: ctx,
+      sources: scored.map((s) => `Data Percakapan (${label(s.row.review_status)}): ${s.text.slice(0, 60)}${s.text.length > 60 ? "..." : ""}`),
+    };
+  } catch (e) {
+    console.warn("[homepage-chat] Failed retrieving conversation-data context:", e);
+    return { text: "", sources: [] };
+  }
+}
+
+async function buildPromptWithHistory(history: HomeChatMessage[], prompt: string, memoryCtx: string = "", isVoiceMode: boolean = false, compactSummary: string = ""): Promise<PromptWithHistoryResult> {
   const kamusCtx = getKamusContext(prompt);
   const languageMixCtx = getLanguageMixContext(prompt);
   let knowledgeCtx: ContextResult = { text: "", sources: [] };
@@ -273,14 +348,16 @@ function buildPromptWithHistory(history: HomeChatMessage[], prompt: string, memo
   } catch (e) {
     console.warn("[homepage-chat] Failed retrieving knowledge context:", e);
   }
+  const convoDataCtx = await getConversationDataContext(prompt);
   const sources: string[] = [
     ...kamusCtx.sources,
     ...languageMixCtx.sources,
     ...knowledgeCtx.sources.map((s) => `Knowledge: ${prettifyKnowledgeSource(s)}`),
+    ...convoDataCtx.sources,
   ];
 
   const personaHeader = `[SYSTEM INSTRUCTION BOGANI AI]:\n${SYSTEM_PROMPT_ID}${isVoiceMode ? `\n\n${VOICE_MODE_DIRECTIVE}` : ""}\n\n`;
-  const fullPrompt = prompt + kamusCtx.text + languageMixCtx.text + memoryCtx + knowledgeCtx.text;
+  const fullPrompt = prompt + kamusCtx.text + languageMixCtx.text + memoryCtx + knowledgeCtx.text + convoDataCtx.text;
   const isFirstTurn = !Array.isArray(history) || history.length === 0;
 
   // Sinyal eksplisit & terstruktur ttg posisi giliran ini -- diletakkan
@@ -530,7 +607,10 @@ async function attemptGatewayCall(
   }
 }
 
-async function callGateway(req: NextRequest, fullPrompt: string, fileData?: string | null): Promise<{ text: string; provider: string; visionUnavailable?: boolean } | null> {
+// Diekspor spy job cron ekstraksi pengetahuan harian
+// (app/api/cron/extract-knowledge) bisa pakai jalur AI yg sama persis --
+// bukan duplikat implementasi baru.
+export async function callGateway(req: NextRequest, fullPrompt: string, fileData?: string | null): Promise<{ text: string; provider: string; visionUnavailable?: boolean } | null> {
   const gatewayKey = process.env.MYAI_OS_GATEWAY_API_KEY || process.env.HOMEPAGE_GATEWAY_API_KEY;
   if (!gatewayKey) return null;
 
@@ -852,6 +932,72 @@ interface ChatPipelineResult {
  * MAUPUN jalur JSON non-stream -- dua jalur itu dulu berisiko diverge kalau
  * ditulis terpisah.
  */
+/**
+ * Simpan SETIAP giliran chat (bukan cuma yg gagal total spt sebelumnya) ke
+ * gw_data_center -- ini bahan mentah utk job ekstraksi pengetahuan harian
+ * (lihat app/api/cron/extract-knowledge/route.ts). Sengaja SELALU jalan,
+ * tamu maupun user login -- sebelumnya riwayat tamu tidak tersimpan sama
+ * sekali di mana pun, jadi "bahan mentah"-nya cuma sebagian kecil trafik.
+ * Non-blocking (fire-and-forget), tidak menunda balasan ke user.
+ *
+ * PERBAIKAN BUG: sebelumnya pakai source_type "chatbot_interaction" yg
+ * TIDAK ADA di CHECK constraint tabel ini (cuma ocr_upload/url_scrape/
+ * manual_document/chat_memory_fact) -- insert-nya kemungkinan besar diam2
+ * gagal terus (dibungkus try/catch, cuma console.warn, tidak pernah
+ * ketahuan). "chat_memory_fact" SUDAH ada di constraint & memang
+ * dimaksudkan utk kasus persis ini.
+ */
+function syncToDataCenter(opts: {
+  prompt: string;
+  responseText: string;
+  provider: string;
+  isVoiceMode: boolean;
+  lang: Language;
+}) {
+  if (!supabaseAdmin) return;
+  const { prompt, responseText, provider, isVoiceMode, lang } = opts;
+  (async () => {
+    try {
+      await supabaseAdmin.from("gw_data_center").insert({
+        id: crypto.randomUUID(),
+        // SEBELUMNYA hardcode UUID "MyAI Chat app id" yg TIDAK PERNAH ada di
+        // tabel gw_client_apps proyek Supabase ini -- setiap insert selalu
+        // gagal kena foreign key constraint (silently, dibungkus try/catch),
+        // sejak tabel ini dibuat (20260717) sampai baru ketahuan hari ini
+        // (2026-08-18) saat mengetes fitur ini. client_app_id NULLABLE
+        // (ON DELETE SET NULL) -- MongondowPedia/Bogani AI memang tidak
+        // terdaftar sbg client app terpisah di ekosistem gw_client_apps,
+        // jadi null di sini benar, bukan tambal sulam.
+        client_app_id: null,
+        field_key: isVoiceMode ? "voice_chat_homepage" : GATEWAY_FIELD,
+        source_type: "chat_memory_fact",
+        document_type: isVoiceMode ? "voice_chat" : "text_chat",
+        extracted_data: {
+          source_app: "myai-chat",
+          field_key: isVoiceMode ? "voice_chat_homepage" : GATEWAY_FIELD,
+          provider_display: provider,
+          user_message: prompt.substring(0, 1000),
+          ai_response: responseText.substring(0, 2000),
+          is_voice_mode: isVoiceMode,
+          processed_at: new Date().toISOString(),
+        },
+        raw_text: `[${isVoiceMode ? "VOICE CHAT" : "HOMEPAGE CHAT"}] User: ${prompt}\n---\nAI: ${responseText.slice(0, 2000)}`,
+        language: lang,
+        tags: ["homepage", "myai-chat", isVoiceMode ? "voice_interaction" : "text_chat", lang],
+        // false di sini, BUKAN diabaikan -- job cron harian
+        // (app/api/cron/extract-knowledge) yg menyaring mana yg genuinely
+        // menarik utk ditinjau verifikator (jadi true), drpd SEMUA giliran
+        // chat langsung membanjiri antrean review dari menit pertama.
+        manual_review_required: false,
+        review_status: "pending",
+        created_at: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.warn("[homepage-chat] Data Center sync warning:", e);
+    }
+  })();
+}
+
 async function runChatPipeline(opts: ChatPipelineOpts): Promise<ChatPipelineResult> {
   const { req, prompt, history, memoryRows, isVoiceMode, fileInput, parsedFileData, lang, profile, guestId, ip, conversationId } = opts;
 
@@ -862,7 +1008,7 @@ async function runChatPipeline(opts: ChatPipelineOpts): Promise<ChatPipelineResu
     summarizedThroughCount: opts.summarizedThroughCount,
     req,
   });
-  const { prompt: fullPrompt, sources } = buildPromptWithHistory(history, prompt, formatMemoryContext(memoryRows), isVoiceMode, contextSummary);
+  const { prompt: fullPrompt, sources } = await buildPromptWithHistory(history, prompt, formatMemoryContext(memoryRows), isVoiceMode, contextSummary);
   opts.onSources?.(sources);
 
   opts.onPhase?.("mencari_jawaban");
@@ -871,6 +1017,7 @@ async function runChatPipeline(opts: ChatPipelineOpts): Promise<ChatPipelineResu
   const gatewayResult = await callGateway(req, fullPrompt, fileInput);
   if (gatewayResult && gatewayResult.text) {
     void logChatTurn({ profile, prompt, responseText: gatewayResult.text, provider: gatewayResult.provider, history, guestId, ip, conversationId });
+    syncToDataCenter({ prompt, responseText: gatewayResult.text, provider: gatewayResult.provider, isVoiceMode, lang });
     return { text: gatewayResult.text, provider: gatewayResult.provider, contextSummary, summarizedThroughCount, sources };
   }
 
@@ -891,6 +1038,7 @@ Jawab secara lisan dengan hangat, natural, dan ringkas (maksimal 2–3 kalimat).
       promptTokens: direct.promptTokens, completionTokens: direct.completionTokens,
       guestId, ip, conversationId,
     });
+    syncToDataCenter({ prompt, responseText: direct.text, provider, isVoiceMode, lang });
     return { text: direct.text, provider, contextSummary, summarizedThroughCount, sources };
   }
 
@@ -904,42 +1052,7 @@ Jawab secara lisan dengan hangat, natural, dan ringkas (maksimal 2–3 kalimat).
     ? "Mohon maaf Utat, saat ini belum ada AI dengan kemampuan membaca gambar yang tersedia untuk memproses file yang dikirim. Coba lagi beberapa saat lagi, atau kirim pertanyaannya dalam bentuk teks ya."
     : simulateReply(prompt, lang, isFirstMsg);
   void logChatTurn({ profile, prompt, responseText: simulatedText, provider: "simulated", history, guestId, ip, conversationId });
-
-  // Non-blocking sync to MyAI OS Master Data Center
-  (async () => {
-    try {
-      if (supabaseAdmin) {
-        const recordId = crypto.randomUUID();
-        await supabaseAdmin.from("gw_data_center").insert({
-          id: recordId,
-          client_app_id: "c4fa9b89-8cf6-4d9c-a68f-3134664536fd", // MyAI Chat app id
-          field_key: isVoiceMode ? "voice_chat_homepage" : GATEWAY_FIELD,
-          source_type: "chatbot_interaction",
-          document_type: isVoiceMode ? "voice_chat" : "text_chat",
-          extracted_data: {
-            source_app: "myai-chat",
-            field_key: isVoiceMode ? "voice_chat_homepage" : GATEWAY_FIELD,
-            provider_display: direct.provider || "Gemini",
-            user_message: prompt.substring(0, 1000),
-            ai_response: simulatedText.substring(0, 2000),
-            is_voice_mode: isVoiceMode,
-            messages: [
-              ...history.map((m) => ({ role: m.role, content: m.content })),
-              { role: "user", content: prompt },
-              { role: "assistant", content: simulatedText },
-            ],
-            processed_at: new Date().toISOString(),
-          },
-          raw_text: `[${isVoiceMode ? "VOICE CHAT" : "HOMEPAGE CHAT"}] User: ${prompt}\n---\nAI: ${simulatedText.slice(0, 500)}`,
-          language: lang,
-          tags: ["homepage", "myai-chat", isVoiceMode ? "voice_interaction" : "text_chat", lang],
-          created_at: new Date().toISOString(),
-        });
-      }
-    } catch (e) {
-      console.warn("[homepage-chat] Ingestion to Data Center warning:", e);
-    }
-  })();
+  syncToDataCenter({ prompt, responseText: simulatedText, provider: direct.provider || "gemini", isVoiceMode, lang });
 
   return { text: simulatedText, provider: "gemini", contextSummary, summarizedThroughCount, sources };
 }

@@ -13,6 +13,7 @@ import DatabaseKamusPanel from "@/components/dashboard/panels/DatabaseKamusPanel
 import DatabaseKnowledgePanel from "@/components/dashboard/panels/DatabaseKnowledgePanel";
 import AksaraPanel from "@/components/dashboard/panels/AksaraPanel";
 import KontribusiPanel from "@/components/dashboard/panels/KontribusiPanel";
+import KnowledgeCandidatesPanel from "@/components/dashboard/panels/KnowledgeCandidatesPanel";
 import MetricsPanel from "@/components/dashboard/panels/MetricsPanel";
 import AiMasterPanel from "@/components/dashboard/panels/AiMasterPanel";
 import LogsPanel from "@/components/dashboard/panels/LogsPanel";
@@ -20,7 +21,7 @@ import ArtikelManagementPanel from "@/components/dashboard/panels/ArtikelManagem
 
 export type AdminPanelKey =
   | "overview" | "messages" | "feedback" | "users" | "verificators" | "kamus" | "knowledge"
-  | "aksara" | "contributions" | "articles" | "metrics" | "ai-master" | "logs";
+  | "aksara" | "contributions" | "knowledge-candidates" | "articles" | "metrics" | "ai-master" | "logs";
 
 interface DashboardProps {
   adminEmail: string;
@@ -63,6 +64,7 @@ export default function Dashboard({ adminEmail }: DashboardProps) {
       case "knowledge": return <DatabaseKnowledgePanel />;
       case "aksara": return <AksaraPanel />;
       case "contributions": return <KontribusiPanel />;
+      case "knowledge-candidates": return <KnowledgeCandidatesPanel />;
       case "articles": return <ArtikelManagementPanel />;
       case "metrics": return <MetricsPanel />;
       case "ai-master": return <AiMasterPanel />;

@@ -1128,3 +1128,48 @@ export async function deleteInstantReply(id: string) {
   const { error } = await db.from("bogani_instant_replies").delete().eq("id", id);
   if (error) throw error;
 }
+
+// ── Kandidat Pengetahuan (gw_data_center, hasil job cron extract-knowledge) ──
+// Beda dari contributions: tidak ada kuorum suara verifikator/skor
+// kontributor (ini saran dari AI, bukan usulan manusia) -- langsung bisa
+// disetujui/ditolak admin/verifikator 1 klik. Lihat
+// app/api/cron/extract-knowledge/route.ts utk bagaimana baris ini terisi.
+
+export interface DataCenterCandidateRow {
+  id: string;
+  raw_text: string | null;
+  extracted_data: Record<string, any> | null;
+  review_status: "pending" | "approved" | "rejected";
+  confidence_score: number | null;
+  created_at: string;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+}
+
+export async function listDataCenterCandidates(status?: string): Promise<DataCenterCandidateRow[]> {
+  const db = assertDb();
+  let q = db
+    .from("gw_data_center")
+    .select("id, raw_text, extracted_data, review_status, confidence_score, created_at, reviewed_by, reviewed_at")
+    .eq("source_type", "chat_memory_fact")
+    .eq("manual_review_required", true)
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (status) q = q.eq("review_status", status);
+  const { data, error } = await q;
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function finalizeDataCenterCandidate(candidateId: string, adminId: string | null, approve: boolean) {
+  const db = assertDb();
+  const { error } = await db
+    .from("gw_data_center")
+    .update({
+      review_status: approve ? "approved" : "rejected",
+      reviewed_by: adminId,
+      reviewed_at: new Date().toISOString(),
+    })
+    .eq("id", candidateId);
+  if (error) throw error;
+}

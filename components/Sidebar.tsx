@@ -3,7 +3,7 @@
 import { useState } from "react";
 import {
   LogOut, Code, ChevronLeft, ChevronRight, LayoutDashboard, MessageSquare, Users, ShieldCheck,
-  BookMarked, Library, Type, FileCheck2, BarChart3, Bot, ScrollText, FileText, ClipboardList
+  BookMarked, Library, Type, FileCheck2, BarChart3, Bot, ScrollText, FileText, ClipboardList, Sparkles
 } from "lucide-react";
 import { Language } from "@/lib/types";
 import { translations } from "@/lib/i18n";
@@ -29,6 +29,7 @@ const NAV_ITEMS: { key: AdminPanelKey; label: string; icon: typeof LayoutDashboa
   { key: "knowledge", label: "Database Knowledge", icon: Library },
   { key: "aksara", label: "Huruf / Abjad Mongondow", icon: Type },
   { key: "contributions", label: "Kontribusi", icon: FileCheck2 },
+  { key: "knowledge-candidates", label: "Celah Pengetahuan (AI)", icon: Sparkles },
   { key: "articles", label: "Kelola Artikel Publik", icon: FileText },
   { key: "metrics", label: "Metrics", icon: BarChart3 },
   { key: "ai-master", label: "Ai Master (Bogani AI)", icon: Bot },
