@@ -2,19 +2,21 @@ import { supabaseAdmin } from "@/lib/supabase";
 import crypto from "crypto";
 
 /**
- * Kontrol pemakaian AI: batas kecil utk tamu (belum login), batas harian utk
- * User biasa, tanpa batas utk verifikator & admin. Dipakai bersama oleh
+ * Kontrol pemakaian AI: batas harian utk tamu (belum login) & User biasa,
+ * tanpa batas utk verifikator & admin. Dipakai bersama oleh
  * app/api/homepage/chat/route.ts (chat Bogani AI) dan
  * app/api/kamus/ai-define/route.ts (tombol AI definisi Kamus).
  *
  * Kebal Refresh, Kebal Incognito, & Kebal Hapus Storage:
- * Identitas tamu diikat pada kombinasi Cookie HttpOnly (mp_guest_id) + SHA256 Hash IP Address.
- * Sekali jatah 5 pertanyaan habis, user TIDAK BISA mereset walau buka Incognito / hapus cookie.
+ * Identitas tamu diikat pada kombinasi Cookie HttpOnly (mp_guest_id) + SHA256 Hash IP Address
+ * -- tidak bisa disiasati dgn Incognito/hapus cookie. TAPI kuotanya reset tiap 24 jam
+ * (window_started_at di tabel guest_usage), bukan seumur hidup.
  */
 
-export const GUEST_QUESTION_LIMIT = 7;
-export const USER_DAILY_QUESTION_LIMIT = 35;
+export const GUEST_QUESTION_LIMIT = 15;
+export const USER_DAILY_QUESTION_LIMIT = 45;
 export const GUEST_COOKIE_NAME = "mp_guest_id";
+const GUEST_WINDOW_MS = 24 * 60 * 60 * 1000;
 const UNLIMITED_ROLES = new Set(["admin", "verificator", "developer", "vip", "owner"]);
 
 export interface QuotaCheckResult {
@@ -47,9 +49,16 @@ export function setGuestCookieHeader(res: Response, guestId: string): void {
   );
 }
 
+/** true kalau window 24 jam sejak windowStartedAt sudah lewat -- kuota dianggap 0/reset. */
+function isGuestWindowExpired(windowStartedAt: string | null | undefined): boolean {
+  if (!windowStartedAt) return true;
+  return Date.now() - new Date(windowStartedAt).getTime() >= GUEST_WINDOW_MS;
+}
+
 /**
  * Cek kuota tamu berdasarkan guest_id DAN IP Hash (server-side).
  * Kebal Incognito & Hapus Cookie karena jika cookie hilang, server tetap mengenali IP Hash-nya!
+ * Kuota reset otomatis tiap 24 jam (lihat window_started_at).
  */
 export async function checkGuestQuota(guestId: string, rawIp: string = "127.0.0.1"): Promise<QuotaCheckResult> {
   if (!supabaseAdmin) return { allowed: true, remaining: GUEST_QUESTION_LIMIT };
@@ -59,20 +68,20 @@ export async function checkGuestQuota(guestId: string, rawIp: string = "127.0.0.
     // 1. Cek berdasarkan guest_id terlebih dahulu
     const { data: byGuestId } = await supabaseAdmin
       .from("guest_usage")
-      .select("question_count")
+      .select("question_count, window_started_at")
       .eq("guest_id", guestId)
       .maybeSingle();
 
-    let used = byGuestId?.question_count ?? 0;
+    let used = byGuestId && !isGuestWindowExpired(byGuestId.window_started_at) ? byGuestId.question_count ?? 0 : 0;
 
     // 2. Jika cookie baru/hilang (misal di Incognito), cek fallback berdasarkan ip_address
     if (used === 0) {
       const { data: byIp } = await supabaseAdmin
         .from("guest_usage")
-        .select("question_count")
+        .select("question_count, window_started_at")
         .eq("ip_address", ipHash)
         .maybeSingle();
-      if (byIp) {
+      if (byIp && !isGuestWindowExpired(byIp.window_started_at)) {
         used = byIp.question_count ?? 0;
       }
     }
@@ -81,7 +90,7 @@ export async function checkGuestQuota(guestId: string, rawIp: string = "127.0.0.
       return {
         allowed: false,
         remaining: 0,
-        message: `Anda sudah menggunakan jatah ${GUEST_QUESTION_LIMIT} pertanyaan gratis sebagai tamu. Silakan masuk atau buat akun gratis untuk terus menggunakan Bogani AI.`,
+        message: `Anda sudah menggunakan jatah ${GUEST_QUESTION_LIMIT} pertanyaan gratis sebagai tamu untuk 24 jam terakhir. Silakan masuk/buat akun gratis untuk kuota lebih besar, atau coba lagi setelah jatah harian direset.`,
       };
     }
     return { allowed: true, remaining: GUEST_QUESTION_LIMIT - used };
@@ -93,16 +102,18 @@ export async function checkGuestQuota(guestId: string, rawIp: string = "127.0.0.
 
 /**
  * Tambah hitungan tamu +1 setelah AI berhasil menjawab.
- * Diikat pada guest_id DAN IP Hash agar tidak bisa disiasati.
+ * Diikat pada guest_id DAN IP Hash agar tidak bisa disiasati. Reset otomatis
+ * ke 1 (bukan +1 dari count lama) kalau window 24 jam sebelumnya sudah lewat.
  */
 export async function incrementGuestQuota(guestId: string, rawIp: string): Promise<void> {
   if (!supabaseAdmin) return;
   const ipHash = hashIpAddress(rawIp);
+  const now = new Date().toISOString();
 
   try {
     const { data: existing } = await supabaseAdmin
       .from("guest_usage")
-      .select("question_count, guest_id")
+      .select("question_count, guest_id, window_started_at")
       .or(`guest_id.eq.${guestId},ip_address.eq.${ipHash}`)
       .maybeSingle();
 
@@ -110,15 +121,28 @@ export async function incrementGuestQuota(guestId: string, rawIp: string): Promi
       await supabaseAdmin.from("guest_usage").insert({
         guest_id: guestId,
         ip_address: ipHash,
-        question_count: 1
+        question_count: 1,
+        window_started_at: now,
       });
+    } else if (isGuestWindowExpired(existing.window_started_at)) {
+      // Window 24 jam sebelumnya sudah habis -- mulai window baru dari 1,
+      // bukan menumpuk dari count lama.
+      await supabaseAdmin
+        .from("guest_usage")
+        .update({
+          question_count: 1,
+          window_started_at: now,
+          ip_address: ipHash,
+          last_seen_at: now,
+        })
+        .eq("guest_id", existing.guest_id);
     } else {
       await supabaseAdmin
         .from("guest_usage")
         .update({
           question_count: existing.question_count + 1,
           ip_address: ipHash,
-          last_seen_at: new Date().toISOString()
+          last_seen_at: now,
         })
         .eq("guest_id", existing.guest_id);
     }
