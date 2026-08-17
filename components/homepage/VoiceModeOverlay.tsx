@@ -34,6 +34,18 @@ function getSilentAudioBlobUrl(): string {
   return silentAudioBlobUrl;
 }
 
+// Nama suara nyata, dikonfirmasi lewat Google Cloud TTS voices:list API
+// (bukan tebakan) -- semua id-ID-Chirp3-HD. Key localStorage sengaja beda
+// dari `setting_voice_type` di SettingsModal.tsx (itu enum lama yg tidak
+// terhubung ke pipeline Google TTS ini sama sekali).
+const DEFAULT_ID_VOICE = "id-ID-Chirp3-HD-Aoede";
+const VOICE_OPTIONS: { id: string; label: string }[] = [
+  { id: "id-ID-Chirp3-HD-Aoede", label: "Aoede (Wanita, Hangat)" },
+  { id: "id-ID-Chirp3-HD-Puck", label: "Puck (Pria, Ceria)" },
+  { id: "id-ID-Chirp3-HD-Kore", label: "Kore (Wanita, Tegas)" },
+];
+const VOICE_STORAGE_KEY = "bogani_voice_name";
+
 export default function VoiceModeOverlay({
   isOpen,
   onClose,
@@ -47,6 +59,7 @@ export default function VoiceModeOverlay({
   const [errorMessage, setErrorMessage] = useState("");
   const [permissionState, setPermissionState] = useState<'granted' | 'prompt' | 'denied' | 'unknown'>('unknown');
   const [audioLevel, setAudioLevel] = useState(0);
+  const [selectedVoice, setSelectedVoice] = useState<string>(DEFAULT_ID_VOICE);
 
   // Perekaman suara pengguna (Google Cloud STT, lihat app/api/voice/stt).
   // CATATAN JUJUR soal batasan: ini BUKAN transkripsi live kata-per-kata --
@@ -77,6 +90,11 @@ export default function VoiceModeOverlay({
   const analyserRef = useRef<AnalyserNode | null>(null);
   const micStreamRef = useRef<MediaStream | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(VOICE_STORAGE_KEY);
+    if (saved && VOICE_OPTIONS.some((v) => v.id === saved)) setSelectedVoice(saved);
+  }, []);
 
   useEffect(() => {
     if (typeof navigator !== "undefined" && navigator.permissions && navigator.permissions.query) {
@@ -173,6 +191,21 @@ export default function VoiceModeOverlay({
     if (audioObjectUrlRef.current) {
       URL.revokeObjectURL(audioObjectUrlRef.current);
       audioObjectUrlRef.current = null;
+    }
+  };
+
+  // Mute HANYA pause (beda dari stopAiAudio yg juga revoke blob URL) --
+  // supaya unmute bisa lanjutkan dari posisi yg sama, bukan suara hilang
+  // permanen. stopAiAudio tetap dipakai apa adanya utk kasus interupsi
+  // giliran baru (startRecording/stopVoiceSession), itu memang niatnya buang.
+  const pauseAiAudio = () => {
+    persistentAudioRef.current?.pause();
+  };
+
+  const resumeAiAudio = () => {
+    const audio = persistentAudioRef.current;
+    if (audio && audioObjectUrlRef.current && audio.paused && !audio.ended) {
+      audio.play().catch((err) => console.warn("Resume AI audio failed:", err));
     }
   };
 
@@ -436,7 +469,7 @@ export default function VoiceModeOverlay({
       const res = await fetch("/api/voice/tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: cleanText, languageCode: lang }),
+        body: JSON.stringify({ text: cleanText, languageCode: lang, voiceName: selectedVoice }),
       });
       if (!res.ok) {
         const errBody = await res.json().catch(() => ({}));
@@ -634,14 +667,15 @@ export default function VoiceModeOverlay({
         </div>
       </div>
 
-      {/* Bawah: cuma tombol Mute -- kontrol bicara SUDAH di orb utama di
-          atas, sengaja tidak diduplikat di sini supaya tidak ada 2 tombol
-          beda yg membingungkan. */}
-      <div className="w-full max-w-md flex items-center justify-center">
+      {/* Bawah: tombol Mute + pemilih karakter suara -- kontrol bicara SUDAH
+          di orb utama di atas, sengaja tidak diduplikat di sini supaya tidak
+          ada 2 tombol beda yg membingungkan. */}
+      <div className="w-full max-w-md flex items-center justify-center gap-3 flex-wrap">
         <button
           onClick={() => {
-            setIsMuted(!isMuted);
-            if (!isMuted) stopAiAudio();
+            const nextMuted = !isMuted;
+            setIsMuted(nextMuted);
+            if (nextMuted) pauseAiAudio(); else resumeAiAudio();
           }}
           className={`p-4 rounded-full transition-all duration-200 border flex items-center gap-2 ${
             isMuted
@@ -655,6 +689,27 @@ export default function VoiceModeOverlay({
             {isMuted ? (lang === 'id' ? 'Suara AI Dimatikan' : 'AI Voice Muted') : (lang === 'id' ? 'Suara AI Aktif' : 'AI Voice On')}
           </span>
         </button>
+
+        {/* Cuma ditampilkan saat idle -- ganti suara di tengah AI bicara
+            tidak terdengar efeknya sampai giliran berikutnya, jadi
+            disembunyikan supaya tidak terkesan "kok gak berubah". */}
+        {status === 'idle' && (
+          <select
+            value={selectedVoice}
+            onChange={(e) => {
+              setSelectedVoice(e.target.value);
+              localStorage.setItem(VOICE_STORAGE_KEY, e.target.value);
+            }}
+            className="px-3 py-2 rounded-full bg-white/10 text-white border border-white/10 hover:bg-white/20 text-sm font-medium transition-all duration-200 cursor-pointer"
+            title={lang === 'id' ? "Pilih Karakter Suara" : "Choose Voice Character"}
+          >
+            {VOICE_OPTIONS.map((v) => (
+              <option key={v.id} value={v.id} className="bg-neutral-900 text-white">
+                {v.label}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
     </div>
   );

@@ -12,6 +12,23 @@ const DEFAULT_VOICE = process.env.GOOGLE_TTS_VOICE_NAME || "id-ID-Chirp3-HD-Aoed
 
 export const maxDuration = 45;
 
+function escapeSsml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+// Sisipkan jeda pendek sesudah tanda baca akhir kalimat supaya ritme bicara
+// tidak datar/monoton -- SSML, bukan sekadar text mentah spt sebelumnya.
+function buildSsml(text: string): string {
+  const escaped = escapeSsml(text);
+  const withBreaks = escaped.replace(/([.!?])(\s+)/g, `$1<break time="300ms"/>$2`);
+  return `<speak>${withBreaks}</speak>`;
+}
+
 export async function POST(req: NextRequest) {
   const apiKey = process.env.GOOGLE_CLOUD_SPEECH_API_KEY;
   if (!apiKey) {
@@ -45,7 +62,7 @@ export async function POST(req: NextRequest) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        input: { text: clipped },
+        input: { ssml: buildSsml(clipped) },
         voice: { languageCode, name: voiceName },
         audioConfig: { audioEncoding: "MP3", speakingRate: 1.0 },
       }),
