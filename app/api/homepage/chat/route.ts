@@ -173,7 +173,14 @@ function extractMemoryCandidates(prompt: string): { content: string; category: U
 // yg sudah lebih dulu membatasi ke -8 pesan.
 const MAX_HISTORY_MESSAGES = 20;
 
-function buildPromptWithHistory(history: HomeChatMessage[], prompt: string, memoryCtx: string = ""): string {
+// Dulu instruksi ini cuma ditempel ke systemPrompt yg dipakai callProviderDirect
+// (jalur fallback yg nyaris tak pernah kena krn callGateway hampir selalu
+// berhasil duluan) -- jadi di praktiknya nyaris tidak pernah benar2 sampai
+// ke AI. Sekarang ditaruh di sini supaya ikut fullPrompt yg dikirim ke
+// callGateway (jalur yg SUNGGUHAN dipakai), utk kedua jalur sekaligus.
+const VOICE_MODE_DIRECTIVE = `[MODE SUARA LANGSUNG AKTIF]: Balasan ini akan DIUCAPKAN keras (text-to-speech), bukan dibaca sbg teks. Jawab dgn hangat & natural spt bicara langsung, ringkas tapi tidak dipotong paksa (idealnya 2-4 kalimat utk topik ringan, boleh lebih panjang kalau pertanyaannya memang butuh penjelasan, tapi tetap dalam gaya lisan bukan tulisan formal). JANGAN PERNAH pakai pemformatan markdown (bold **, bullet -, tabel |, header #) krn semua itu akan diucapkan literal & terdengar aneh. Ucapkan nama tempat & kosa kata Mongondow dgn fonetik yg jernih.`;
+
+function buildPromptWithHistory(history: HomeChatMessage[], prompt: string, memoryCtx: string = "", isVoiceMode: boolean = false): string {
   const kamusCtx = getKamusContext(prompt);
   const languageMixCtx = getLanguageMixContext(prompt);
   let knowledgeCtx = "";
@@ -183,7 +190,7 @@ function buildPromptWithHistory(history: HomeChatMessage[], prompt: string, memo
     console.warn("[homepage-chat] Failed retrieving knowledge context:", e);
   }
 
-  const personaHeader = `[SYSTEM INSTRUCTION BOGANI AI]:\n${SYSTEM_PROMPT_ID}\n\n`;
+  const personaHeader = `[SYSTEM INSTRUCTION BOGANI AI]:\n${SYSTEM_PROMPT_ID}${isVoiceMode ? `\n\n${VOICE_MODE_DIRECTIVE}` : ""}\n\n`;
   const fullPrompt = prompt + kamusCtx + languageMixCtx + memoryCtx + knowledgeCtx;
   const isFirstTurn = !Array.isArray(history) || history.length === 0;
 
@@ -294,7 +301,7 @@ function simulateReply(prompt: string, lang: Language, isFirstMessage: boolean =
 /**
  * Preferred path: call Gateway AI (MYAI_OS_GATEWAY_URL or local /api/v1/chat/completions)
  */
-async function callGateway(req: NextRequest, fullPrompt: string, fileData?: string | null, isVoiceMode?: boolean): Promise<{ text: string; provider: string; visionUnavailable?: boolean } | null> {
+async function callGateway(req: NextRequest, fullPrompt: string, fileData?: string | null): Promise<{ text: string; provider: string; visionUnavailable?: boolean } | null> {
   const gatewayKey = process.env.MYAI_OS_GATEWAY_API_KEY || process.env.HOMEPAGE_GATEWAY_API_KEY;
   if (!gatewayKey) return null;
 
@@ -312,7 +319,12 @@ async function callGateway(req: NextRequest, fullPrompt: string, fileData?: stri
           Authorization: `Bearer ${gatewayKey}`,
         },
         body: JSON.stringify({
-          field: isVoiceMode ? "chatbot_general" : GATEWAY_FIELD,
+          // Dulu voice mode dialihkan ke field "chatbot_general" -- artinya
+          // persona Bogani AI (gaya Manado/Mongondow, aturan Niondon, dst)
+          // TIDAK pernah dipakai sama sekali di mode suara, field itu punya
+          // persona server-side sendiri yg beda. Disamakan ke GATEWAY_FIELD
+          // spy mode suara benar2 Bogani AI, bukan AI generik lain.
+          field: GATEWAY_FIELD,
           messages: [{ role: "user", content: fullPrompt }],
           file: fileData || undefined,
         }),
@@ -696,7 +708,7 @@ export async function POST(req: NextRequest) {
     profile ? listUserMemory(profile.id).catch(() => []) : Promise.resolve([]),
   ]);
 
-  const fullPrompt = buildPromptWithHistory(history, prompt, formatMemoryContext(memoryRows));
+  const fullPrompt = buildPromptWithHistory(history, prompt, formatMemoryContext(memoryRows), isVoiceMode);
 
   if (!quota.allowed) {
     const blocked = NextResponse.json(
@@ -708,7 +720,7 @@ export async function POST(req: NextRequest) {
   }
 
   // 1. Preferred: route through the AI Gateway (myai.nexus or local) as a registered client app.
-  const gatewayResult = await callGateway(req, fullPrompt, fileInput, isVoiceMode);
+  const gatewayResult = await callGateway(req, fullPrompt, fileInput);
   if (gatewayResult && gatewayResult.text) {
     void logChatTurn({ profile, prompt, responseText: gatewayResult.text, provider: gatewayResult.provider, history, guestId, ip, conversationId });
     if (wantStream) {

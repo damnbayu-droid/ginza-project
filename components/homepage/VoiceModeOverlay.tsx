@@ -330,12 +330,26 @@ export default function VoiceModeOverlay({
     }
   };
 
+  // Dulu dipotong keras di 450 karakter (~70-90 kata) -- jawaban AI yg lebih
+  // panjang dari itu kepotong di tengah kalimat saat diucapkan, padahal
+  // teks penuhnya tetap tampil utuh di subtitle (mismatch: apa yg dibaca
+  // beda dgn apa yg didengar). Batas dinaikkan jauh & sekarang dipotong di
+  // akhir kalimat terdekat (bukan mentah di tengah kata) kalau memang masih
+  // melebihi batas.
+  const MAX_SPEAKABLE_CHARS = 1600;
+
   const cleanTextForPhonetics = (text: string): string => {
     const stripped = text
       .replace(/[*_#`~]/g, '')
-      .replace(/\[.*?\]\(.*?\)/g, '')
-      .slice(0, 450);
-    return toSpeakableMongondow(stripped);
+      .replace(/\[.*?\]\(.*?\)/g, '');
+
+    let limited = stripped;
+    if (stripped.length > MAX_SPEAKABLE_CHARS) {
+      const window = stripped.slice(0, MAX_SPEAKABLE_CHARS);
+      const lastBoundary = Math.max(window.lastIndexOf('. '), window.lastIndexOf('! '), window.lastIndexOf('? '), window.lastIndexOf('.\n'));
+      limited = lastBoundary > MAX_SPEAKABLE_CHARS * 0.5 ? window.slice(0, lastBoundary + 1) : window;
+    }
+    return toSpeakableMongondow(limited);
   };
 
   const speakResponse = (text: string) => {
