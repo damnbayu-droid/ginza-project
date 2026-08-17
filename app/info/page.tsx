@@ -27,7 +27,8 @@ import {
   HeartHandshake,
   Building2,
   GraduationCap,
-  Mail
+  Mail,
+  Heart
 } from "lucide-react";
 
 export default function InfoPage() {
@@ -168,13 +169,24 @@ export default function InfoPage() {
             </a>
           </div>
 
-          <Link
-            href="/"
-            className="self-start sm:self-auto text-xs font-semibold px-3 py-1.5 rounded-xl border border-[#252833] bg-[#111318] text-gray-300 hover:text-white hover:border-gray-600 transition-all flex items-center gap-1.5 shrink-0"
-          >
-            <span>Kembali ke Beranda</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+          <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+            <a
+              href="https://pay.doku.com/p-link/p/mongondowpedia"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-rose-500/30 bg-rose-600/10 text-rose-400 hover:bg-rose-600/20 transition-all flex items-center gap-1.5"
+            >
+              <Heart className="w-3.5 h-3.5 fill-rose-400/20" />
+              <span>Donasi</span>
+            </a>
+            <Link
+              href="/"
+              className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-[#252833] bg-[#111318] text-gray-300 hover:text-white hover:border-gray-600 transition-all flex items-center gap-1.5"
+            >
+              <span>Kembali ke Beranda</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
         </div>
 
         {/* Page Hero Header */}
