@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { getCurrentUserProfile } from "@/lib/supabase-auth-server";
+import { checkGuestQuota, checkUserQuota, getOrCreateGuestId, setGuestCookieHeader } from "@/lib/ai-usage-quota";
 
 /**
  * Speech-to-Text Bogani AI Voice Mode via Google Cloud STT -- menggantikan
@@ -28,12 +30,29 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Google Cloud Speech API key belum dikonfigurasi" }, { status: 503 });
   }
 
-  // Sama spt TTS -- endpoint ini manggil API berbayar tanpa kuota AI chat
-  // yg sudah ada, jadi wajib rate limit per-IP sendiri.
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
   const rateCheck = await checkRateLimit(ip, RATE_LIMITS.VOICE_STT);
   if (!rateCheck.allowed) {
     return NextResponse.json({ error: "Terlalu banyak permintaan suara, coba lagi sebentar lagi." }, { status: 429 });
+  }
+
+  // Ini AWAL dari 1 giliran suara (STT -> chat -> TTS). Kuota AI harian yg
+  // SAMA dgn chat teks (lib/ai-usage-quota.ts, 15 tamu/45 user per hari)
+  // dicek DI SINI, sebelum transkripsi, supaya kalau memang sudah pasti
+  // bakal ditolak di langkah chat, tidak usah buang biaya STT dulu. TIDAK
+  // increment di sini -- increment sungguhan tetap terjadi sekali di
+  // /api/homepage/chat (logChatTurn), spy 1 giliran suara = 1 pemakaian
+  // kuota, bukan dobel dihitung.
+  const profile = await getCurrentUserProfile().catch(() => null);
+  const guestId = profile ? null : getOrCreateGuestId(req.headers.get("cookie")).guestId;
+  const quota = profile
+    ? await checkUserQuota(profile.id, profile.role)
+    : await checkGuestQuota(guestId!, ip);
+
+  if (!quota.allowed) {
+    const blocked = NextResponse.json({ error: quota.message, quotaExceeded: true, requiresAuth: !profile }, { status: 403 });
+    if (guestId) setGuestCookieHeader(blocked, guestId);
+    return blocked;
   }
 
   const body = await req.json().catch(() => ({}));

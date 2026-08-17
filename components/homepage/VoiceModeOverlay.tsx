@@ -354,6 +354,16 @@ export default function VoiceModeOverlay({
           body: JSON.stringify({ audio: base64, mimeType: blob.type, languageCode: lang }),
         });
         const data = await res.json().catch(() => ({}));
+
+        // Kuota harian habis (sama persis dgn kuota chat teks, lib/ai-usage-quota.ts)
+        // -- tampilkan pesan aslinya, jangan disamakan dgn "tidak menangkap
+        // ucapan" yg bikin user bingung dikira mic-nya bermasalah.
+        if (res.status === 403 && data.quotaExceeded) {
+          setErrorMessage(data.error || (lang === 'id' ? "Jatah pertanyaan AI harian sudah habis." : "Daily AI question quota reached."));
+          setStatus('idle');
+          return;
+        }
+
         const captured = (data.transcript || "").trim();
 
         if (captured.length > 0) {
