@@ -519,6 +519,8 @@ export default function HomeApp() {
           return aiReply;
         }}
         lang={lang}
+        currentPhase={currentPhase}
+        currentSources={currentSources}
       />
     </div>
   );

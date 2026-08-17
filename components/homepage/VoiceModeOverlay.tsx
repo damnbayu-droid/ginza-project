@@ -4,12 +4,17 @@ import { useEffect, useRef, useState } from "react";
 import { Mic, MicOff, X, Volume2, Loader2, AlertCircle, ShieldAlert } from "lucide-react";
 import MyAILogo from "./MyAILogo";
 import { toSpeakableMongondow } from "@/lib/mongondow-pronunciation";
+import { useBoganiThinkingDisplay, type RealPhase } from "@/lib/use-bogani-thinking";
 
 interface VoiceModeOverlayProps {
   isOpen: boolean;
   onClose: () => void;
   onSendVoiceMessage: (text: string, isVoiceInput?: boolean) => Promise<string>;
   lang: 'id' | 'en';
+  /** Fase NYATA giliran yg sedang diproses (event SSE `phase` dari HomeApp.tsx) -- sama persis dgn yg dipakai BoganiThinkingIndicator di chat teks. */
+  currentPhase: RealPhase | null;
+  /** Sumber (Kamus/Knowledge Base/Data Percakapan) yg benar2 dipakai giliran ini (event SSE `sources`). */
+  currentSources: string[];
 }
 
 // Batas aman lama rekaman kalau tombol ditahan kelewat lama (bukan trigger
@@ -50,7 +55,9 @@ export default function VoiceModeOverlay({
   isOpen,
   onClose,
   onSendVoiceMessage,
-  lang
+  lang,
+  currentPhase,
+  currentSources
 }: VoiceModeOverlayProps) {
   const [status, setStatus] = useState<'listening' | 'processing' | 'speaking' | 'idle'>('idle');
   const [transcript, setTranscript] = useState("");
@@ -60,6 +67,17 @@ export default function VoiceModeOverlay({
   const [permissionState, setPermissionState] = useState<'granted' | 'prompt' | 'denied' | 'unknown'>('unknown');
   const [audioLevel, setAudioLevel] = useState(0);
   const [selectedVoice, setSelectedVoice] = useState<string>(DEFAULT_ID_VOICE);
+  // Preview LANGSUNG (live caption) selagi tombol ditahan -- pakai
+  // SpeechRecognition BAWAAN BROWSER (gratis, betulan real-time kata-per-
+  // kata), MURNI utk tampilan visual/sensitivitas ("apa yg sedang direkam").
+  // TRANSKRIP SUNGGUHAN yg dipakai utk menjawab TETAP dari Google Cloud STT
+  // (lebih akurat/konsisten, lihat startRecording/onstop di bawah) -- dua
+  // mekanisme terpisah, jangan tertukar. Kalau browser tidak dukung
+  // SpeechRecognition (mis. Safari lama), live preview cuma tidak muncul,
+  // alur rekam+kirim inti tidak terganggu sama sekali.
+  const [liveTranscript, setLiveTranscript] = useState("");
+  const speechRecognitionRef = useRef<any>(null);
+  const { displayWord: thinkingWord, isTyping: thinkingIsTyping, currentSource: thinkingSource } = useBoganiThinkingDisplay(currentPhase, currentSources);
 
   // Perekaman suara pengguna (Google Cloud STT, lihat app/api/voice/stt).
   // CATATAN JUJUR soal batasan: ini BUKAN transkripsi live kata-per-kata --
@@ -209,8 +227,49 @@ export default function VoiceModeOverlay({
     }
   };
 
+  // Live preview kata-per-kata pakai SpeechRecognition bawaan browser --
+  // MURNI visual, dijalankan PARALEL dgn MediaRecorder (yg tetap jadi
+  // sumber audio sungguhan dikirim ke Google Cloud STT). Kalau browser
+  // tidak dukung, fungsi ini no-op diam2 (fitur inti tak terganggu).
+  function startLiveTranscriptPreview() {
+    const SpeechRecognitionCtor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognitionCtor) return; // browser tak dukung -- live preview cuma tak muncul
+
+    try {
+      const recognition = new SpeechRecognitionCtor();
+      recognition.lang = lang === 'id' ? 'id-ID' : 'en-US';
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      recognition.onresult = (event: any) => {
+        let combined = "";
+        for (let i = 0; i < event.results.length; i++) {
+          combined += event.results[i][0].transcript;
+        }
+        setLiveTranscript(combined.trim());
+      };
+      recognition.onerror = () => {
+        // Diam2 abaikan (mis. "no-speech", "aborted") -- ini cuma preview,
+        // transkrip sungguhan tetap dari Google Cloud STT stlh tombol dilepas.
+      };
+
+      recognition.start();
+      speechRecognitionRef.current = recognition;
+    } catch (e) {
+      console.warn("Live transcript preview unavailable:", e);
+    }
+  }
+
+  function stopLiveTranscriptPreview() {
+    if (speechRecognitionRef.current) {
+      try { speechRecognitionRef.current.stop(); } catch {}
+      speechRecognitionRef.current = null;
+    }
+  }
+
   const stopVoiceSession = () => {
     cleanupAudioResources();
+    stopLiveTranscriptPreview();
     if (maxDurationTimeoutRef.current) {
       clearTimeout(maxDurationTimeoutRef.current);
       maxDurationTimeoutRef.current = null;
@@ -223,6 +282,7 @@ export default function VoiceModeOverlay({
     stopAiAudio();
     setStatus('idle');
     setAudioLevel(0);
+    setLiveTranscript("");
   };
 
   // Mic stream + analyser dipakai utk meter level visual selama tombol
@@ -402,7 +462,9 @@ export default function VoiceModeOverlay({
 
     setErrorMessage("");
     setTranscript("");
+    setLiveTranscript("");
     setStatus('listening');
+    startLiveTranscriptPreview();
 
     try {
       recorder.start(250);
@@ -421,6 +483,7 @@ export default function VoiceModeOverlay({
 
   // --- Push-to-talk: berhenti & kirim saat tombol DILEPAS ---
   const stopRecordingAndSend = () => {
+    stopLiveTranscriptPreview();
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop(); // memicu onstop -> kirim ke STT
     }
@@ -617,12 +680,37 @@ export default function VoiceModeOverlay({
         <div className="text-center space-y-3 max-w-md px-4">
           <p className="text-lg font-medium tracking-wide text-white/95">
             {status === 'listening' && (lang === 'id' ? 'Mendengarkan... (lepas tombol utk kirim)' : 'Listening... (release to send)')}
-            {status === 'processing' && (lang === 'id' ? 'Bogani AI sedang berpikir...' : 'Bogani AI is thinking...')}
+            {status === 'processing' && (
+              <span className="italic inline-flex items-center">
+                {thinkingWord}
+                <span className={`inline-block w-[2px] h-4 ml-0.5 bg-cyan-400 align-middle ${thinkingIsTyping ? "opacity-100" : "opacity-0 animate-pulse"}`} />
+              </span>
+            )}
             {status === 'speaking' && (lang === 'id' ? 'Bogani AI sedang berbicara... (tekan utk menyela)' : 'Bogani AI is speaking... (press to interrupt)')}
             {status === 'idle' && (lang === 'id' ? 'Tekan & Tahan Tombol untuk Bicara' : 'Press & Hold the Button to Talk')}
           </p>
 
-          {transcript && (
+          {/* Sumber (Kamus/Knowledge/Data Percakapan) yg benar2 dipakai
+              giliran ini, bergantian cepat -- sama persis dgn BoganiThinkingIndicator
+              di chat teks (lib/use-bogani-thinking.ts). */}
+          {status === 'processing' && thinkingSource && (
+            <p className="text-[11px] text-gray-500 flex items-center justify-center gap-1.5">
+              <span className="opacity-60 shrink-0">📄</span>
+              <span key={thinkingSource} className="animate-pop-up-smooth truncate max-w-[280px]">{thinkingSource}</span>
+            </p>
+          )}
+
+          {/* Preview LANGSUNG selagi tombol ditahan (SpeechRecognition
+              browser, murni visual -- lihat startLiveTranscriptPreview()).
+              Transkrip SUNGGUHAN yg dipakai menjawab tetap dari Google Cloud
+              STT, muncul di bawah SETELAH tombol dilepas (blok berikutnya). */}
+          {status === 'listening' && liveTranscript && (
+            <p className="text-sm text-cyan-300 italic bg-cyan-950/40 px-4 py-2.5 rounded-xl border border-cyan-800/50 max-h-24 overflow-y-auto shadow-inner">
+              &ldquo;{liveTranscript}&rdquo;
+            </p>
+          )}
+
+          {transcript && status !== 'listening' && (
             <p className="text-sm text-cyan-300 italic bg-cyan-950/40 px-4 py-2.5 rounded-xl border border-cyan-800/50 max-h-24 overflow-y-auto shadow-inner">
               &ldquo;{transcript}&rdquo;
             </p>

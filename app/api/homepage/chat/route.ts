@@ -339,6 +339,34 @@ async function getConversationDataContext(userPrompt: string): Promise<ContextRe
   }
 }
 
+/**
+ * Gabung beberapa daftar sumber jadi SATU array yg diselang-seling
+ * round-robin antar kategori (bukan disambung mentah2 blok-per-blok) --
+ * kalau tidak, kategori dgn hasil paling banyak (biasanya Kamus, bisa
+ * sampai 25 entri vs 3-8 kategori lain) akan mendominasi tampilan cepat-
+ * bergantian di BoganiThinkingIndicator/VoiceModeOverlay: user cuma lihat
+ * beberapa detik pertama dari array yg sangat panjang, jadi TERASA cuma
+ * "loop Kamus doang" & ritme cepat/lambat yg dirancang tidak pernah
+ * kelihatan (baru muncul jauh di tengah array yg keburu tak sempat
+ * ditonton). Dibatasi ke MAX_INTERLEAVED_SOURCES total spy satu putaran
+ * penuh (dgn ritme cepat-lambat-cepatnya) selesai dlm hitungan detik,
+ * bukan puluhan detik.
+ */
+const MAX_INTERLEAVED_SOURCES = 16;
+function interleaveSources(...lists: string[][]): string[] {
+  const result: string[] = [];
+  const maxLen = Math.max(0, ...lists.map((l) => l.length));
+  for (let i = 0; i < maxLen && result.length < MAX_INTERLEAVED_SOURCES; i++) {
+    for (const list of lists) {
+      if (i < list.length) {
+        result.push(list[i]);
+        if (result.length >= MAX_INTERLEAVED_SOURCES) break;
+      }
+    }
+  }
+  return result;
+}
+
 async function buildPromptWithHistory(history: HomeChatMessage[], prompt: string, memoryCtx: string = "", isVoiceMode: boolean = false, compactSummary: string = ""): Promise<PromptWithHistoryResult> {
   const kamusCtx = getKamusContext(prompt);
   const languageMixCtx = getLanguageMixContext(prompt);
@@ -349,12 +377,15 @@ async function buildPromptWithHistory(history: HomeChatMessage[], prompt: string
     console.warn("[homepage-chat] Failed retrieving knowledge context:", e);
   }
   const convoDataCtx = await getConversationDataContext(prompt);
-  const sources: string[] = [
-    ...kamusCtx.sources,
-    ...languageMixCtx.sources,
-    ...knowledgeCtx.sources.map((s) => `Knowledge: ${prettifyKnowledgeSource(s)}`),
-    ...convoDataCtx.sources,
-  ];
+  // Urutan list menentukan prioritas SAAT SERI (i sama) -- Knowledge &
+  // Data Percakapan didahulukan drpd Kamus/Kosakata krn itu yg paling
+  // "menunjukkan AI benar2 riset", Kamus/Kosakata cenderung generik.
+  const sources: string[] = interleaveSources(
+    knowledgeCtx.sources.map((s) => `Knowledge: ${prettifyKnowledgeSource(s)}`),
+    convoDataCtx.sources,
+    kamusCtx.sources,
+    languageMixCtx.sources
+  );
 
   const personaHeader = `[SYSTEM INSTRUCTION BOGANI AI]:\n${SYSTEM_PROMPT_ID}${isVoiceMode ? `\n\n${VOICE_MODE_DIRECTIVE}` : ""}\n\n`;
   const fullPrompt = prompt + kamusCtx.text + languageMixCtx.text + memoryCtx + knowledgeCtx.text + convoDataCtx.text;
