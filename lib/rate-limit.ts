@@ -112,4 +112,6 @@ export const RATE_LIMITS = {
   FORGOT_PASSWORD: { endpoint: "auth/forgot-password", maxRequests: 1, windowMinutes: 60 },
   GEMINI: { endpoint: "gemini/query", maxRequests: 20, windowMinutes: 60 },
   HOMEPAGE_CHAT: { endpoint: "homepage/chat", maxRequests: 30, windowMinutes: 1 },
+  VOICE_TTS: { endpoint: "voice/tts", maxRequests: 30, windowMinutes: 1 },
+  VOICE_STT: { endpoint: "voice/stt", maxRequests: 30, windowMinutes: 1 },
 } as const;

@@ -12,6 +12,14 @@ interface VoiceModeOverlayProps {
   lang: 'id' | 'en';
 }
 
+// Ambang volume (skala 0-100 dari analyser) & waktu diam sebelum rekaman
+// dianggap selesai bicara -- dipakai loop VAD di updateVolume(). Beda dari
+// ambang barge-in (35) yg sengaja lebih tinggi (harus "cukup keras utk
+// menyela", bukan cuma "mulai bicara").
+const SPEECH_LEVEL_THRESHOLD = 12;
+const SILENCE_STOP_MS = 1400;
+const MAX_RECORDING_MS = 25000;
+
 export default function VoiceModeOverlay({
   isOpen,
   onClose,
@@ -26,28 +34,38 @@ export default function VoiceModeOverlay({
   const [permissionState, setPermissionState] = useState<'granted' | 'prompt' | 'denied' | 'unknown'>('unknown');
   const [audioLevel, setAudioLevel] = useState(0);
 
-  const recognitionRef = useRef<any>(null);
-  const synthRef = useRef<SpeechSynthesis | null>(null);
+  // Perekaman suara pengguna (Google Cloud STT, lihat app/api/voice/stt) --
+  // menggantikan SpeechRecognition bawaan browser yg sebelumnya dipakai di
+  // sini (kualitas/dukungan tidak konsisten lintas browser, nyaris tak ada
+  // di Firefox). CATATAN JUJUR soal batasan: ini BUKAN transkripsi live
+  // kata-per-kata seperti SpeechRecognition lama -- audio direkam utuh dulu
+  // (VAD kasar mendeteksi kapan pengguna selesai bicara), baru dikirim
+  // sekali ke STT dan dapat transkrip penuh. Transkrip "hidup" saat masih
+  // bicara jadi tidak ada lagi; trade-off yg diambil demi akurasi &
+  // konsistensi suara yg jauh lebih baik. Streaming STT sungguhan (spt
+  // Claude/GPT voice mode) butuh koneksi persisten terpisah, di luar scope
+  // perbaikan ini.
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingStartedAtRef = useRef<number>(0);
+  const hasDetectedSpeechRef = useRef(false);
+  const silenceStartRef = useRef<number | null>(null);
+
+  // Pemutaran balasan AI (Google Cloud TTS, lihat app/api/voice/tts) --
+  // menggantikan SpeechSynthesisUtterance bawaan browser (suara bawaan
+  // seringkali tidak ada/kasar utk id-ID tergantung OS pengguna).
+  const audioPlayerRef = useRef<HTMLAudioElement | null>(null);
+  const audioPlayerUrlRef = useRef<string | null>(null);
+
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const micStreamRef = useRef<MediaStream | null>(null);
   const animationFrameRef = useRef<number | null>(null);
-  // transcriptRef: menyimpan nilai transcript terbaru secara sinkron.
-  // Dibutuhkan karena di Android, recognition.onend bisa dipanggil SEBELUM
-  // React state transcript selesai di-update, sehingga membaca state di onend
-  // selalu dapat string kosong dan AI tidak pernah dipanggil.
-  const transcriptRef = useRef("");
-  // updateVolume() hidup lintas render di dalam requestAnimationFrame loop,
-  // jadi butuh ref (bukan langsung baca state `status`) supaya nilainya
+  // statusRef: updateVolume() hidup lintas render di dalam requestAnimationFrame
+  // loop, jadi butuh ref (bukan langsung baca state `status`) supaya nilainya
   // selalu yang terbaru, tidak stale-closure ke status saat loop dibuat.
   const statusRef = useRef(status);
   useEffect(() => { statusRef.current = status; }, [status]);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      synthRef.current = window.speechSynthesis;
-    }
-  }, []);
 
   // Check microphone permission state on mount & when open
   useEffect(() => {
@@ -131,25 +149,34 @@ export default function VoiceModeOverlay({
     analyserRef.current = null;
   };
 
+  const stopAiAudio = () => {
+    if (audioPlayerRef.current) {
+      audioPlayerRef.current.pause();
+      audioPlayerRef.current = null;
+    }
+    if (audioPlayerUrlRef.current) {
+      URL.revokeObjectURL(audioPlayerUrlRef.current);
+      audioPlayerUrlRef.current = null;
+    }
+  };
+
   const stopVoiceSession = () => {
     cleanupAudioResources();
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch {}
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      try { mediaRecorderRef.current.stop(); } catch {}
     }
-    if (synthRef.current) {
-      synthRef.current.cancel();
-    }
+    mediaRecorderRef.current = null;
+    audioChunksRef.current = [];
+    stopAiAudio();
     setStatus('idle');
     setAudioLevel(0);
   };
 
-  // Mic stream + analyser dipakai untuk visualisasi level suara & deteksi
-  // barge-in (VAD kasar) — TIDAK dipakai oleh SpeechRecognition itu sendiri
-  // (browser menangani capture audio recognition-nya sendiri secara terpisah).
-  // Karena itu stream ini aman dipakai ulang lintas giliran bicara, tidak
-  // perlu getUserMedia() baru tiap kali user mulai bicara lagi.
+  // Mic stream + analyser dipakai untuk visualisasi level suara, deteksi
+  // barge-in, DAN sekarang deteksi diam (VAD) utk tahu kapan pengguna
+  // selesai bicara. TIDAK dipakai MediaRecorder-nya sendiri (itu instance
+  // terpisah di startListening()) -- aman dipakai ulang lintas giliran
+  // bicara, tidak perlu getUserMedia() baru tiap kali.
   const ensureMicAnalyser = async (): Promise<boolean> => {
     if (micStreamRef.current && micStreamRef.current.getTracks().some((t) => t.readyState === "live")) {
       return true;
@@ -204,12 +231,29 @@ export default function VoiceModeOverlay({
         setAudioLevel(normalized);
 
         // VAD / Barge-in: kalau AI sedang bicara dan user mulai bicara cukup keras,
-        // batalkan suara AI DAN langsung mulai rekam interupsi user (bukan cuma
-        // ganti status) -- sebelumnya recognition baru tidak pernah dimulai lagi
-        // di titik ini, jadi ucapan interupsi user tidak pernah benar-benar tertangkap.
-        if (normalized > 35 && synthRef.current?.speaking && statusRef.current !== 'listening') {
-          synthRef.current.cancel();
+        // batalkan suara AI DAN langsung mulai rekam interupsi user.
+        const aiSpeaking = !!audioPlayerRef.current && !audioPlayerRef.current.paused && !audioPlayerRef.current.ended;
+        if (normalized > 35 && aiSpeaking && statusRef.current !== 'listening') {
+          stopAiAudio();
           startListening();
+        }
+
+        // VAD: deteksi selesai bicara supaya rekaman otomatis berhenti &
+        // dikirim ke STT, mirip perilaku onend SpeechRecognition dulu.
+        if (statusRef.current === 'listening' && mediaRecorderRef.current?.state === 'recording') {
+          const elapsed = Date.now() - recordingStartedAtRef.current;
+          if (normalized > SPEECH_LEVEL_THRESHOLD) {
+            hasDetectedSpeechRef.current = true;
+            silenceStartRef.current = null;
+          } else if (hasDetectedSpeechRef.current) {
+            if (silenceStartRef.current === null) silenceStartRef.current = Date.now();
+            else if (Date.now() - silenceStartRef.current >= SILENCE_STOP_MS) {
+              mediaRecorderRef.current.stop();
+            }
+          }
+          if (elapsed >= MAX_RECORDING_MS) {
+            mediaRecorderRef.current.stop();
+          }
         }
 
         animationFrameRef.current = requestAnimationFrame(updateVolume);
@@ -221,100 +265,120 @@ export default function VoiceModeOverlay({
     }
   };
 
-  const startListening = async () => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+  function pickSupportedMimeType(): string {
+    const candidates = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", "audio/mp4"];
+    for (const type of candidates) {
+      if (typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported?.(type)) return type;
+    }
+    return "";
+  }
 
-    if (!SpeechRecognition) {
+  function blobToBase64(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        resolve(result.split(",")[1] || "");
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  const startListening = async () => {
+    if (typeof MediaRecorder === "undefined" || !navigator.mediaDevices?.getUserMedia) {
       setErrorMessage(
         lang === 'id'
-          ? "Browser Anda tidak mendukung Speech Recognition (Gunakan Chrome, Edge, atau Safari)."
-          : "Your browser does not support Speech Recognition."
+          ? "Browser Anda tidak mendukung perekaman audio (gunakan browser modern spt Chrome, Edge, Firefox, atau Safari terbaru)."
+          : "Your browser does not support audio recording (use a modern browser: Chrome, Edge, Firefox, or recent Safari)."
       );
       setStatus('idle');
       return;
     }
 
-    // Stop TTS if speaking when user starts talking
-    if (synthRef.current) {
-      synthRef.current.cancel();
-    }
+    // Stop AI audio kalau sedang bicara pas user mau bicara
+    stopAiAudio();
 
-    // 1. Pastikan mic stream + analyser (utk visualisasi & VAD) aktif -- dipakai
-    //    ulang lintas giliran bicara kalau sudah ada, jadi tidak numpuk stream
-    //    baru setiap kali user/AI gantian bicara.
+    // 1. Pastikan mic stream + analyser (utk visualisasi & VAD) aktif.
     const micOk = await ensureMicAnalyser();
     if (!micOk) {
       setStatus('idle');
       return;
     }
 
-    // Kalau ada recognition instance sebelumnya yang masih jalan (mis. dari
-    // barge-in yang menimpa giliran lama), hentikan dulu supaya tidak ada
-    // dua instance SpeechRecognition aktif bersamaan.
-    if (recognitionRef.current) {
-      try { recognitionRef.current.stop(); } catch {}
-      recognitionRef.current = null;
+    // Kalau ada recorder sebelumnya yg masih jalan (mis. dari barge-in yg
+    // menimpa giliran lama), hentikan dulu.
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      try { mediaRecorderRef.current.stop(); } catch {}
     }
+
+    const mimeType = pickSupportedMimeType();
+    let recorder: MediaRecorder;
+    try {
+      recorder = mimeType ? new MediaRecorder(micStreamRef.current!, { mimeType }) : new MediaRecorder(micStreamRef.current!);
+    } catch (e) {
+      console.warn("Gagal membuat MediaRecorder:", e);
+      setErrorMessage(lang === 'id' ? "Gagal memulai perekaman audio." : "Failed to start audio recording.");
+      setStatus('idle');
+      return;
+    }
+
+    mediaRecorderRef.current = recorder;
+    audioChunksRef.current = [];
+    hasDetectedSpeechRef.current = false;
+    silenceStartRef.current = null;
+    recordingStartedAtRef.current = Date.now();
+
+    recorder.ondataavailable = (e: BlobEvent) => {
+      if (e.data.size > 0) audioChunksRef.current.push(e.data);
+    };
+
+    recorder.onstop = async () => {
+      const chunks = audioChunksRef.current;
+      audioChunksRef.current = [];
+      const totalSize = chunks.reduce((s, c) => s + c.size, 0);
+
+      // Diam total / klik stop sebelum sempat bicara -- jangan kirim ke STT.
+      if (!hasDetectedSpeechRef.current || totalSize < 800) {
+        setStatus('idle');
+        return;
+      }
+
+      setStatus('processing');
+      try {
+        const blob = new Blob(chunks, { type: recorder.mimeType || mimeType || "audio/webm" });
+        const base64 = await blobToBase64(blob);
+        const res = await fetch("/api/voice/stt", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ audio: base64, mimeType: blob.type, languageCode: lang }),
+        });
+        const data = await res.json().catch(() => ({}));
+        const captured = (data.transcript || "").trim();
+
+        if (captured.length > 0) {
+          setTranscript(captured);
+          handleProcessVoiceInput(captured);
+        } else {
+          setErrorMessage(lang === 'id' ? "Tidak menangkap ucapan, silakan coba lagi." : "No speech detected, please try again.");
+          setStatus('idle');
+        }
+      } catch (err: any) {
+        console.warn("STT request error:", err);
+        setErrorMessage(lang === 'id' ? "Gagal memproses suara, silakan coba lagi." : "Failed to process speech, please try again.");
+        setStatus('idle');
+      }
+    };
 
     setErrorMessage("");
     setStatus('listening');
     setTranscript("");
 
-    // 2. Start Web Speech Recognition
-    const recognition = new SpeechRecognition();
-    recognitionRef.current = recognition;
-    recognition.continuous = false;
-    recognition.interimResults = true;
-    recognition.lang = lang === 'id' ? 'id-ID' : 'en-US';
-
-    recognition.onresult = (event: any) => {
-      let currentText = "";
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        currentText += event.results[i][0].transcript;
-      }
-      // Update ref TERLEBIH DAHULU (sinkron) supaya onend selalu dapat nilai terbaru.
-      // State update (setTranscript) bersifat async di React, jadi tidak bisa
-      // diandalkan di callback onend terutama di Android Chrome.
-      transcriptRef.current = currentText;
-      setTranscript(currentText);
-    };
-
-    recognition.onerror = (event: any) => {
-      console.warn("Speech recognition error:", event.error);
-      if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-        setPermissionState('denied');
-        setErrorMessage(
-          lang === 'id'
-            ? "Izin Mikrofon diblokir. Klik ikon gembok di URL bar browser Anda untuk mengizinkan."
-            : "Microphone permission blocked. Please allow mic in browser address bar."
-        );
-      } else if (event.error !== 'no-speech') {
-        setErrorMessage(
-          lang === 'id'
-            ? "Gagal mendeteksi suara, silakan coba lagi."
-            : "Speech recognition error, please try again."
-        );
-      }
-      transcriptRef.current = "";
-      setStatus('idle');
-    };
-
-    recognition.onend = () => {
-      // Baca dari ref (bukan state) -- ref selalu sinkron bahkan di Android
-      // di mana onend bisa menyalip antrian update state React.
-      const captured = transcriptRef.current.trim();
-      transcriptRef.current = "";
-      if (captured.length > 0) {
-        handleProcessVoiceInput(captured);
-      } else {
-        setStatus('idle');
-      }
-    };
-
     try {
-      recognition.start();
+      recorder.start(250); // timeslice 250ms spy ondataavailable ngalir bertahap
     } catch (e) {
-      console.warn("Failed starting speech recognition:", e);
+      console.warn("Failed starting media recorder:", e);
+      setStatus('idle');
     }
   };
 
@@ -352,13 +416,13 @@ export default function VoiceModeOverlay({
     return toSpeakableMongondow(limited);
   };
 
-  const speakResponse = (text: string) => {
-    if (!synthRef.current || isMuted) {
+  const speakResponse = async (text: string) => {
+    if (isMuted) {
       setStatus('idle');
       return;
     }
 
-    synthRef.current.cancel();
+    stopAiAudio();
     const cleanText = cleanTextForPhonetics(text);
 
     if (!cleanText.trim()) {
@@ -366,25 +430,53 @@ export default function VoiceModeOverlay({
       return;
     }
 
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.lang = lang === 'id' ? 'id-ID' : 'en-US';
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
+    try {
+      const res = await fetch("/api/voice/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: cleanText, languageCode: lang }),
+      });
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody.error || "TTS request failed");
+      }
+      const audioBlob = await res.blob();
+      const url = URL.createObjectURL(audioBlob);
+      audioPlayerUrlRef.current = url;
 
-    utterance.onstart = () => {
-      setStatus('speaking');
-    };
+      const audio = new Audio(url);
+      audioPlayerRef.current = audio;
 
-    utterance.onend = () => {
-      setStatus('listening');
-      startListening();
-    };
+      audio.onplay = () => setStatus('speaking');
+      audio.onended = () => {
+        if (audioPlayerUrlRef.current === url) {
+          URL.revokeObjectURL(url);
+          audioPlayerUrlRef.current = null;
+        }
+        setStatus('listening');
+        startListening();
+      };
+      audio.onerror = () => {
+        if (audioPlayerUrlRef.current === url) {
+          URL.revokeObjectURL(url);
+          audioPlayerUrlRef.current = null;
+        }
+        setStatus('idle');
+      };
 
-    utterance.onerror = () => {
-      setStatus('idle');
-    };
-
-    synthRef.current.speak(utterance);
+      await audio.play();
+    } catch (err) {
+      // audio.play() bisa reject dgn AbortError kalau audio ini SENGAJA
+      // dihentikan (barge-in/stopAiAudio() manggil .pause() sebelum promise
+      // play() selesai) -- itu bukan kegagalan sungguhan, statusnya sudah
+      // benar diurus di tempat lain (startListening() dari barge-in). Cuma
+      // set 'idle' kalau audio element ini MASIH yg aktif (error genuine,
+      // bukan tersalip proses lain).
+      console.warn("TTS playback error:", err);
+      if ((err as any)?.name !== "AbortError") {
+        setStatus('idle');
+      }
+    }
   };
 
   if (!isOpen) return null;
@@ -444,7 +536,9 @@ export default function VoiceModeOverlay({
           <button
             onClick={() => {
               if (status === 'listening') {
-                if (recognitionRef.current) recognitionRef.current.stop();
+                if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+                  mediaRecorderRef.current.stop();
+                }
                 setStatus('idle');
               } else {
                 startListening();
@@ -480,7 +574,7 @@ export default function VoiceModeOverlay({
             {status === 'idle' && (lang === 'id' ? 'Tekan Mikrofon untuk Mulai' : 'Tap Microphone to Speak')}
           </p>
 
-          {/* User Live Voice Transcript */}
+          {/* User Voice Transcript (muncul setelah STT selesai, bukan live) */}
           {transcript && (
             <p className="text-sm text-cyan-300 italic bg-cyan-950/40 px-4 py-2.5 rounded-xl border border-cyan-800/50 max-h-24 overflow-y-auto shadow-inner">
               &ldquo;{transcript}&rdquo;
@@ -542,8 +636,8 @@ export default function VoiceModeOverlay({
         <button
           onClick={() => {
             setIsMuted(!isMuted);
-            if (synthRef.current && !isMuted) {
-              synthRef.current.cancel();
+            if (!isMuted) {
+              stopAiAudio();
             }
           }}
           className={`p-4 rounded-full transition-all duration-200 border ${
@@ -559,7 +653,9 @@ export default function VoiceModeOverlay({
         <button
           onClick={() => {
             if (status === 'listening') {
-              if (recognitionRef.current) recognitionRef.current.stop();
+              if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+                mediaRecorderRef.current.stop();
+              }
               setStatus('idle');
             } else {
               startListening();
