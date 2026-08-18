@@ -30,8 +30,7 @@ import {
   Folder,
   FolderPlus,
   ChevronDown,
-  ChevronRight,
-  Heart
+  ChevronRight
 } from "lucide-react";
 import Link from "next/link";
 
@@ -399,16 +398,6 @@ export default function ChatSidebar({
               <span>Dashboard</span>
             </Link>
           )}
-
-          <a
-            href="https://pay.doku.com/p-link/p/mongondowpedia"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full p-2.5 rounded-xl text-xs font-semibold text-rose-400 bg-rose-600/10 hover:bg-rose-600/20 border border-rose-500/30 flex items-center gap-2.5 transition-all group shadow-sm"
-          >
-            <Heart className="w-4 h-4 text-rose-400 fill-rose-400/20 group-hover:scale-105 transition-transform" />
-            <span>{lang === 'id' ? 'Donasi' : 'Donate'}</span>
-          </a>
 
           <button
             onClick={() => setShowSettingsModal(true)}

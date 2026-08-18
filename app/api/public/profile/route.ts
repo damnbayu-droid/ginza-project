@@ -17,9 +17,15 @@ export async function PATCH(req: NextRequest) {
   const body = await req.json();
   const { display_name, bio, avatar_url } = body as { display_name?: string; bio?: string; avatar_url?: string };
 
+  // CATATAN: sengaja TIDAK menulis `role` di sini -- endpoint ini dipakai user
+  // utk update profil sendiri (avatar/bio/nama), bukan tempat mengubah role.
+  // Sebelumnya `role: profile!.role` ikut ditulis tiap save, padahal utk sesi
+  // JWT internal (owner/developer) nilai `profile.role` itu HASIL PEMETAAN
+  // TAMPILAN ("owner"/"developer" -> "admin", lihat getCurrentUserProfile di
+  // lib/supabase-auth-server.ts) -- ikut menimpa role ASLI di DB jadi 'admin'
+  // permanen tiap kali pemilik akun cuma ganti foto/bio sendiri.
   const updateData = {
     id: profile!.id,
-    role: profile!.role,
     ...(profile!.email ? { email: profile!.email } : {}),
     ...(display_name !== undefined ? { display_name } : {}),
     ...(bio !== undefined ? { bio } : {}),

@@ -15,7 +15,8 @@ import {
   ExternalLink,
   MapPin,
   Eye,
-  AlertTriangle
+  AlertTriangle,
+  Trash2
 } from "lucide-react";
 
 interface AdminArticle {
@@ -149,6 +150,34 @@ export default function ArtikelManagementPanel() {
       }
     } catch {
       setProcessing(false);
+    }
+  }
+
+  async function handleDeleteArticle() {
+    if (!selectedArticle) return;
+    const confirmed = window.confirm(
+      `Hapus PERMANEN artikel "${selectedArticle.title}"? Aksi ini tidak bisa dibatalkan -- seluruh komentar di artikel ini juga akan ikut terhapus.`
+    );
+    if (!confirmed) return;
+
+    setProcessing(true);
+    setActionSuccess(null);
+    try {
+      const res = await fetch(`/api/admin/articles?articleId=${encodeURIComponent(selectedArticle.id)}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      setProcessing(false);
+
+      if (res.ok && data.success) {
+        setSelectedArticle(null);
+        loadArticles();
+      } else {
+        alert(data.error || "Gagal menghapus artikel.");
+      }
+    } catch (err: any) {
+      setProcessing(false);
+      alert(`Gagal: ${err.message}`);
     }
   }
 
@@ -358,6 +387,15 @@ export default function ArtikelManagementPanel() {
                   Pulihkan Artikel
                 </button>
               )}
+
+              <button
+                onClick={handleDeleteArticle}
+                disabled={processing}
+                className="px-3 py-1.5 rounded-xl bg-red-600/20 text-red-300 border border-red-600/40 text-xs font-bold hover:bg-red-600/30 flex items-center gap-1 ml-auto"
+                title="Hapus artikel ini secara permanen dari database"
+              >
+                <Trash2 className="w-3.5 h-3.5" /> Hapus Permanen
+              </button>
             </div>
 
             {/* Admin Warning Custom Message */}

@@ -17,8 +17,10 @@ import {
   HelpCircle,
   Upload,
   Loader2,
-  Edit3
+  Edit3,
+  ImagePlus
 } from "lucide-react";
+import { uploadContentImage, insertAtCursor } from "@/lib/upload-content-image";
 
 interface Props {
   userEmail: string;
@@ -43,48 +45,6 @@ const REGIONS = [
   "Bolsel",
 ];
 
-/**
- * Utility client-side untuk menkonversi file gambar (JPG/PNG/GIF/HEIC)
- * menjadi format WebP berkualitas tinggi dengan ukuran file yang sangat kecil & jernih (tanpa blur).
- */
-function compressImageToWebP(file: File, maxWidth = 1600, quality = 0.88): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error("Gagal membaca file gambar"));
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onerror = () => reject(new Error("Gagal memuat format gambar"));
-      img.onload = () => {
-        let width = img.width;
-        let height = img.height;
-
-        if (width > maxWidth) {
-          height = Math.round((height * maxWidth) / width);
-          width = maxWidth;
-        }
-
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-
-        const ctx = canvas.getContext("2d");
-        if (!ctx) {
-          reject(new Error("Gagal menginisialisasi canvas"));
-          return;
-        }
-
-        ctx.drawImage(img, 0, 0, width, height);
-
-        // Convert canvas to WebP data URL with crisp quality (0.88)
-        const webpDataUrl = canvas.toDataURL("image/webp", quality);
-        resolve(webpDataUrl);
-      };
-      img.src = e.target?.result as string;
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
 export default function WriteArticleClient({ userEmail, userRole }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -100,11 +60,14 @@ export default function WriteArticleClient({ userEmail, userRole }: Props) {
   const [isEditMode, setIsEditMode] = useState(false);
   const [loadingInitial, setLoadingInitial] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingBodyImage, setUploadingBodyImage] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const bodyImageInputRef = useRef<HTMLInputElement>(null);
+  const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [forbiddenEdit, setForbiddenEdit] = useState(false);
 
@@ -144,7 +107,8 @@ export default function WriteArticleClient({ userEmail, userRole }: Props) {
     }
   }, [editSlug, userEmail, userRole]);
 
-  // Handler Upload Foto dengan Otomatis Konversi ke WebP Jernih Ukuran Kecil
+  // Handler upload foto SAMPUL -- upload asli (max 2MB) & convert ke WebP di server,
+  // hasilnya URL Storage publik permanen (bukan lagi base64 tertanam di konten).
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -153,22 +117,42 @@ export default function WriteArticleClient({ userEmail, userRole }: Props) {
     setUploadingImage(true);
 
     try {
-      // Convert ke WebP
-      const webpUrl = await compressImageToWebP(file);
-
-      // Sisipkan syntax markdown ke dalam textarea konten
-      const imageMarkdown = `\n\n![${file.name.replace(/\.[^/.]+$/, "")}](${webpUrl})\n\n`;
-      setContent((prev) => prev + imageMarkdown);
-
-      // Set sebagai cover image jika cover image masih kosong
-      if (!coverImage) {
-        setCoverImage(webpUrl);
-      }
+      const url = await uploadContentImage(file, "articles");
+      setCoverImage(url);
     } catch (err: any) {
-      setError(err.message || "Gagal mengunggah dan mengonversi gambar ke WebP");
+      setError(err.message || "Gagal mengunggah gambar sampul");
     } finally {
       setUploadingImage(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  // Handler sisip gambar ke DALAM isi artikel, di posisi kursor -- bukan
+  // selalu ditambahkan di akhir (keterbatasan lama yg diminta Boss Bayu utk diperbaiki).
+  const handleBodyImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setError("");
+    setUploadingBodyImage(true);
+
+    try {
+      const url = await uploadContentImage(file, "articles");
+      const alt = file.name.replace(/\.[^/.]+$/, "");
+      const { text, cursorPos } = insertAtCursor(contentTextareaRef.current, content, `\n\n![${alt}](${url})\n\n`);
+      setContent(text);
+      requestAnimationFrame(() => {
+        const el = contentTextareaRef.current;
+        if (el) {
+          el.focus();
+          el.setSelectionRange(cursorPos, cursorPos);
+        }
+      });
+    } catch (err: any) {
+      setError(err.message || "Gagal mengunggah gambar ke konten");
+    } finally {
+      setUploadingBodyImage(false);
+      if (bodyImageInputRef.current) bodyImageInputRef.current.value = "";
     }
   };
 
@@ -425,7 +409,39 @@ export default function WriteArticleClient({ userEmail, userRole }: Props) {
               </span>
             </div>
 
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <span className="text-[11px] text-gray-500">
+                Letakkan kursor di posisi yang diinginkan, lalu sisipkan gambar di sana.
+              </span>
+              <input
+                type="file"
+                ref={bodyImageInputRef}
+                accept="image/*"
+                onChange={handleBodyImageSelect}
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => bodyImageInputRef.current?.click()}
+                disabled={uploadingBodyImage}
+                className="px-3 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/30 text-[11px] font-bold transition-all flex items-center gap-1.5 active:scale-95 disabled:opacity-50"
+              >
+                {uploadingBodyImage ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-purple-400" />
+                    <span>Mengunggah...</span>
+                  </>
+                ) : (
+                  <>
+                    <ImagePlus className="w-3.5 h-3.5 text-purple-400" />
+                    <span>Sisipkan Gambar di Kursor (maks 2MB)</span>
+                  </>
+                )}
+              </button>
+            </div>
+
             <textarea
+              ref={contentTextareaRef}
               required
               rows={14}
               value={content}

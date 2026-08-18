@@ -66,6 +66,18 @@ export default function MarkdownRenderer({ content }: { content: string }) {
           a: ({ node, ...props }) => (
             <a className="text-blue-400 hover:text-blue-300 underline underline-offset-4 font-medium transition-colors break-all" {...props} />
           ),
+          img: ({ src, alt, ...props }) => {
+            const imgSrc = typeof src === "string" ? src : "";
+            if (!imgSrc || !imgSrc.trim()) return null;
+            return (
+              <img
+                src={imgSrc}
+                alt={alt || ""}
+                {...props}
+                className="rounded-xl border border-[#262838] max-h-[500px] w-auto mx-auto my-4"
+              />
+            );
+          },
           strong: ({ node, ...props }) => (
             <strong className="font-bold text-white break-words" {...props} />
           ),

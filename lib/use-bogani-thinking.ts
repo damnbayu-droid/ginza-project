@@ -4,26 +4,29 @@ import { useEffect, useState } from "react";
 import { THINKING_PHASES, buildPhaseQueue } from "@/lib/bogani-thinking-phrases";
 
 // Diperlambat 2x atas permintaan Boss Bayu: draf awal 32ms/900ms -> +40%
-// (45ms/1260ms) -> +20% lagi dari situ (nilai final di bawah).
-const TYPE_CHAR_MS = 54; // kecepatan efek ketik per karakter (kata Mongondow)
-const HOLD_AFTER_TYPED_MS = 1512; // jeda setelah kata selesai diketik, sebelum ganti
+// (45ms/1260ms) -> +20% lagi dari situ -> 54ms/1512ms -> dipercepat 2x
+// (2026-08-18) -> 27ms/756ms -> dipercepat 2x LAGI (2026-08-18, "pas") ->
+// nilai final di bawah.
+const TYPE_CHAR_MS = 14; // kecepatan efek ketik per karakter (kata Mongondow)
+const HOLD_AFTER_TYPED_MS = 378; // jeda setelah kata selesai diketik, sebelum ganti
 
 // Jeda antar-huruf efek ketik utk SUMBER (Kamus/Knowledge/dst) -- SENGAJA
 // efek TYPE (ketik karakter-demi-karakter), BUKAN pop-in/scale spt draf
 // sebelumnya (Boss Bayu: "muncul dari bawah ke atas, frame membesar-mengecil,
 // tidak enak dipandang"). Kecepatan per-KARAKTER (bukan per-item) berbasis
 // POSISI PERSENTASE dlm satu putaran daftar sumber -- setiap item ketiknya
-// beda kecepatan tergantung posisinya, jadi ritmenya terasa hidup/dinamis:
-// 30% pertama 35ms/huruf, 15% berikutnya 220ms/huruf, 35% berikutnya
-// 150ms/huruf, 25% sisanya 80ms/huruf.
-const HOLD_AFTER_SOURCE_TYPED_MS = 260;
+// beda kecepatan tergantung posisinya, jadi ritmenya terasa hidup/dinamis.
+// Rasio 30/15/35/25% dipertahankan; nilai ms dipercepat 50% dari draf pertama
+// (35/220/150/80) -> dipercepat 2x (2026-08-18) -> 9/55/38/20 -> dipercepat
+// 2x LAGI (2026-08-18, "pas") -> nilai final di bawah.
+const HOLD_AFTER_SOURCE_TYPED_MS = 33;
 function getSourceCharDelayMs(indexInCycle: number, totalSources: number): number {
-  if (totalSources <= 0) return 35;
+  if (totalSources <= 0) return 5;
   const position = (indexInCycle % totalSources) / totalSources; // 0..1 dlm satu putaran
-  if (position < 0.30) return 35;
-  if (position < 0.45) return 220;
-  if (position < 0.80) return 150;
-  return 80;
+  if (position < 0.30) return 5;
+  if (position < 0.45) return 28;
+  if (position < 0.80) return 19;
+  return 10;
 }
 
 export type RealPhase = 'berpikir' | 'mencari_jawaban';

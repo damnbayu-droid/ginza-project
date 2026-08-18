@@ -114,4 +114,5 @@ export const RATE_LIMITS = {
   HOMEPAGE_CHAT: { endpoint: "homepage/chat", maxRequests: 30, windowMinutes: 1 },
   VOICE_TTS: { endpoint: "voice/tts", maxRequests: 30, windowMinutes: 1 },
   VOICE_STT: { endpoint: "voice/stt", maxRequests: 30, windowMinutes: 1 },
+  UPLOAD_IMAGE: { endpoint: "upload/image", maxRequests: 20, windowMinutes: 1 },
 } as const;

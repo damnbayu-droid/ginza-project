@@ -158,7 +158,7 @@ const nextConfig: NextConfig = {
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
-              "img-src 'self' data: blob:",
+              "img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com",
               "media-src 'self' blob: mediastream:",
               "worker-src 'self' blob:",
               "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://generativelanguage.googleapis.com https://www.google.com wss://www.google.com https://speech.googleapis.com https://*.googleapis.com wss://*.googleapis.com",

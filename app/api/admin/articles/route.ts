@@ -156,3 +156,49 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: err.message || "Gagal memproses aksi sensor artikel" }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  const { error } = await requireAdmin(req);
+  if (error) return error;
+
+  try {
+    const { searchParams } = new URL(req.url);
+    const articleId = searchParams.get("articleId");
+    if (!articleId) {
+      return NextResponse.json({ error: "articleId wajib diisi" }, { status: 400 });
+    }
+
+    if (!isSupabaseReady || !supabaseAdmin) {
+      return NextResponse.json({ error: "Database tidak siap" }, { status: 500 });
+    }
+
+    const { data: existing } = await supabaseAdmin
+      .from("user_articles")
+      .select("id, title, slug, author_id")
+      .eq("id", articleId)
+      .maybeSingle();
+
+    if (!existing) {
+      return NextResponse.json({ error: "Artikel tidak ditemukan" }, { status: 404 });
+    }
+
+    // article_comments punya ON DELETE CASCADE ke user_articles, jadi
+    // komentar ikut terhapus otomatis -- lihat 20260808_user_articles.sql.
+    const { error: delErr } = await supabaseAdmin.from("user_articles").delete().eq("id", articleId);
+    if (delErr) {
+      return NextResponse.json({ error: delErr.message }, { status: 500 });
+    }
+
+    await writeAuditLog({
+      actorRole: "admin",
+      action: "article_deleted_by_admin",
+      targetTable: "user_articles",
+      targetId: articleId,
+      beforeData: existing,
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || "Gagal menghapus artikel" }, { status: 500 });
+  }
+}

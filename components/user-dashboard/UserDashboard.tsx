@@ -41,6 +41,20 @@ import {
 import type { Profile } from "@/lib/ginza-db";
 import { getSupabaseBrowserClient } from "@/lib/supabase-browser-auth";
 import TrendingUsersWidget from "@/components/TrendingUsersWidget";
+import { uploadContentImage } from "@/lib/upload-content-image";
+
+// Avatar bawaan bermode Roblox -- 4 maskulin & 4 feminim -- utk user yg belum
+// mau/tidak punya foto sendiri. File statis di public/avatars/presets/.
+const PRESET_AVATARS = [
+  { url: "/avatars/presets/m1-cap.svg", label: "Topi Biru" },
+  { url: "/avatars/presets/m2-mohawk.svg", label: "Mohawk" },
+  { url: "/avatars/presets/m3-beanie.svg", label: "Kupluk Merah" },
+  { url: "/avatars/presets/m4-shades.svg", label: "Kacamata Hitam" },
+  { url: "/avatars/presets/f1-ponytail.svg", label: "Kuncir Kuda" },
+  { url: "/avatars/presets/f2-twinbuns.svg", label: "Kuncir Dua" },
+  { url: "/avatars/presets/f3-flower.svg", label: "Bunga Rambut" },
+  { url: "/avatars/presets/f4-afro.svg", label: "Bandana Keriting" },
+];
 
 type Tab =
   | "profil"
@@ -213,6 +227,24 @@ function ProfilTab({ profile }: { profile: Profile }) {
       .catch(() => setOverview(null));
   }, []);
 
+  function readFileAsDataUrl(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error("Gagal membaca file foto"));
+      reader.onload = () => resolve(reader.result as string);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function loadImageEl(src: string): Promise<HTMLImageElement> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error("Gagal memuat format foto"));
+      img.src = src;
+    });
+  }
+
   async function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -220,51 +252,68 @@ function ProfilTab({ profile }: { profile: Profile }) {
     setMessage(null);
 
     try {
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        const img = new Image();
-        img.onload = async () => {
-          // 1. Crop presisi 1:1 persegi dari tengah gambar (Center-Square Crop)
-          const size = Math.min(img.width, img.height);
-          const sx = (img.width - size) / 2;
-          const sy = (img.height - size) / 2;
+      const dataUrl = await readFileAsDataUrl(file);
+      const img = await loadImageEl(dataUrl);
 
-          const canvas = document.createElement("canvas");
-          canvas.width = 300;
-          canvas.height = 300;
-          const ctx = canvas.getContext("2d");
+      // Crop presisi 1:1 persegi dari tengah gambar (Center-Square Crop)
+      const size = Math.min(img.width, img.height);
+      const sx = (img.width - size) / 2;
+      const sy = (img.height - size) / 2;
 
-          if (ctx) {
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = "high";
-            ctx.drawImage(img, sx, sy, size, size, 0, 0, 300, 300);
-          }
+      const canvas = document.createElement("canvas");
+      canvas.width = 300;
+      canvas.height = 300;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(img, sx, sy, size, size, 0, 0, 300, 300);
+      }
 
-          // 2. Kompresi ke format WebP kualitas 0.88 (super jernih, tanpa distorsi, ringan ~20KB)
-          const dataUrl = canvas.toDataURL("image/webp", 0.88);
+      const blob: Blob = await new Promise((resolve, reject) => {
+        canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Gagal membuat file gambar"))), "image/webp", 0.88);
+      });
+      const croppedFile = new File([blob], "avatar.webp", { type: "image/webp" });
 
-          setAvatarUrl(dataUrl);
+      // Upload SUNGGUHAN ke bucket Storage "avatars" (bukan lagi base64
+      // ditanam di kolom DB) -- lihat app/api/upload-image/route.ts.
+      const url = await uploadContentImage(croppedFile, "avatars");
+      setAvatarUrl(url);
 
-          // 3. Simpan langsung ke database profiles Supabase
-          const res = await fetch("/api/public/profile", {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ avatar_url: dataUrl }),
-          });
+      const res = await fetch("/api/public/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ avatar_url: url }),
+      });
 
-          setUploading(false);
-          if (res.ok) {
-            setMessage({ type: "success", text: "Foto profil berhasil diperbarui dengan resolusi tinggi!" });
-          } else {
-            setMessage({ type: "error", text: "Gagal menyimpan foto ke database." });
-          }
-        };
-        img.src = event.target?.result as string;
-      };
-      reader.readAsDataURL(file);
+      if (res.ok) {
+        setMessage({ type: "success", text: "Foto profil berhasil diperbarui!" });
+      } else {
+        setMessage({ type: "error", text: "Gagal menyimpan foto ke database." });
+      }
     } catch (err: any) {
+      setMessage({ type: "error", text: err.message || "Gagal mengunggah foto profil." });
+    } finally {
       setUploading(false);
-      setMessage({ type: "error", text: `Gagal membaca foto: ${err.message}` });
+    }
+  }
+
+  async function handlePickPresetAvatar(url: string) {
+    setMessage(null);
+    setAvatarUrl(url);
+    try {
+      const res = await fetch("/api/public/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ avatar_url: url }),
+      });
+      if (res.ok) {
+        setMessage({ type: "success", text: "Avatar berhasil dipilih!" });
+      } else {
+        setMessage({ type: "error", text: "Gagal menyimpan avatar." });
+      }
+    } catch (err: any) {
+      setMessage({ type: "error", text: err.message || "Gagal menyimpan avatar." });
     }
   }
 
@@ -360,6 +409,31 @@ function ProfilTab({ profile }: { profile: Profile }) {
             <p className="text-[11px] text-bento-text-secondary">
               Format JPG, PNG, atau WEBP (Maksimal 2MB).
             </p>
+          </div>
+        </div>
+
+        {/* Avatar Bawaan (Roblox Mode) -- utk yg belum mau upload foto sendiri */}
+        <div className="pb-6 border-b border-bento-border/60 space-y-2.5">
+          <p className="text-xs font-semibold text-bento-text-primary">Atau Pilih Avatar Bawaan (Roblox Mode) 😎</p>
+          <p className="text-[11px] text-bento-text-secondary">
+            Belum punya foto? Tenang, pilih salah satu avatar seru di bawah ini.
+          </p>
+          <div className="grid grid-cols-4 sm:grid-cols-8 gap-2.5">
+            {PRESET_AVATARS.map((preset) => (
+              <button
+                key={preset.url}
+                type="button"
+                onClick={() => handlePickPresetAvatar(preset.url)}
+                title={preset.label}
+                className={`h-14 w-14 rounded-full overflow-hidden border-2 transition-all hover:scale-105 active:scale-95 ${
+                  avatarUrl === preset.url
+                    ? "border-bento-accent shadow-md shadow-bento-accent/30"
+                    : "border-bento-border hover:border-bento-accent/50"
+                }`}
+              >
+                <img src={preset.url} alt={preset.label} className="h-full w-full object-cover" />
+              </button>
+            ))}
           </div>
         </div>
 

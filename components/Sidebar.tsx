@@ -3,7 +3,7 @@
 import { useState } from "react";
 import {
   LogOut, Code, ChevronLeft, ChevronRight, LayoutDashboard, MessageSquare, Users, ShieldCheck,
-  BookMarked, Library, Type, FileCheck2, BarChart3, Bot, ScrollText, FileText, ClipboardList, Sparkles
+  BookMarked, Library, Type, FileCheck2, BarChart3, Bot, ScrollText, FileText, ClipboardList, Sparkles, Home
 } from "lucide-react";
 import { Language } from "@/lib/types";
 import { translations } from "@/lib/i18n";
@@ -112,6 +112,16 @@ export default function Sidebar({ lang, theme, adminEmail, activePanel, onSelect
             </div>
           </div>
         )}
+
+        <Link
+          href="/"
+          id="sidebar-home-link"
+          title={collapsed ? "Kembali ke Beranda MongondowPedia" : undefined}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-medium border border-bento-border text-bento-text-secondary hover:text-blue-400 hover:border-blue-500/40 hover:bg-bento-surface-lighter transition-all duration-150"
+        >
+          <Home className="h-4 w-4 shrink-0 text-blue-400" />
+          {!collapsed && <span>Beranda</span>}
+        </Link>
 
         <button
           onClick={handleLogout}

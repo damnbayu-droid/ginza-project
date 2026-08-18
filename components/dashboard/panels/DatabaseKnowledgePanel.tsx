@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useRef } from "react";
 import { PanelHeader, Card, LoadingState, ErrorState, Badge, Button } from "@/components/dashboard/ui";
-import { Plus, Edit2, Eye, FileText, Image as ImageIcon, Upload, CheckCircle2, RotateCcw, X, Search, Layers, Sparkles } from "lucide-react";
+import { Plus, Edit2, Eye, FileText, Image as ImageIcon, ImagePlus, Upload, CheckCircle2, RotateCcw, X, Search, Layers, Sparkles, Loader2 } from "lucide-react";
+import { uploadContentImage, insertAtCursor } from "@/lib/upload-content-image";
 
 interface CategoryRow {
   id: string;
@@ -29,39 +30,6 @@ interface ArticleRow {
   updated_at?: string;
 }
 
-/** Utility mengompres dan mengonversi file gambar ke format WebP jernih dan berukuran kecil */
-function convertImageToWebP(file: File, maxWidth = 1280, quality = 0.82): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        let width = img.width;
-        let height = img.height;
-
-        if (width > maxWidth) {
-          height = Math.round((height * maxWidth) / width);
-          width = maxWidth;
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return reject(new Error("Canvas context error"));
-
-        ctx.drawImage(img, 0, 0, width, height);
-        const webpDataUrl = canvas.toDataURL("image/webp", quality);
-        resolve(webpDataUrl);
-      };
-      img.onerror = () => reject(new Error("Gagal membaca gambar"));
-      img.src = e.target?.result as string;
-    };
-    reader.onerror = () => reject(new Error("Gagal membaca file"));
-    reader.readAsDataURL(file);
-  });
-}
-
 export default function DatabaseKnowledgePanel() {
   const [categories, setCategories] = useState<CategoryRow[] | null>(null);
   const [articles, setArticles] = useState<ArticleRow[] | null>(null);
@@ -81,8 +49,11 @@ export default function DatabaseKnowledgePanel() {
   const [isNewArticle, setIsNewArticle] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isConvertingImage, setIsConvertingImage] = useState(false);
+  const [isUploadingBodyImage, setIsUploadingBodyImage] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const bodyImageInputRef = useRef<HTMLInputElement>(null);
+  const contentTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   function loadData() {
     setError(null);
@@ -147,15 +118,44 @@ export default function DatabaseKnowledgePanel() {
 
     setIsConvertingImage(true);
     try {
-      const webpBase64 = await convertImageToWebP(file, 1280, 0.82);
+      const url = await uploadContentImage(file, "knowledge");
       setEditingArticle({
         ...editingArticle,
-        cover_image_url: webpBase64,
+        cover_image_url: url,
       });
     } catch (err: any) {
-      alert(`Gagal memproses gambar: ${err.message}`);
+      alert(`Gagal mengunggah gambar: ${err.message}`);
     } finally {
       setIsConvertingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  // Sisip gambar ke DALAM isi artikel Knowledge, di posisi kursor -- sebelumnya
+  // Knowledge Base sama sekali tidak punya cara menaruh gambar di badan konten.
+  const handleBodyImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editingArticle) return;
+
+    setIsUploadingBodyImage(true);
+    try {
+      const url = await uploadContentImage(file, "knowledge");
+      const alt = file.name.replace(/\.[^/.]+$/, "");
+      const currentContent = editingArticle.content || "";
+      const { text, cursorPos } = insertAtCursor(contentTextareaRef.current, currentContent, `\n\n![${alt}](${url})\n\n`);
+      setEditingArticle({ ...editingArticle, content: text });
+      requestAnimationFrame(() => {
+        const el = contentTextareaRef.current;
+        if (el) {
+          el.focus();
+          el.setSelectionRange(cursorPos, cursorPos);
+        }
+      });
+    } catch (err: any) {
+      alert(`Gagal mengunggah gambar: ${err.message}`);
+    } finally {
+      setIsUploadingBodyImage(false);
+      if (bodyImageInputRef.current) bodyImageInputRef.current.value = "";
     }
   };
 
@@ -537,7 +537,7 @@ export default function DatabaseKnowledgePanel() {
               {/* Upload Foto / Gambar (Convert to WebP) */}
               <div className="space-y-2">
                 <label className="block text-xs font-bold text-bento-text-primary">
-                  Foto Sampul / Gambar Artikel (Konversi Otomatis ke WebP Jernih & Ringan)
+                  Foto Sampul / Gambar Artikel (Maks 2MB, Konversi Otomatis ke WebP Jernih & Ringan)
                 </label>
 
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 rounded-xl border border-bento-border bg-bento-surface-lighter/50">
@@ -576,7 +576,7 @@ export default function DatabaseKnowledgePanel() {
                       className="flex items-center gap-2 text-xs"
                     >
                       <Upload className="w-4 h-4 text-bento-accent" />
-                      <span>{isConvertingImage ? "Mengompres ke WebP..." : "Upload Foto / Pilih Gambar"}</span>
+                      <span>{isConvertingImage ? "Mengunggah..." : "Upload Foto / Pilih Gambar"}</span>
                     </Button>
                     <p className="text-[11px] text-bento-text-secondary leading-normal">
                       Gambar otomatis dikompres ke format <strong>WebP</strong> (ukuran file kecil, gambar tetap jernih).
@@ -601,15 +601,44 @@ export default function DatabaseKnowledgePanel() {
 
               {/* Deskripsi Panjang / Isi Artikel */}
               <div>
-                <label className="block text-xs font-bold text-bento-text-primary mb-1">
-                  Deskripsi Panjang / Isi Artikel Lengkap * (Mendukung Markdown & Teks Berformat)
-                </label>
+                <div className="flex items-center justify-between flex-wrap gap-2 mb-1">
+                  <label className="block text-xs font-bold text-bento-text-primary">
+                    Deskripsi Panjang / Isi Artikel Lengkap * (Mendukung Markdown & Teks Berformat)
+                  </label>
+                  <input
+                    type="file"
+                    ref={bodyImageInputRef}
+                    onChange={handleBodyImageUpload}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="default"
+                    onClick={() => bodyImageInputRef.current?.click()}
+                    disabled={isUploadingBodyImage}
+                    className="!py-1 !px-2.5 text-[11px] flex items-center gap-1.5"
+                  >
+                    {isUploadingBodyImage ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-bento-accent" />
+                        <span>Mengunggah...</span>
+                      </>
+                    ) : (
+                      <>
+                        <ImagePlus className="w-3.5 h-3.5 text-bento-accent" />
+                        <span>Sisipkan Gambar di Kursor (maks 2MB)</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
                 <textarea
+                  ref={contentTextareaRef}
                   required
                   rows={10}
                   value={editingArticle.content || ""}
                   onChange={(e) => setEditingArticle({ ...editingArticle, content: e.target.value })}
-                  placeholder="Tuliskan isi artikel lengkap di sini... Anda bisa menggunakan pemformatan Markdown (# Judul, **teks tebal**, gambar, dll)."
+                  placeholder="Tuliskan isi artikel lengkap di sini... Anda bisa menggunakan pemformatan Markdown (# Judul, **teks tebal**, gambar, dll). Letakkan kursor di posisi yang diinginkan lalu klik 'Sisipkan Gambar di Kursor' untuk menaruh foto di sana."
                   className="w-full px-3.5 py-3 rounded-xl border border-bento-border bg-bento-bg text-sm font-mono leading-relaxed outline-none focus:border-bento-accent"
                 />
               </div>
