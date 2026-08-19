@@ -115,4 +115,5 @@ export const RATE_LIMITS = {
   VOICE_TTS: { endpoint: "voice/tts", maxRequests: 30, windowMinutes: 1 },
   VOICE_STT: { endpoint: "voice/stt", maxRequests: 30, windowMinutes: 1 },
   UPLOAD_IMAGE: { endpoint: "upload/image", maxRequests: 20, windowMinutes: 1 },
+  MANUAL_KNOWLEDGE: { endpoint: "data-center/manual", maxRequests: 15, windowMinutes: 10 },
 } as const;

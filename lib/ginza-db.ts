@@ -1144,14 +1144,21 @@ export interface DataCenterCandidateRow {
   created_at: string;
   reviewed_by: string | null;
   reviewed_at: string | null;
+  source_type?: string;
+  document_type?: string | null;
 }
 
+// source_type "manual_document" ditambahkan 2026-08-18 -- jalur submit manual
+// (lirik lagu/dokumen via form admin, app/api/data-center/route.ts) TIDAK
+// lewat AI triase (langsung manual_review_required=true saat insert), tapi
+// tetap masuk antrean review yg SAMA dgn hasil cron chat_memory_fact supaya
+// admin cuma perlu 1 tempat utk approve/reject.
 export async function listDataCenterCandidates(status?: string): Promise<DataCenterCandidateRow[]> {
   const db = assertDb();
   let q = db
     .from("gw_data_center")
-    .select("id, raw_text, extracted_data, review_status, confidence_score, created_at, reviewed_by, reviewed_at")
-    .eq("source_type", "chat_memory_fact")
+    .select("id, raw_text, extracted_data, review_status, confidence_score, created_at, reviewed_by, reviewed_at, source_type, document_type")
+    .in("source_type", ["chat_memory_fact", "manual_document"])
     .eq("manual_review_required", true)
     .order("created_at", { ascending: false })
     .limit(200);

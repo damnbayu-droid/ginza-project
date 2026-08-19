@@ -33,22 +33,29 @@ Bangun **satu form admin sederhana** ("Tambah Pengetahuan dari Lirik/Dokumen") y
 3. **Tautkan ke antrian triase** — pastikan cron `extract-knowledge` (sudah ada, `app/api/cron/extract-knowledge/route.ts`) memproses baris baru ini sama seperti `chat_memory_fact`.
 4. **Verifikasi end-to-end**: submit contoh lirik → cek muncul di `gw_data_center` → cek AI triase memprosesnya jadi `knowledge_candidates` → cek muncul di panel review admin.
 
-## 🚀 4. Opsi Lanjutan (Fase 2+, BELUM dikerjakan, didiskusikan dulu sebelum mulai)
+## 🚀 4. Opsi Lanjutan: Belajar Langsung dari LINK (Fase 2+, BELUM dikerjakan, didiskusikan dulu sebelum mulai)
 
-Kalau Fase 1 (teks manual) sudah jalan tapi ternyata kebutuhannya memang video-native (bukan sekadar teks lirik), ada 3 jalur tambahan, urut dari paling murah ke paling kompleks:
+Boss Bayu menanyakan (2026-08-18): bisakah Bogani AI "belajar" langsung dari link yang dikirim (YouTube, TikTok, Instagram, atau file mp3/rekaman suara)? **Bisa, tapi tingkat keandalannya beda-beda per sumber** — semua jalur di bawah ini pada akhirnya mengubah sumbernya jadi TEKS lalu masuk ke pipeline Fase 1 yang sama (`gw_data_center` → triase AI → **review admin WAJIB**, bukan opsional).
 
-| Opsi | Kapan dipakai | Kebutuhan teknis | Kompleksitas |
+| Opsi | Kapan dipakai | Kebutuhan teknis | Keandalan |
 |---|---|---|---|
-| **A. Tarik caption/transkrip YouTube** | Video punya caption resmi/otomatis | Ambil teks caption → masukkan ke Fase 1 sbg teks biasa | Rendah |
-| **B. Google Cloud Speech-to-Text** | Lagu/audio tanpa caption sama sekali | Sudah terintegrasi (dipakai Voice Mode STT) — tinggal terima file audio & transkrip | Sedang |
-| **C. Gemini video understanding** | Perlu AI "menonton" video (lirik cuma tampil di layar, atau perlu paham konteks visual) | Panggilan API Gemini baru dgn input video — **kerja lintas-repo**, Gateway (myai-os-console) sudah pakai Gemini sbg salah satu provider tapi belum ada endpoint video | Tinggi |
+| **A. Caption/transkrip YouTube** | Video punya caption resmi/otomatis | Ambil teks caption → masuk Fase 1 sbg teks biasa. Paling murah, tanpa AI transkripsi sama sekali. | **Tinggi** kalau captionnya manual (ditulis manusia yg paham liriknya) |
+| **B. Upload file MP3/rekaman langsung** | Lagu/audio tanpa caption | Google Cloud Speech-to-Text (sudah terintegrasi, dipakai Voice Mode STT) — terima file audio, transkrip otomatis | **Sedang** — lihat catatan di bawah |
+| **C. Link TikTok/Instagram** | Konten cuma ada di platform tsb | Perlu library pihak-ketiga utk download (TikTok/Instagram tak punya API resmi utk ini) → ekstrak audio (ffmpeg) → lanjut ke Opsi B | **Rendah/rapuh** — library sering rusak tiap platform ubah struktur situs, & area abu-abu soal ToS platform. **Bukan prioritas pertama.** |
+| **D. Gemini video understanding** | Lirik/teks cuma tampil visual di layar (bukan di audio), atau perlu paham konteks visual video | Panggilan API Gemini baru dgn input video — **kerja lintas-repo**, Gateway (myai-os-console) sudah pakai Gemini sbg provider tapi belum ada endpoint video | Tinggi kalau berhasil, tapi paling mahal & paling belakangan |
 
-**Catatan:** Opsi C butuh koordinasi dengan sesi Gateway (myai-os-console) karena semua routing provider AI ada di sana, bukan di repo Ginza ini.
+**⚠️ Catatan penting soal Opsi B & C — akurasi transkripsi Bahasa Mongondow:**
+Google Speech-to-Text **tidak punya model Bahasa Mongondow** — dia cuma mengenali Bahasa Indonesia umum (id-ID). Ini masalah yang SAMA dengan yang sudah kita tangani di `lib/mongondow-voice.ts` untuk arah sebaliknya (teks→suara/TTS tak paham fonem Mongondow) — di sini arahnya kebalik (suara→teks) tapi akar masalahnya identik. Artinya: transkrip otomatis dari lagu berbahasa Mongondow akan banyak salah dengar/typo pada kata-kata Mongondow-nya, dan **wajib dikoreksi manusia** sebelum disetujui masuk Knowledge Base. Untungnya langkah review admin di Fase 1 memang sudah ada utk ini — bukan infrastruktur baru, cuma makin krusial perannya di jalur ini.
 
-## ✅ 5. Definition of Done (Fase 1)
+**Rekomendasi urutan pengerjaan Fase 2 (kalau/ketika dilanjutkan):** A → B → D, dan lewati C kecuali benar-benar tidak ada alternatif (kontennya cuma ada di TikTok/Instagram).
 
-- [ ] Migrasi/verifikasi kolom `document_type` di `gw_data_center` mendukung nilai bebas (bukan enum terbatas)
-- [ ] Form admin baru terhubung ke `POST /api/data-center`
-- [ ] Rate limit & validasi input (panjang teks maks, dll) ditambahkan ke endpoint kalau belum ada
-- [ ] Verifikasi end-to-end: submit → `gw_data_center` → triase AI → `knowledge_candidates` → panel review
-- [ ] Tidak ada perubahan pada pipeline chat log (`chat_memory_fact`) yang sudah berjalan
+**Catatan:** Opsi D butuh koordinasi dengan sesi Gateway (myai-os-console) karena semua routing provider AI ada di sana, bukan di repo Ginza ini.
+
+## ✅ 5. Definition of Done (Fase 1) — SELESAI 2026-08-19
+
+- [x] Verifikasi kolom `document_type` di `gw_data_center` — free text, tidak ada CHECK constraint, tidak perlu migrasi
+- [x] Form admin baru ("Tambah Pengetahuan dari Lirik/Dokumen") terhubung ke `POST /api/data-center`, ditaruh di panel "Celah Pengetahuan (AI)" (`KnowledgeCandidatesPanel.tsx`)
+- [x] Rate limit (`RATE_LIMITS.MANUAL_KNOWLEDGE`, 15/10menit) & validasi input (wajib isi, maks 20.000 karakter) ditambahkan ke `POST /api/data-center`
+- [x] **Perbedaan penting dari rencana awal**: baris manual TIDAK lewat cron `extract-knowledge` sama sekali (cron itu cuma proses `chat_memory_fact`, memang didesain menyaring noise obrolan) — sebagai gantinya baris manual langsung diberi `manual_review_required=true` saat insert, dan `lib/ginza-db.ts#listDataCenterCandidates()` diperluas dari `.eq("source_type","chat_memory_fact")` jadi `.in("source_type", ["chat_memory_fact","manual_document"])` supaya kedua sumber tampil di panel review yang sama. Ini lebih tepat karena submission manual sudah sengaja dikurasi admin, tidak perlu disaring AI dulu.
+- [x] Verifikasi end-to-end (curl, data uji sudah dihapus): submit → muncul di `gw_data_center` dgn `manual_review_required=true` → langsung muncul di `GET /api/admin/knowledge-candidates?status=pending` → approve via PATCH → `review_status` jadi `approved`
+- [x] Tidak ada perubahan pada pipeline chat log (`chat_memory_fact`) yang sudah berjalan — dikonfirmasi baris lama tetap tampil normal setelah perubahan filter
