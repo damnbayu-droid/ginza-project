@@ -171,17 +171,24 @@ const nextConfig: NextConfig = {
 
   // "output: standalone" SENGAJA DIHAPUS (2026-08-24) -- Vercel eksplisit
   // TIDAK menganjurkan setting ini di platform mereka (dokumentasi resmi
-  // Vercel: "you do not need this option"), krn file-tracing standalone
-  // mode dituning utk deployment self-host (Docker), bukan Vercel sendiri.
-  // Root-cause insiden nyata: SEMUA route yg import `sharp` (native binary,
-  // dipakai lib/file-parser.ts & app/api/upload-image/route.ts) crash total
-  // di production (generic 500 Next.js, bukan error dari kode kita sendiri)
-  // krn standalone tracing gagal menyertakan binary native sharp yg benar
-  // -- termasuk /api/homepage/chat (via file-parser.ts), yg bikin SELURUH
-  // chat Bogani AI (teks maupun Voice Mode) mati total di production,
-  // padahal jalan normal di localhost (next dev tidak lewat standalone
-  // tracing sama sekali). Dikonfirmasi via curl langsung ke domain produksi
-  // sebelum & sesudah perbaikan.
+  // Vercel: "you do not need this option"). Root-cause insiden nyata: SEMUA
+  // route yg import `sharp` (native binary, dipakai lib/file-parser.ts &
+  // app/api/upload-image/route.ts) crash total di production (generic 500
+  // Next.js) -- termasuk /api/homepage/chat (via file-parser.ts), yg bikin
+  // SELURUH chat Bogani AI (teks maupun Voice Mode) mati total di
+  // production, padahal jalan normal di localhost.
+  //
+  // Menghapus "output: standalone" saja TERNYATA BELUM CUKUP -- log runtime
+  // Vercel (dicek Boss Bayu langsung, 2026-08-24) masih menunjukkan error
+  // persis: "Failed to load external module sharp-<hash>: Could not load
+  // the sharp module". Ini bug spesifik Turbopack (dipakai build ini,
+  // lihat package.json) dlm men-trace binary native sharp utk server
+  // bundle -- fix aslinya adalah `serverExternalPackages` di bawah, yg
+  // memberi tahu Next.js supaya TIDAK mencoba bundle sharp sama sekali,
+  // cukup require() dari node_modules apa adanya saat runtime (persis spt
+  // cara kerja `sharp` yg memang dirancang, krn binary native platform-
+  // spesifik tidak bisa di-bundle).
+  serverExternalPackages: ["sharp"],
   typescript: { ignoreBuildErrors: false },
 };
 
