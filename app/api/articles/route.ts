@@ -6,7 +6,7 @@ import { getCurrentUserProfile } from "@/lib/supabase-auth-server";
 const MEMORY_ARTICLES: any[] = [];
 
 /** Helper slug generator: /artikel/{slug-judul}-{ddmmyy} */
-export function generateArticleSlug(title: string): string {
+function generateArticleSlug(title: string): string {
   const cleanTitle = title
     .toLowerCase()
     .trim()

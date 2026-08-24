@@ -189,6 +189,23 @@ const nextConfig: NextConfig = {
   // cara kerja `sharp` yg memang dirancang, krn binary native platform-
   // spesifik tidak bisa di-bundle).
   serverExternalPackages: ["sharp"],
+
+  // `outputFileTracingIncludes` (2026-08-24) -- root-cause sebenarnya dari
+  // ERR_DLOPEN_FAILED: libvips-cpp.so tetap muncul di production meski
+  // `output:standalone` sudah dihapus DAN `serverExternalPackages` sudah
+  // ditambah. sharp me-load binary native (.so/.node) via require() dengan
+  // path yg dihitung runtime (lib/libvips.cjs) -- pola dinamis begini tidak
+  // bisa dideteksi tracer statis manapun (punya Turbopack maupun @vercel/nft
+  // punya webpack), jadi file .so-nya tidak pernah ikut ter-bundle ke Lambda
+  // walau ada fisik di node_modules hasil `npm install` di build machine
+  // Vercel. Paksa sertakan seluruh folder binary native sharp secara
+  // eksplisit di sini utk kedua route yg importnya (langsung/tidak
+  // langsung via lib/file-parser.ts).
+  outputFileTracingIncludes: {
+    "/api/homepage/chat": ["./node_modules/@img/**/*", "./node_modules/sharp/**/*"],
+    "/api/upload-image": ["./node_modules/@img/**/*", "./node_modules/sharp/**/*"],
+  },
+
   typescript: { ignoreBuildErrors: false },
 };
 
