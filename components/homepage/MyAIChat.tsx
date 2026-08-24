@@ -38,6 +38,7 @@ import SettingsModal from "@/components/SettingsModal";
 import FeedbackModal from "@/components/FeedbackModal";
 import { HomeChatMessage, HomeChatSession, Language } from "@/lib/types";
 import { speakMongondow, stopSpeakingMongondow } from "@/lib/mongondow-voice";
+import { trackButtonClick } from "@/lib/track-metric";
 
 // Identitas produk Ginza Project — pakai env var yang sama dengan lib/bogani-persona.ts
 // supaya konsisten di seluruh app (bukan generic "MyAI" seperti sebelumnya).
@@ -349,6 +350,7 @@ export default function MyAIChat({
       setShowLoginModal(true);
       return;
     }
+    trackButtonClick("Bogani AI Voice Mode");
     onOpenVoiceOverlay();
   };
 
@@ -424,7 +426,7 @@ export default function MyAIChat({
           )}
 
           <button
-            onClick={() => setShowFeedbackModal(true)}
+            onClick={() => { trackButtonClick("CTA Feedback"); setShowFeedbackModal(true); }}
             className="flex items-center gap-2 bg-[#21232B] hover:bg-[#2A2D37] text-gray-300 hover:text-white border border-[#2E313D] px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shadow-sm group"
             title={lang === 'id' ? "Kritik, Saran & Kuisioner" : "Feedback & Survey"}
           >
@@ -434,6 +436,7 @@ export default function MyAIChat({
 
           <Link
             href="/info"
+            onClick={() => trackButtonClick("CTA Info")}
             className="flex items-center gap-2 bg-[#21232B] hover:bg-[#2A2D37] text-gray-300 hover:text-white border border-[#2E313D] px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all shadow-sm group"
             title="Informasi & Direktori Tools MongondowPedia"
           >
@@ -740,7 +743,7 @@ export default function MyAIChat({
             </p>
             {quotaBlock?.requiresAuth && (
               <button
-                onClick={() => setShowLoginModal(true)}
+                onClick={() => { trackButtonClick("CTA Login"); setShowLoginModal(true); }}
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-all shadow-lg cursor-pointer"
               >
                 <LogIn className="w-4 h-4" />

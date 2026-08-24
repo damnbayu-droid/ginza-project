@@ -37,6 +37,7 @@ import Link from "next/link";
 import SettingsModal from "@/components/SettingsModal";
 import { HomeChatSession, Language, ChatFolder } from "@/lib/types";
 import MyAILogo from "./MyAILogo";
+import { trackButtonClick } from "@/lib/track-metric";
 
 interface ChatSidebarProps {
   sessions: HomeChatSession[];
@@ -211,7 +212,7 @@ export default function ChatSidebar({
           <div className="grid grid-cols-2 gap-2 pt-1">
             <Link
               href="/kamus"
-              onClick={onCloseMobile}
+              onClick={() => { trackButtonClick("Kamus"); onCloseMobile(); }}
               className="py-2 px-2.5 rounded-xl bg-[#212121] hover:bg-[#2b2b2b] text-gray-300 hover:text-white border border-[#333] text-xs font-semibold flex items-center gap-2 transition-all"
             >
               <BookOpen className="w-4 h-4 text-emerald-400 shrink-0" />
@@ -220,7 +221,7 @@ export default function ChatSidebar({
 
             <Link
               href="/knowledge"
-              onClick={onCloseMobile}
+              onClick={() => { trackButtonClick("Knowledge"); onCloseMobile(); }}
               className="py-2 px-2.5 rounded-xl bg-[#212121] hover:bg-[#2b2b2b] text-gray-300 hover:text-white border border-[#333] text-xs font-semibold flex items-center gap-2 transition-all"
             >
               <Database className="w-4 h-4 text-blue-400 shrink-0" />
@@ -232,7 +233,7 @@ export default function ChatSidebar({
           <div className="grid grid-cols-2 gap-2">
             <Link
               href="/aksara-mongondow?tab=sandbox"
-              onClick={onCloseMobile}
+              onClick={() => { trackButtonClick("Transliterasi"); onCloseMobile(); }}
               className="py-2 px-2.5 rounded-xl bg-[#212121] hover:bg-[#2b2b2b] text-gray-300 hover:text-white border border-[#333] text-xs font-semibold flex items-center gap-2 transition-all"
             >
               <Type className="w-4 h-4 text-violet-400 shrink-0" />
@@ -241,7 +242,7 @@ export default function ChatSidebar({
 
             <Link
               href="/aksara-mongondow"
-              onClick={onCloseMobile}
+              onClick={() => { trackButtonClick("Aksara"); onCloseMobile(); }}
               className="py-2 px-2.5 rounded-xl bg-[#212121] hover:bg-[#2b2b2b] text-gray-300 hover:text-white border border-[#333] text-xs font-semibold flex items-center gap-2 transition-all"
             >
               <ScrollText className="w-4 h-4 text-amber-400 shrink-0" />
@@ -253,7 +254,7 @@ export default function ChatSidebar({
           <div className="grid grid-cols-2 gap-2">
             <Link
               href="/aksara-mongondow?tab=tracing"
-              onClick={onCloseMobile}
+              onClick={() => { trackButtonClick("Latihan"); onCloseMobile(); }}
               className="py-2 px-2.5 rounded-xl bg-[#212121] hover:bg-[#2b2b2b] text-gray-300 hover:text-white border border-[#333] text-xs font-semibold flex items-center gap-2 transition-all group"
               title="Buka Studio Latihan Menulis Aksara Mongondow"
             >
@@ -263,7 +264,7 @@ export default function ChatSidebar({
 
             <Link
               href="/game"
-              onClick={onCloseMobile}
+              onClick={() => { trackButtonClick("Game"); onCloseMobile(); }}
               className="py-2 px-2.5 rounded-xl bg-[#212121] hover:bg-[#2b2b2b] text-gray-300 hover:text-white border border-[#333] text-xs font-semibold flex items-center gap-2 transition-all group"
               title="Buka Arena Game & Kuis MongondowPedia"
             >
@@ -380,6 +381,7 @@ export default function ChatSidebar({
         <div className="p-2 border-t border-[#262626] space-y-1 bg-[#171717]">
           <Link
             href="/ecosystem"
+            onClick={() => trackButtonClick("Ecosystem")}
             className="w-full p-2.5 rounded-xl text-xs font-semibold text-blue-400 bg-blue-600/10 hover:bg-blue-600/20 border border-blue-500/30 flex items-center justify-between transition-all group shadow-sm"
           >
             <div className="flex items-center gap-2.5">
@@ -392,6 +394,7 @@ export default function ChatSidebar({
           {user && (
             <Link
               href="/dashboard"
+              onClick={() => trackButtonClick("Dashboard")}
               className="w-full p-2.5 rounded-xl text-xs font-medium text-gray-300 hover:bg-[#212121] flex items-center gap-2.5 transition-colors"
             >
               <LayoutDashboard className="w-4 h-4 text-gray-400" />
@@ -400,7 +403,7 @@ export default function ChatSidebar({
           )}
 
           <button
-            onClick={() => setShowSettingsModal(true)}
+            onClick={() => { trackButtonClick("Pengaturan"); setShowSettingsModal(true); }}
             className="w-full p-2.5 rounded-xl text-xs font-medium text-gray-300 hover:bg-[#212121] flex items-center gap-2.5 transition-colors"
           >
             <Settings className="w-4 h-4 text-gray-400" />
@@ -458,6 +461,7 @@ export default function ChatSidebar({
 
                 <Link
                   href="/login"
+                  onClick={() => trackButtonClick("CTA Login")}
                   className="w-full py-2 px-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs flex items-center justify-center gap-2 transition-all shadow-md"
                 >
                   <LogIn className="w-4 h-4" />

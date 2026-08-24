@@ -31,7 +31,9 @@ export const geminiAdapter: ProviderAdapter = {
         },
       };
 
-      let modelToUse = "gemini-3.1-flash-lite";
+      // Disamakan dgn model aktif di Gateway (console.myai.nexus/api/v1/models,
+      // dicek 2026-08-24) -- sebelumnya gemini-3.1-flash-lite (versi lebih lama).
+      let modelToUse = "gemini-3.5-flash-lite";
       let res = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${modelToUse}:generateContent?key=${providerApiKey}`,
         { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }

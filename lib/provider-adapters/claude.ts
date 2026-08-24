@@ -32,7 +32,11 @@ export const claudeAdapter: ProviderAdapter = {
           "anthropic-version": "2023-06-01",
         },
         body: JSON.stringify({
-          model: options.model_name || "claude-3-5-sonnet-20241022",
+          // Disamakan dgn model aktif di Gateway (console.myai.nexus/api/v1/models,
+          // dicek 2026-08-24) -- default lama (claude-3-5-sonnet-20241022) makin
+          // berisiko dideprecate Anthropic seiring waktu, ini cuma jalur fallback
+          // darurat (dipakai kalau Gateway down), jadi harus tetap model yg hidup.
+          model: options.model_name || "claude-sonnet-4-5",
           // Dulu 2000 -- lihat lib/provider-adapters/deepseek.ts utk alasan lengkapnya (insiden jawaban terpotong mid-kalimat).
           max_tokens: options.max_tokens ?? 4096,
           system: systemPrompt,

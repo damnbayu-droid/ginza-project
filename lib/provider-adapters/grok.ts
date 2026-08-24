@@ -23,7 +23,9 @@ export const grokAdapter: ProviderAdapter = {
           Authorization: `Bearer ${providerApiKey}`,
         },
         body: JSON.stringify({
-          model: options.model_name || "grok-2",
+          // Disamakan dgn model aktif di Gateway (console.myai.nexus/api/v1/models,
+          // dicek 2026-08-24) -- grok-2 makin berisiko dideprecate xAI.
+          model: options.model_name || "grok-4.5",
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: prompt },

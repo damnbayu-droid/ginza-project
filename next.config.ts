@@ -169,7 +169,19 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  output: "standalone",
+  // "output: standalone" SENGAJA DIHAPUS (2026-08-24) -- Vercel eksplisit
+  // TIDAK menganjurkan setting ini di platform mereka (dokumentasi resmi
+  // Vercel: "you do not need this option"), krn file-tracing standalone
+  // mode dituning utk deployment self-host (Docker), bukan Vercel sendiri.
+  // Root-cause insiden nyata: SEMUA route yg import `sharp` (native binary,
+  // dipakai lib/file-parser.ts & app/api/upload-image/route.ts) crash total
+  // di production (generic 500 Next.js, bukan error dari kode kita sendiri)
+  // krn standalone tracing gagal menyertakan binary native sharp yg benar
+  // -- termasuk /api/homepage/chat (via file-parser.ts), yg bikin SELURUH
+  // chat Bogani AI (teks maupun Voice Mode) mati total di production,
+  // padahal jalan normal di localhost (next dev tidak lewat standalone
+  // tracing sama sekali). Dikonfirmasi via curl langsung ke domain produksi
+  // sebelum & sesudah perbaikan.
   typescript: { ignoreBuildErrors: false },
 };
 

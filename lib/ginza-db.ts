@@ -670,8 +670,10 @@ export async function finalizeContribution(contributionId: string, adminId: stri
 
 // ── Metrics ──────────────────────────────────────────────────────────────
 
+export type MetricEventType = "kamus_search" | "kamus_click" | "knowledge_view" | "ai_question" | "button_click";
+
 export async function logMetricEvent(event: {
-  type: "kamus_search" | "kamus_click" | "knowledge_view" | "ai_question";
+  type: MetricEventType;
   targetId?: string;
   targetText?: string;
   userId?: string;
@@ -705,6 +707,62 @@ export async function getTopMetrics(eventType: "kamus_search" | "kamus_click" | 
     .map(([text, count]) => ({ text, count }))
     .sort((a, b) => b.count - a.count)
     .slice(0, limit);
+}
+
+export type MetricsPeriod = "day" | "week" | "month" | "all";
+
+function periodStartIso(period: MetricsPeriod): string | null {
+  if (period === "all") return null;
+  const now = Date.now();
+  const ms = period === "day" ? 24 * 60 * 60 * 1000 : period === "week" ? 7 * 24 * 60 * 60 * 1000 : 30 * 24 * 60 * 60 * 1000;
+  return new Date(now - ms).toISOString();
+}
+
+/**
+ * Klik per tombol (lib/track-metric.ts#TRACKED_BUTTONS), difilter per
+ * periode -- dipakai Panel Metrics admin (tab Harian/Mingguan/Bulanan/Semua),
+ * 2026-08-24. Data 100% nyata dari tabel metrics_events, tidak ada mock.
+ */
+export async function getButtonClickCounts(period: MetricsPeriod): Promise<Record<string, number>> {
+  const db = assertDb();
+  let q = db.from("metrics_events").select("target_text").eq("event_type", "button_click").not("target_text", "is", null).limit(20000);
+  const since = periodStartIso(period);
+  if (since) q = q.gte("created_at", since);
+  const { data, error } = await q;
+  if (error) throw error;
+
+  const counts: Record<string, number> = {};
+  for (const row of data ?? []) {
+    const key = (row.target_text ?? "").trim();
+    if (!key) continue;
+    counts[key] = (counts[key] ?? 0) + 1;
+  }
+  return counts;
+}
+
+export interface ChatUsageStats {
+  totalTurns: number;
+  uniqueUsers: number;
+}
+
+/**
+ * Pemakaian "Bogani AI Chat" (event ai_question, dicatat tiap giliran chat
+ * SUKSES baik teks maupun Voice Mode -- lihat logChatTurn di
+ * app/api/homepage/chat/route.ts) -- total giliran & jumlah user login unik
+ * (tamu tidak py user_id, jadi tidak ikut terhitung di uniqueUsers, tapi
+ * tetap ikut di totalTurns).
+ */
+export async function getChatUsageStats(period: MetricsPeriod): Promise<ChatUsageStats> {
+  const db = assertDb();
+  let q = db.from("metrics_events").select("user_id").eq("event_type", "ai_question").limit(50000);
+  const since = periodStartIso(period);
+  if (since) q = q.gte("created_at", since);
+  const { data, error } = await q;
+  if (error) throw error;
+
+  const rows = data ?? [];
+  const uniqueUsers = new Set(rows.map((r: any) => r.user_id).filter(Boolean)).size;
+  return { totalTurns: rows.length, uniqueUsers };
 }
 
 // ── Overview aggregate ───────────────────────────────────────────────────
