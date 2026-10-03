@@ -105,6 +105,7 @@ export default function AksaraMongondow({ statusMap = {} }: AksaraMongondowProps
     if (typeof window === "undefined") return;
     const tabParam = new URLSearchParams(window.location.search).get("tab");
     if (tabParam === "sandbox" || tabParam === "matrix" || tabParam === "tracing" || tabParam === "quiz") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- baca localStorage/URL hanya di client setelah mount (hindari hydration mismatch)
       setActiveTab(tabParam);
     }
   }, []);
@@ -327,6 +328,7 @@ export default function AksaraMongondow({ statusMap = {} }: AksaraMongondowProps
 
   useEffect(() => {
     if (activeTab === "quiz" && (!quizOn || !quizQuestion)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sinkronkan state dgn perubahan tab/overlay/sumber (disengaja)
       startQuiz();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -335,6 +337,7 @@ export default function AksaraMongondow({ statusMap = {} }: AksaraMongondowProps
   // Ganti kategori => mulai ulang sesi kuis dgn pool baru, bukan lanjut soal lama.
   useEffect(() => {
     if (activeTab === "quiz" && quizOn) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sinkronkan state dgn perubahan tab/overlay/sumber (disengaja)
       startQuiz();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

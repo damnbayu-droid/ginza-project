@@ -81,6 +81,7 @@ export default function SettingsModal({
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedAutoVoice = localStorage.getItem("setting_auto_voice");
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- baca localStorage/URL hanya di client setelah mount (hindari hydration mismatch)
       if (savedAutoVoice !== null) setAutoPlayVoice(savedAutoVoice === "true");
 
       const savedAksaraSub = localStorage.getItem("setting_aksara_subtitles");
@@ -108,6 +109,7 @@ export default function SettingsModal({
   // cuma gonta-ganti tab lain lalu balik lagi.
   useEffect(() => {
     if (isOpen && activeTab === 'memory' && user && !memoryLoaded) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- ambil data saat mount/deps berubah; reset state loading sinkron disengaja
       setMemoryLoading(true);
       fetch("/api/public/memory")
         .then((res) => res.json())
@@ -758,7 +760,7 @@ export default function SettingsModal({
                 </div>
 
                 <p className="text-xs text-gray-300 leading-relaxed">
-                  Portal Ensiklopedia & Pengetahuan Bolaang Mongondow Raya berbasis RAG Kecerdasan Buatan <strong>Bogani Ai "Abo"</strong>by MyAI OS (myai.nexus) dan diampu oleh tim inisiasi <strong>Yayasan Bolaang Mongondow Raya</strong>.
+                  Portal Ensiklopedia & Pengetahuan Bolaang Mongondow Raya berbasis RAG Kecerdasan Buatan <strong>Bogani Ai &quot;Abo&quot;</strong>by MyAI OS (myai.nexus) dan diampu oleh tim inisiasi <strong>Yayasan Bolaang Mongondow Raya</strong>.
                 </p>
 
                 <div className="pt-2 border-t border-[#252836] flex flex-wrap gap-2 text-[11px] font-mono text-gray-400">

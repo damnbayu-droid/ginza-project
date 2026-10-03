@@ -7,6 +7,10 @@
  * di Supabase SQL Editor project rainfqnsazraiifprkmc.
  *
  * Jalankan: npx tsx scripts/import-knowledge-to-db.ts
+ *
+ * Satu file saja (artikel lain, arsip, & kategori tidak disentuh, supaya hasil
+ * suntingan lewat panel admin tidak tertimpa):
+ *   npx tsx scripts/import-knowledge-to-db.ts --only=Kawasan_Cagar_Budaya_Panang.md
  */
 import { loadEnvLocal } from "./_load-env";
 loadEnvLocal();
@@ -45,6 +49,7 @@ const CURATED_FILES: { file: string; categorySlug: string; title?: string }[] = 
   { file: "Sejarah_Bolaang_Mongondow_Timur_Boltim_Kotabunan.md", categorySlug: "sejarah" },
   { file: "Graphify_Naskah_Teater_Panang_Lipu_Ku_dan_Aksi_HAM_Panang.md", categorySlug: "sejarah" },
   { file: "Sejarah_Kotabunan.md", categorySlug: "sejarah" },
+  { file: "Kawasan_Cagar_Budaya_Panang.md", categorySlug: "sejarah" },
 ];
 
 // arsip_download/*.md — teks mentah/OCR, masuk sbg "pending_review" (belum
@@ -96,6 +101,21 @@ function parseMarkdown(content: string): { title: string; summary: string } {
 }
 
 async function main() {
+  // --only=<nama file>: batasi impor ke satu file dari CURATED_FILES atau arsip_download/.
+  const onlyArg = process.argv.find(a => a.startsWith("--only="));
+  const only = onlyArg ? path.basename(onlyArg.slice("--only=".length).trim()) : null;
+  if (onlyArg && !only) {
+    console.error("❌ --only butuh nama file, mis. --only=Kawasan_Cagar_Budaya_Panang.md");
+    process.exit(1);
+  }
+  const curatedFiles = only ? CURATED_FILES.filter(e => e.file === only) : CURATED_FILES;
+  const isArsipOnly = !!only && fs.existsSync(path.join(process.cwd(), "knowledge", "arsip_download", only));
+  if (only && curatedFiles.length === 0 && !isArsipOnly) {
+    console.error(`❌ --only=${only}: tidak ada di CURATED_FILES maupun knowledge/arsip_download/`);
+    process.exit(1);
+  }
+  if (only) console.log(`🎯 Mode --only: hanya ${only} (kategori & artikel lain tidak disentuh)`);
+
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !serviceKey) {
@@ -112,9 +132,10 @@ async function main() {
     process.exit(1);
   }
 
-  // 1) Tambah kategori ekstra (idempotent — upsert by slug)
-  console.log(`\n📁 Menambah ${EXTRA_CATEGORIES.length} kategori tambahan...`);
-  for (const cat of EXTRA_CATEGORIES) {
+  // 1) Tambah kategori ekstra (idempotent — upsert by slug). Dilewati di mode --only.
+  const extraCategories = only ? [] : EXTRA_CATEGORIES;
+  console.log(`\n📁 Menambah ${extraCategories.length} kategori tambahan...`);
+  for (const cat of extraCategories) {
     const { error } = await db.from("knowledge_categories").upsert(
       { slug: cat.slug, name: cat.name, display_order: cat.order },
       { onConflict: "slug" }
@@ -130,8 +151,8 @@ async function main() {
   let ok = 0, failed = 0, skipped = 0;
 
   // 2) File kurasi utama -> published
-  console.log(`\n📥 Mengimpor ${CURATED_FILES.length} artikel utama (status: published)...`);
-  for (const entry of CURATED_FILES) {
+  console.log(`\n📥 Mengimpor ${curatedFiles.length} artikel utama (status: published)...`);
+  for (const entry of curatedFiles) {
     const filePath = path.join(knowledgeDir, entry.file);
     if (!fs.existsSync(filePath)) { console.warn(`   ⚠️  Tidak ditemukan: ${entry.file}`); skipped++; continue; }
     const content = fs.readFileSync(filePath, "utf-8");
@@ -157,7 +178,8 @@ async function main() {
 
   // 3) Arsip mentah -> pending_review (menunggu kurasi admin/verifikator)
   const arsipDir = path.join(knowledgeDir, "arsip_download");
-  const arsipFiles = fs.existsSync(arsipDir) ? fs.readdirSync(arsipDir).filter(f => f.endsWith(".md")) : [];
+  const arsipFiles = (fs.existsSync(arsipDir) ? fs.readdirSync(arsipDir).filter(f => f.endsWith(".md")) : [])
+    .filter(f => !only || f === only);
   console.log(`\n📥 Mengimpor ${arsipFiles.length} arsip mentah (status: pending_review)...`);
 
   for (const file of arsipFiles) {

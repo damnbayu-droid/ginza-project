@@ -1001,7 +1001,7 @@ function AjukanTab() {
                   className="w-full mt-1.5 rounded-xl border border-bento-border bg-bento-bg px-3.5 py-2.5 text-sm text-bento-text-primary outline-none focus:border-bento-accent"
                 >
                   <option value="Sejarah">Sejarah & Kerajaan</option>
-                  <option value="Adat & Falsafah">Adat & Falsafah (Palu'an)</option>
+                  <option value="Adat & Falsafah">Adat & Falsafah (Palu&apos;an)</option>
                   <option value="Silsilah Raja">Silsilah & Tokoh</option>
                   <option value="Bahasa & Sastra">Bahasa & Sastra (Itum-Itum)</option>
                   <option value="Seni & Tradisi">Seni & Tari Tradisional</option>
@@ -1422,12 +1422,6 @@ function ArtikelTab() {
   const [myArticles, setMyArticles] = useState<any[]>([]);
   const [loadingArticles, setLoadingArticles] = useState(false);
 
-  useEffect(() => {
-    if (subTab === "my_articles") {
-      fetchMyArticles();
-    }
-  }, [subTab]);
-
   async function fetchMyArticles() {
     setLoadingArticles(true);
     try {
@@ -1440,6 +1434,13 @@ function ArtikelTab() {
       setLoadingArticles(false);
     }
   }
+
+  useEffect(() => {
+    if (subTab === "my_articles") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- ambil data saat mount/deps berubah; reset state loading sinkron disengaja
+      fetchMyArticles();
+    }
+  }, [subTab]);
 
   // Kompresi Gambar Otomatis ke Format WebP (Canvas API)
   function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {

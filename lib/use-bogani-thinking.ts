@@ -67,6 +67,7 @@ export function useBoganiThinkingDisplay(phase: RealPhase | null, sources: strin
 
   useEffect(() => {
     if (sources.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sinkronkan state dgn perubahan tab/overlay/sumber (disengaja)
       setDisplaySource("");
       return;
     }

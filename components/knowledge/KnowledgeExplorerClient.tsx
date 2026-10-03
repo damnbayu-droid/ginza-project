@@ -126,6 +126,26 @@ export default function KnowledgeExplorerClient({
           </div>
         </div>
 
+        {/* ── 1b. SOROTAN: Kawasan Cagar Budaya Panang (halaman statis /kawasan-cagar-budaya-panang) ── */}
+        <Link
+          href="/kawasan-cagar-budaya-panang"
+          className="group flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 md:p-5 rounded-2xl bg-amber-500/5 hover:bg-amber-500/10 border border-amber-500/25 transition-all"
+        >
+          <div className="flex items-start gap-3">
+            <History className="w-5 h-5 text-amber-300 shrink-0 mt-0.5" />
+            <div className="space-y-1">
+              <p className="text-sm md:text-base font-bold text-white">Kawasan Cagar Budaya Panang, Kotabunan</p>
+              <p className="text-xs text-gray-400 leading-relaxed max-w-2xl">
+                Usulan kawasan cagar budaya di Bolaang Mongondow Timur: delapan lokasi, O&apos;uman leluhur, jejak di lapangan, dan arsip Belanda/VOC sejak abad ke-18.
+              </p>
+            </div>
+          </div>
+          <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-300 shrink-0">
+            <span>Buka halaman</span>
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+          </span>
+        </Link>
+
         {/* ── 2. CATEGORY TAB BAR (Menggantikan Card Grid Kategori) ── */}
         <div className="space-y-4">
           <div className="flex items-center gap-2 overflow-x-auto pb-2 custom-scrollbar">

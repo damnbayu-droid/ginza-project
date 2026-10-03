@@ -141,6 +141,7 @@ export default function KnowledgeCandidatesPanel() {
       .catch(e => setError(String(e)));
   }
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- ambil data saat mount/deps berubah; reset state loading sinkron disengaja
   useEffect(() => { load(); }, [filter]);
 
   async function finalize(c: CandidateRow, approve: boolean) {

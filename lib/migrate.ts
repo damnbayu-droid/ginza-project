@@ -4,6 +4,9 @@ import { encryptKey, decryptKey } from "./crypto";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const crypto = require("crypto") as typeof import("crypto");
 
+// Network-level failure (local DNS/connectivity), not a schema or data error.
+const isConnectionError = (message?: string) =>
+  /fetch failed|ENOTFOUND|EAI_AGAIN|ECONNREFUSED|ETIMEDOUT/i.test(message ?? "");
 
 /**
  * Automatically import provider API keys from environment variables.
@@ -136,6 +139,16 @@ export async function runSeedMigration(): Promise<void> {
     return;
   }
 
+  // Check if client_apps table already has data (doubles as a connectivity check)
+  const { count, error: countError } = await supabaseAdmin
+    .from("gw_client_apps")
+    .select("*", { count: "exact", head: true });
+
+  if (countError && isConnectionError(countError.message)) {
+    console.warn(`[migrate] ⚠ Supabase unreachable (${countError.message}) — skipping key import & seed. Check local network/DNS.`);
+    return;
+  }
+
   // 1. Unconditionally import Gemini API keys from env if they aren't in the DB yet
   try {
     await importEnvProviderKeys();
@@ -144,11 +157,6 @@ export async function runSeedMigration(): Promise<void> {
   }
 
   try {
-    // Check if client_apps table already has data
-    const { count } = await supabaseAdmin
-      .from("gw_client_apps")
-      .select("*", { count: "exact", head: true });
-
     if (count && count > 0) {
       console.log(`[migrate] ⏭ DB already has ${count} apps. Skipping seed.`);
       return;

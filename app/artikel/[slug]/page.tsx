@@ -99,10 +99,6 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
     )
   );
 
-  useEffect(() => {
-    fetchArticle();
-  }, [slug]);
-
   async function fetchArticle() {
     setLoading(true);
     try {
@@ -122,6 +118,11 @@ export default function ArticleDetailPage({ params }: { params: Promise<{ slug: 
       setLoading(false);
     }
   }
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- ambil data saat mount/deps berubah; reset state loading sinkron disengaja
+    fetchArticle();
+  }, [slug]);
 
   async function handleInteract(action: "like" | "dislike" | "share") {
     if (action === "like") {

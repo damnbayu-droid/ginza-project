@@ -207,6 +207,7 @@ export default function AksaraPanel() {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- ambil data saat mount/deps berubah; reset state loading sinkron disengaja
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);

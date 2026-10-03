@@ -78,6 +78,7 @@ export default function KamusPage() {
           const parsed = JSON.parse(savedFeatured);
           const activeOnly = parsed.filter((c: any) => c.status === "verified");
           if (activeOnly.length > 0) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect -- baca localStorage/URL hanya di client setelah mount (hindari hydration mismatch)
             setFeaturedCards(activeOnly);
           }
         } catch (e) {
@@ -111,10 +112,11 @@ export default function KamusPage() {
   const searchContainerRef = useRef<HTMLDivElement>(null);
 
   // Aksara Mongondow asli (glyph)
+  const activeWord = activeWordData?.word;
   const realAksara = useMemo(() => {
-    if (!activeWordData?.word) return { success: false, allFailed: true, words: [] as ReturnType<typeof transliterateToAksara>["words"] };
-    return transliterateToAksara(activeWordData.word);
-  }, [activeWordData?.word]);
+    if (!activeWord) return { success: false, allFailed: true, words: [] as ReturnType<typeof transliterateToAksara>["words"] };
+    return transliterateToAksara(activeWord);
+  }, [activeWord]);
 
   const alphabet = ["ALL", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
 
@@ -157,6 +159,7 @@ export default function KamusPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- ambil data saat mount/deps berubah; reset state loading sinkron disengaja
     fetchKamusData(query, selectedLetter, page);
   }, [query, selectedLetter, page]);
 

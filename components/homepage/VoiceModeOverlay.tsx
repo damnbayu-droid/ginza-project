@@ -111,6 +111,7 @@ export default function VoiceModeOverlay({
 
   useEffect(() => {
     const saved = localStorage.getItem(VOICE_STORAGE_KEY);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- baca localStorage/URL hanya di client setelah mount (hindari hydration mismatch)
     if (saved && VOICE_OPTIONS.some((v) => v.id === saved)) setSelectedVoice(saved);
   }, []);
 
@@ -125,23 +126,6 @@ export default function VoiceModeOverlay({
         })
         .catch(() => setPermissionState('unknown'));
     }
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      stopVoiceSession();
-      return;
-    }
-    setErrorMessage("");
-    setStatus('idle');
-    // Siapkan izin mic + meter level visual di awal -- TAPI jangan mulai
-    // merekam apa pun sampai tombol benar2 ditahan (push-to-talk).
-    ensureMicAnalyser();
-
-    return () => {
-      stopVoiceSession();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const requestPermission = async () => {
@@ -353,6 +337,24 @@ export default function VoiceModeOverlay({
     }
   };
 
+  useEffect(() => {
+    if (!isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sinkronkan state dgn perubahan tab/overlay/sumber (disengaja)
+      stopVoiceSession();
+      return;
+    }
+    setErrorMessage("");
+    setStatus('idle');
+    // Siapkan izin mic + meter level visual di awal -- TAPI jangan mulai
+    // merekam apa pun sampai tombol benar2 ditahan (push-to-talk).
+    ensureMicAnalyser();
+
+    return () => {
+      stopVoiceSession();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
   function pickSupportedMimeType(): string {
     const candidates = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus", "audio/mp4"];
     for (const type of candidates) {
@@ -405,6 +407,7 @@ export default function VoiceModeOverlay({
 
     mediaRecorderRef.current = recorder;
     audioChunksRef.current = [];
+    // eslint-disable-next-line react-hooks/purity -- event handler push-to-talk, tidak pernah dipanggil saat render
     recordingStartedAtRef.current = Date.now();
 
     recorder.ondataavailable = (e: BlobEvent) => {

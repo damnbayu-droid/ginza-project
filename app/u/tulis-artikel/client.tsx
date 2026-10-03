@@ -74,6 +74,7 @@ export default function WriteArticleClient({ userEmail, userRole }: Props) {
   // Prefill jika mode edit (?edit=[slug])
   useEffect(() => {
     if (editSlug) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- ambil data saat mount/deps berubah; reset state loading sinkron disengaja
       setIsEditMode(true);
       setLoadingInitial(true);
       fetch(`/api/articles/${editSlug}`)

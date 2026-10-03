@@ -16,6 +16,7 @@ const PUBLIC_PATHS = [
   "/knowledge",
   "/aksara",
   "/aksara-mongondow",
+  "/kawasan-cagar-budaya-panang",
   "/ecosystem",
   "/info",
   "/proposal",

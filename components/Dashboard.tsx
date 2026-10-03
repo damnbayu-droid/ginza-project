@@ -34,6 +34,7 @@ export default function Dashboard({ adminEmail }: DashboardProps) {
 
   useEffect(() => {
     const savedTheme = localStorage.getItem("myai_theme") as 'dark' | 'light';
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- baca localStorage/URL hanya di client setelah mount (hindari hydration mismatch)
     if (savedTheme) setTheme(savedTheme);
     const savedLang = localStorage.getItem("myai_lang") as Language;
     if (savedLang) setLang(savedLang);

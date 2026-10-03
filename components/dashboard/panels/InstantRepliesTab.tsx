@@ -48,6 +48,7 @@ export default function InstantRepliesTab() {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- ambil data saat mount/deps berubah; reset state loading sinkron disengaja
     load();
   }, []);
 

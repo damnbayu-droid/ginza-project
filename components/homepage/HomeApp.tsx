@@ -49,39 +49,6 @@ export default function HomeApp() {
   // 24 jam di server -- Voice Mode jadi kelihatan "cuma jawab 1x lalu diam").
   const [quotaBlock, setQuotaBlock] = useState<{ message: string; requiresAuth: boolean } | null>(null);
 
-  useEffect(() => {
-    // Fetch auth status
-    fetch("/api/auth/me")
-      .then(res => res.json())
-      .then(async (data) => {
-        if (data.authenticated && data.user) {
-          setUser(data.user);
-          // User login: riwayat obrolan yg BENAR sumbernya Supabase (lintas
-          // perangkat), bukan localStorage browser ini saja -- lihat
-          // app/api/public/conversations & lib/ginza-db.ts.
-          await loadServerSessions();
-        } else {
-          setUser(null);
-          loadLocalSessions();
-        }
-      })
-      .catch(() => {
-        setUser(null);
-        loadLocalSessions();
-      });
-
-    const savedLang = localStorage.getItem("myai_lang") as Language;
-    if (savedLang) {
-      setLang(savedLang);
-    }
-
-    const savedGuestCount = localStorage.getItem("myai_guest_count");
-    if (savedGuestCount) {
-      setGuestQuestionCount(parseInt(savedGuestCount, 10) || 0);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   function loadLocalSessions() {
     try {
       const savedSessions = localStorage.getItem("myai_chat_sessions");
@@ -132,6 +99,40 @@ export default function HomeApp() {
       console.error("Failed to load server chat sessions", e);
     }
   }
+
+  useEffect(() => {
+    // Fetch auth status
+    fetch("/api/auth/me")
+      .then(res => res.json())
+      .then(async (data) => {
+        if (data.authenticated && data.user) {
+          setUser(data.user);
+          // User login: riwayat obrolan yg BENAR sumbernya Supabase (lintas
+          // perangkat), bukan localStorage browser ini saja -- lihat
+          // app/api/public/conversations & lib/ginza-db.ts.
+          await loadServerSessions();
+        } else {
+          setUser(null);
+          loadLocalSessions();
+        }
+      })
+      .catch(() => {
+        setUser(null);
+        loadLocalSessions();
+      });
+
+    const savedLang = localStorage.getItem("myai_lang") as Language;
+    if (savedLang) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- baca localStorage/URL hanya di client setelah mount (hindari hydration mismatch)
+      setLang(savedLang);
+    }
+
+    const savedGuestCount = localStorage.getItem("myai_guest_count");
+    if (savedGuestCount) {
+      setGuestQuestionCount(parseInt(savedGuestCount, 10) || 0);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Guest (belum login): tetap simpan ke localStorage spt sebelumnya, biar
   // tidak kehilangan obrolan waktu refresh walau belum daftar akun.

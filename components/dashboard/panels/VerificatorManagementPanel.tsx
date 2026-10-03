@@ -52,6 +52,7 @@ function VoiceSamplesSection() {
       .catch(e => setError(String(e)));
   }
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- ambil data saat mount/deps berubah; reset state loading sinkron disengaja
   useEffect(() => { load(); }, [filter]);
 
   async function review(sample: VoiceSampleRow, approve: boolean) {
@@ -123,6 +124,7 @@ export default function VerificatorManagementPanel() {
       .catch(e => setError(String(e)));
   }
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- ambil data saat mount/deps berubah; reset state loading sinkron disengaja
   useEffect(() => { load(); }, [filter]);
 
   async function review(app: AppRow, approve: boolean) {

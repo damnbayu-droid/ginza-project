@@ -16,6 +16,7 @@ const STATIC_ROUTES: {
   { path: "/kamus",                 priority: 0.95, changeFrequency: "daily" },
   { path: "/aksara-mongondow",      priority: 0.90, changeFrequency: "weekly" },
   { path: "/artikel",               priority: 0.85, changeFrequency: "daily" },
+  { path: "/kawasan-cagar-budaya-panang", priority: 0.85, changeFrequency: "monthly" },
   { path: "/aksara",                priority: 0.80, changeFrequency: "weekly" },
 
   // ─── Konten Informasi ────────────────────────────────────────────

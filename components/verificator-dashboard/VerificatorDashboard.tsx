@@ -815,7 +815,7 @@ function KamusVerifTab() {
 
               <div className="bg-bento-bg p-3 rounded-xl border border-bento-border space-y-1 text-xs">
                 <p className="text-bento-text-primary font-medium">Arti: {word.meaning}</p>
-                {word.example_sentence && <p className="text-bento-text-secondary italic">Contoh: "{word.example_sentence}"</p>}
+                {word.example_sentence && <p className="text-bento-text-secondary italic">Contoh: &quot;{word.example_sentence}&quot;</p>}
               </div>
 
               {word.verificator_notes && (
@@ -1315,12 +1315,6 @@ function VerificatorArtikelTab() {
   const [myArticles, setMyArticles] = useState<any[]>([]);
   const [loadingArticles, setLoadingArticles] = useState(false);
 
-  useEffect(() => {
-    if (subTab === "my_articles") {
-      fetchMyArticles();
-    }
-  }, [subTab]);
-
   async function fetchMyArticles() {
     setLoadingArticles(true);
     try {
@@ -1333,6 +1327,13 @@ function VerificatorArtikelTab() {
       setLoadingArticles(false);
     }
   }
+
+  useEffect(() => {
+    if (subTab === "my_articles") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- ambil data saat mount/deps berubah; reset state loading sinkron disengaja
+      fetchMyArticles();
+    }
+  }, [subTab]);
 
   function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];

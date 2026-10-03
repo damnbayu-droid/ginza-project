@@ -27,6 +27,7 @@ export default function LoginScreen() {
   useEffect(() => {
     const qMode = searchParams.get("mode");
     if (qMode === "forgot" || qMode === "register" || qMode === "login") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- baca localStorage/URL hanya di client setelah mount (hindari hydration mismatch)
       setMode(qMode);
     }
 
