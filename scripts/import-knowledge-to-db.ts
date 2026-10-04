@@ -50,6 +50,14 @@ const CURATED_FILES: { file: string; categorySlug: string; title?: string }[] = 
   { file: "Graphify_Naskah_Teater_Panang_Lipu_Ku_dan_Aksi_HAM_Panang.md", categorySlug: "sejarah" },
   { file: "Sejarah_Kotabunan.md", categorySlug: "sejarah" },
   { file: "Kawasan_Cagar_Budaya_Panang.md", categorySlug: "sejarah" },
+  { file: "Perlawanan_Rakyat_Pedalaman_Mongondow_1901_1902.md", categorySlug: "sejarah" },
+  { file: "Islamisasi_Bolaang_Mongondow.md", categorySlug: "sejarah" },
+  { file: "Zending_Kristen_di_Bolaang_Mongondow.md", categorySlug: "sejarah" },
+  { file: "Monginbalu_Konbulan_Mandi_Puasa_Massal.md", categorySlug: "adat-budaya" },
+  { file: "Asal_Usul_dan_Masa_Punu_Bolaang_Mongondow.md", categorySlug: "kerajaan-bolaang-mongondow" },
+  { file: "Tadohe_dan_Loloda_Mokoagow.md", categorySlug: "kerajaan-bolaang-mongondow" },
+  { file: "Raja_Raja_Dinasti_Manoppo_1695_1950.md", categorySlug: "kerajaan-bolaang-mongondow" },
+  { file: "Cerita_Rakyat_Bolaang_Mongondow.md", categorySlug: "bahasa-sastra" },
 ];
 
 // arsip_download/*.md — teks mentah/OCR, masuk sbg "pending_review" (belum
