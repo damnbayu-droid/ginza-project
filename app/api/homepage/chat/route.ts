@@ -34,6 +34,24 @@ const GATEWAY_FIELD = "bogani_ai";
 // konteks" di production, padahal Gateway-nya sendiri menjawab dgn benar.
 const GATEWAY_TIMEOUT_MS = 45_000;
 
+// Tenggat TOTAL satu giliran chat, dihitung sejak request masuk -- HARUS di
+// bawah maxDuration (60 dtk, lihat bawah). Diukur 2026-10-04: prompt yg sama
+// dijawab Gateway 6,7 dtk lalu 47,7 dtk (DeepSeek lambat -> Gateway pindah
+// sendiri ke Kimi). Dulu tiap percobaan boleh 45 dtk & bisa ada 3 percobaan
+// berurutan, jadi Vercel mematikan function di detik 60 di tengah jalan:
+// stream putus TANPA jawaban & tanpa event error -> di layar cuma gelembung
+// kosong sampai user menekan Ulangi.
+const CHAT_DEADLINE_MS = 54_000;
+// Compacting (ringkasan obrolan panjang) aman dilewati & dicoba lagi giliran
+// berikutnya -- jangan sampai memakan jatah waktu jawaban utama.
+const COMPACT_BUDGET_MS = 10_000;
+// Jawaban Gateway tercepat yg terukur ~7 dtk -- percobaan dgn sisa waktu di
+// bawah ini tidak akan sempat dijawab, lewati saja.
+const MIN_GATEWAY_ATTEMPT_MS = 8_000;
+// callProviderDirect() tidak punya timeout sendiri -- hanya dicoba kalau sisa
+// waktunya masih lega.
+const MIN_DIRECT_PROVIDER_MS = 15_000;
+
 /** Blok teks siap-sisip ke prompt AI + daftar sumber (kata Kamus/file Knowledge/dst) yg BENAR-BENAR terpakai -- lihat components/homepage/BoganiThinkingIndicator.tsx utk bagaimana `sources` ditampilkan sekilas ke user selagi AI berpikir. */
 interface ContextResult {
   text: string;
@@ -209,8 +227,9 @@ async function compactOverflowIfNeeded(opts: {
   existingSummary: string;
   summarizedThroughCount: number;
   req: NextRequest;
+  deadline: number;
 }): Promise<{ summary: string; summarizedThroughCount: number }> {
-  const { history, existingSummary, summarizedThroughCount, req } = opts;
+  const { history, existingSummary, summarizedThroughCount, req, deadline } = opts;
   // Pesan di indeks [0, overflowEnd) sudah TIDAK masuk jendela mentah
   // MAX_HISTORY_MESSAGES lagi -- itu yang perlu diringkas (kalau belum).
   const overflowEnd = Math.max(0, history.length - MAX_HISTORY_MESSAGES);
@@ -225,7 +244,7 @@ async function compactOverflowIfNeeded(opts: {
 
   const summaryPrompt = buildSummarizationPrompt(existingSummary, newlyOverflowed);
   try {
-    const result = await callGateway(req, summaryPrompt, undefined);
+    const result = await callGateway(req, summaryPrompt, undefined, Math.min(Date.now() + COMPACT_BUDGET_MS, deadline));
     if (result && result.text) {
       return { summary: result.text.trim(), summarizedThroughCount: overflowEnd };
     }
@@ -567,7 +586,8 @@ async function attemptGatewayCall(
   gatewayUrl: string,
   gatewayKey: string,
   fullPrompt: string,
-  fileData?: string | null
+  fileData?: string | null,
+  timeoutMs: number = GATEWAY_TIMEOUT_MS
 ): Promise<GatewayAttemptResult> {
   try {
     const res = await fetch(gatewayUrl, {
@@ -586,7 +606,7 @@ async function attemptGatewayCall(
         messages: [{ role: "user", content: fullPrompt }],
         file: fileData || undefined,
       }),
-      signal: AbortSignal.timeout(GATEWAY_TIMEOUT_MS),
+      signal: AbortSignal.timeout(timeoutMs),
     });
 
     if (res.ok) {
@@ -641,15 +661,27 @@ async function attemptGatewayCall(
 // Diekspor spy job cron ekstraksi pengetahuan harian
 // (app/api/cron/extract-knowledge) bisa pakai jalur AI yg sama persis --
 // bukan duplikat implementasi baru.
-export async function callGateway(req: NextRequest, fullPrompt: string, fileData?: string | null): Promise<{ text: string; provider: string; visionUnavailable?: boolean } | null> {
+export async function callGateway(req: NextRequest, fullPrompt: string, fileData?: string | null, deadline?: number): Promise<{ text: string; provider: string; visionUnavailable?: boolean } | null> {
   const gatewayKey = process.env.MYAI_OS_GATEWAY_API_KEY || process.env.HOMEPAGE_GATEWAY_API_KEY;
   if (!gatewayKey) return null;
 
   const primaryUrl = process.env.MYAI_OS_GATEWAY_URL || "https://console.myai.nexus/api/v1/chat/completions";
   const localUrl = `${req.nextUrl.origin}/api/v1/chat/completions`;
 
+  // Tanpa deadline (mis. cron extract-knowledge) tetap spt dulu: tiap
+  // percobaan GATEWAY_TIMEOUT_MS. Dgn deadline: percobaan memakai SISA waktu
+  // (percobaan pertama bisa ~50 dtk, cukup utk fallback internal Gateway),
+  // dan dilewati kalau sisanya sudah tidak mungkin sempat dijawab.
+  const attemptTimeout = (): number | null => {
+    if (deadline === undefined) return GATEWAY_TIMEOUT_MS;
+    const remaining = deadline - Date.now();
+    return remaining >= MIN_GATEWAY_ATTEMPT_MS ? remaining : null;
+  };
+
   for (const gatewayUrl of [primaryUrl, localUrl]) {
-    const result = await attemptGatewayCall(gatewayUrl, gatewayKey, fullPrompt, fileData);
+    const timeoutMs = attemptTimeout();
+    if (timeoutMs === null) return null;
+    const result = await attemptGatewayCall(gatewayUrl, gatewayKey, fullPrompt, fileData, timeoutMs);
     if (result.kind === "success") return { text: result.text, provider: result.provider };
     if (result.kind === "vision_unavailable") return { text: "", provider: "", visionUnavailable: true };
     if (result.kind === "fatal") return null; // jangan lanjut coba apa pun lagi, termasuk retry di bawah
@@ -661,7 +693,9 @@ export async function callGateway(req: NextRequest, fullPrompt: string, fileData
   // total ke simulateReply() tanpa AI sama sekali, provider sebelum/sesudah
   // giliran itu TETAP SAMA -- bukan pergantian tier) menunjukkan kegagalan
   // sesaat spt ini genuinely terjadi, bukan cuma teori.
-  const retryResult = await attemptGatewayCall(primaryUrl, gatewayKey, fullPrompt, fileData);
+  const retryTimeoutMs = attemptTimeout();
+  if (retryTimeoutMs === null) return null;
+  const retryResult = await attemptGatewayCall(primaryUrl, gatewayKey, fullPrompt, fileData, retryTimeoutMs);
   if (retryResult.kind === "success") return { text: retryResult.text, provider: retryResult.provider };
   if (retryResult.kind === "vision_unavailable") return { text: "", provider: "", visionUnavailable: true };
 
@@ -942,6 +976,8 @@ interface ChatPipelineOpts {
   conversationId: string | null;
   existingSummary: string;
   summarizedThroughCount: number;
+  /** Batas waktu absolut (epoch ms) giliran ini -- lihat CHAT_DEADLINE_MS. */
+  deadline: number;
   onPhase?: PhaseCallback;
   /** Dipanggil SEKALI per giliran dgn daftar Kamus/Knowledge Base/kosakata yg benar2 dipakai menyusun prompt -- kosong kalau tidak ada yg cocok. */
   onSources?: (sources: string[]) => void;
@@ -1038,6 +1074,7 @@ async function runChatPipeline(opts: ChatPipelineOpts): Promise<ChatPipelineResu
     existingSummary: opts.existingSummary,
     summarizedThroughCount: opts.summarizedThroughCount,
     req,
+    deadline: opts.deadline,
   });
   const { prompt: fullPrompt, sources } = await buildPromptWithHistory(history, prompt, formatMemoryContext(memoryRows), isVoiceMode, contextSummary);
   opts.onSources?.(sources);
@@ -1045,7 +1082,7 @@ async function runChatPipeline(opts: ChatPipelineOpts): Promise<ChatPipelineResu
   opts.onPhase?.("mencari_jawaban");
 
   // 1. Preferred: route through the AI Gateway (myai.nexus or local) as a registered client app.
-  const gatewayResult = await callGateway(req, fullPrompt, fileInput);
+  const gatewayResult = await callGateway(req, fullPrompt, fileInput, opts.deadline);
   if (gatewayResult && gatewayResult.text) {
     void logChatTurn({ profile, prompt, responseText: gatewayResult.text, provider: gatewayResult.provider, history, guestId, ip, conversationId });
     syncToDataCenter({ prompt, responseText: gatewayResult.text, provider: gatewayResult.provider, isVoiceMode, lang });
@@ -1058,7 +1095,11 @@ async function runChatPipeline(opts: ChatPipelineOpts): Promise<ChatPipelineResu
 Jawab secara lisan dengan hangat, natural, dan ringkas (maksimal 2–3 kalimat). JANGAN PERNAH gunakan pemformatan markdown seperti cetak tebal (**), bullet points (-), tabel (|), atau header (#). Ucapkan nama tempat dan kosa kata Mongondow dengan fonetik yang jernih dan santun.`;
   }
 
-  const direct = await callProviderDirect(fullPrompt, systemPrompt, parsedFileData);
+  // Kalau waktunya sudah mepet, lewati (lanjut ke pesan jujur di bawah) drpd
+  // function dimatikan Vercel di tengah jalan tanpa jawaban sama sekali.
+  const direct: Awaited<ReturnType<typeof callProviderDirect>> = opts.deadline - Date.now() >= MIN_DIRECT_PROVIDER_MS
+    ? await callProviderDirect(fullPrompt, systemPrompt, parsedFileData)
+    : {};
   if (direct.error) {
     throw new ChatPipelineError(`MyAI OS AI Error: ${direct.error}`, direct.status || 500);
   }
@@ -1074,7 +1115,12 @@ Jawab secara lisan dengan hangat, natural, dan ringkas (maksimal 2–3 kalimat).
   }
 
   // 3. Fallback simulation if no API key is set
-  const isFirstMsg = !history || history.length === 0;
+  // Template basa-basi giliran pertama di simulateReply() cuma utk kondisi
+  // BELUM ada API key (dev/testing). Kalau key Gateway ada tapi sampai sini,
+  // artinya AI sungguhan gagal/kehabisan waktu -- giliran pertama pun dapat
+  // pesan jujur, bukan template yg terlihat menjawab padahal tidak.
+  const aiConfigured = !!(process.env.MYAI_OS_GATEWAY_API_KEY || process.env.HOMEPAGE_GATEWAY_API_KEY);
+  const isFirstMsg = (!history || history.length === 0) && !aiConfigured;
   // simulateReply() buta terhadap gambar (murni pattern-match teks) -- kalau
   // ada file yg diupload dan sampai di sini artinya TIDAK ADA jalur (Gateway
   // maupun provider langsung) yg berhasil memprosesnya. Jujur ke user drpd
@@ -1139,6 +1185,7 @@ function createLiveChatStream(pipelineOpts: Omit<ChatPipelineOpts, "onPhase" | "
 export const maxDuration = 60;
 
 export async function POST(req: NextRequest) {
+  const deadline = Date.now() + CHAT_DEADLINE_MS;
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
 
   // Dimulai sedini mungkin, paralel dgn rate-limit check & body parsing di
@@ -1243,7 +1290,7 @@ export async function POST(req: NextRequest) {
 
   const pipelineOpts: Omit<ChatPipelineOpts, "onPhase" | "onSources"> = {
     req, prompt, history, memoryRows, isVoiceMode, fileInput, parsedFileData, lang,
-    profile, guestId, ip, conversationId, existingSummary, summarizedThroughCount,
+    profile, guestId, ip, conversationId, existingSummary, summarizedThroughCount, deadline,
   };
 
   if (wantStream) {

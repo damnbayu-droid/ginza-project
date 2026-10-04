@@ -241,7 +241,7 @@ export default function HomeApp() {
     }
   };
 
-  const handleSendMessage = async (text: string, isVoiceInput: boolean = false, fileData?: string): Promise<string> => {
+  const handleSendMessage = async (text: string, isVoiceInput: boolean = false, fileData?: string, baseMessages?: HomeChatMessage[]): Promise<string> => {
     let currentId = activeSessionId;
     let targetSession = chatSessions.find(s => s.id === currentId);
 
@@ -258,7 +258,9 @@ export default function HomeApp() {
       isVoiceInput
     };
 
-    const existingMessages = targetSession?.messages || [];
+    // baseMessages: dari handleRegenerate (riwayat TANPA giliran yg diulang) --
+    // `chatSessions` di closure ini masih versi lama sebelum giliran itu dibuang.
+    const existingMessages = baseMessages ?? targetSession?.messages ?? [];
     const newTitle = existingMessages.length === 0 ? text.slice(0, 32) + (text.length > 32 ? "..." : "") : (targetSession?.title || "Obrolan Baru");
 
     const aiMsgId = `msg_ai_${Date.now()}`;
@@ -391,6 +393,7 @@ export default function HomeApp() {
         const decoder = new TextDecoder();
         let buffer = "";
         let streamError: string | null = null;
+        let gotDone = false;
 
         while (true) {
           const { done, value } = await reader.read();
@@ -420,6 +423,7 @@ export default function HomeApp() {
               accumulatedText += data.text;
               updateAiMessage(accumulatedText);
             } else if (eventName === "done") {
+              gotDone = true;
               if (typeof data.provider === "string") providerUsedFinal = data.provider;
               if (typeof data.contextSummary === "string" || typeof data.summarizedThroughCount === "number") {
                 applyToSession({
@@ -434,6 +438,12 @@ export default function HomeApp() {
         }
 
         if (streamError) throw new Error(streamError);
+        // Stream putus tanpa teks & tanpa `done` (mis. function server
+        // dimatikan krn kehabisan waktu, atau koneksi terputus) -- dulu
+        // dibiarkan jadi gelembung kosong tanpa penjelasan apa pun.
+        if (!gotDone && !accumulatedText) {
+          throw new Error("Bogani AI belum sempat menjawab (waktu tunggu habis atau koneksi terputus). Tekan tombol Ulangi untuk mencoba lagi.");
+        }
         updateAiMessage(accumulatedText, providerUsedFinal);
       } else {
         const data = await response.json();
@@ -465,12 +475,17 @@ export default function HomeApp() {
     const currentSession = chatSessions.find(s => s.id === activeSessionId);
     if (!currentSession || currentSession.messages.length < 2) return;
 
-    const userMessages = currentSession.messages.filter(m => m.role === 'user');
-    const lastUserMessage = userMessages[userMessages.length - 1];
+    const msgs = currentSession.messages;
+    const lastUserIdx = msgs.map(m => m.role).lastIndexOf('user');
+    if (lastUserIdx < 0) return;
+    const lastUserMessage = msgs[lastUserIdx];
 
-    if (lastUserMessage) {
-      await handleSendMessage(lastUserMessage.content, lastUserMessage.isVoiceInput);
-    }
+    // Ganti giliran terakhir (pertanyaan + jawaban gagal/kosong), jangan
+    // ditumpuk -- dulu pertanyaannya jadi dobel & jawaban kosong ikut
+    // terkirim sbg riwayat ke AI.
+    const baseMessages = msgs.slice(0, lastUserIdx);
+    setChatSessions(prev => prev.map(s => (s.id === currentSession.id ? { ...s, messages: baseMessages } : s)));
+    await handleSendMessage(lastUserMessage.content, lastUserMessage.isVoiceInput, undefined, baseMessages);
   };
 
   const activeSession = chatSessions.find(s => s.id === activeSessionId) || null;
