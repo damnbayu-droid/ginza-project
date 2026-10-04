@@ -58,6 +58,10 @@ const CURATED_FILES: { file: string; categorySlug: string; title?: string }[] = 
   { file: "Tadohe_dan_Loloda_Mokoagow.md", categorySlug: "kerajaan-bolaang-mongondow" },
   { file: "Raja_Raja_Dinasti_Manoppo_1695_1950.md", categorySlug: "kerajaan-bolaang-mongondow" },
   { file: "Cerita_Rakyat_Bolaang_Mongondow.md", categorySlug: "bahasa-sastra" },
+  { file: "Tata_Bahasa_Mongondow_1_Bunyi_Ejaan_Tekanan.md", categorySlug: "bahasa-sastra" },
+  { file: "Tata_Bahasa_Mongondow_2_Imbuhan.md", categorySlug: "bahasa-sastra" },
+  { file: "Tata_Bahasa_Mongondow_3_Pengulangan_Reduplikasi.md", categorySlug: "bahasa-sastra" },
+  { file: "Tata_Bahasa_Mongondow_4_Kata_Ganti_Partikel_Bilangan.md", categorySlug: "bahasa-sastra" },
 ];
 
 // arsip_download/*.md — teks mentah/OCR, masuk sbg "pending_review" (belum

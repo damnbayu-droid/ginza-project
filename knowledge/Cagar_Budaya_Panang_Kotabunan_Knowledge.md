@@ -11,7 +11,7 @@
 > - Kutipan berbahasa Belanda/Melayu lama disalin apa adanya; terjemahan di file ini adalah terjemahan bebas.
 > - Ikuti aturan di §12 (hal sensitif & batas bukti).
 >
-> Disusun: 2 Oktober 2026 (pembacaan penuh 45 tautan arsip daring); **diperbarui 3 Oktober 2026: ditambah O'uman masyarakat Kotabunan (§5A) dan blog emaspanang.blogspot.com**. Folder sumber di komputer pengguna:
+> Disusun: 2 Oktober 2026 (pembacaan penuh 45 tautan arsip daring); **diperbarui 3 Oktober 2026: ditambah O'uman masyarakat Kotabunan (§5A) dan blog emaspanang.blogspot.com**; **diperbarui 5 Oktober 2026: ditambah ANRI Mijnwezen 1921 No. 388, peta AMS T541 lembar Bintaoena (1942) dan Kotamobagoe (1944), serta penanggalan kitab adat TBG 35 (2 Okt 1856)**. Folder sumber di komputer pengguna:
 > `0 FILE MONGONDOW/drive-download-20260727T145923Z-1-001` (42 PDF) dan
 > `0 FILE MONGONDOW/Ka Dhani/PANANG File Ka Dhani/PANANG` (144 gambar bukti, disusun Ka Dhani).
 > Dokumen pendamping di repo: `Sejarah_Kotabunan.md`,
@@ -175,10 +175,11 @@ Kolom "Sumber" merujuk ke §11. Halaman "terj." = terjemahan R. Mokoginta atas D
 | 4 Nov 1840 | **E.A. Forsten**: tujuh tambang emas Kotta Boena di bawah Raja; perjanjian eksploitasi dan pengerahan 750 orang per tahun. | Mulyasari, *Paramita* 25(1) 2015 (mengutip Reisverhaal Forsten, Naturalis arsip 265 inv. 137–152) | S |
 | 1853 | **De Lange** mengunjungi tambang **Kottaboena**: rumah-rumah orang Bugis lebih teratur; enam rumah penggali emas; tanah keputihan tambang; lubang 60 kaki; tiga lubang dikerjakan dengan timba ditarik roda; **tiap pembukaan lubang baru: 1 reaal untuk raja**; Kottaboena "bukan negeri, hanya tempat tinggal sementara penambang dan pedagang"; tempat emas lain: **Goenoeng Dou, Goenoeng Tapabibing, Goenoeng Lama, Goenoeng Mintoe** (yang terakhir disebut terkaya). | scan h. 174–178 | P |
 | (beberapa dekade, sebelum Doup diserahkan Raja kepada pihak kolonial) | **O'uman:** masyarakat dari hutan **Bakan, Pancurang, Ongkobu** turun dan membuat **perkampungan di Doup/Panang**; mereka membuka sejumlah *guhang/guang* — **Lubang Mogoguyang** — sehingga menambang menjadi kegiatan baru di samping berkebun. Dengan pemukim **Bugis–Bone–Buton** di pesisir KonTAMBUNAN (marga Lamajido', Lamaluta, Langaru, Lababu, Lapajawa, Lasambu, Lawatu, Lasabuda, Latojo) terjalin **barter** lalu kawin-mawin. | Blog Damopolii 2014; keterangan lisan penyusun 3 Okt 2026 | T |
+| 2 Okt 1856 | Tanda tangan di akhir kitab adat yang kelak dimuat **TBG jilid 35 (1893)**, h. 497: *"BOLAÄNG 2 October 1856 … Akoe Padoeka Radja trima contract ini daripada Radja Toewa Jacobus Manoekwel Menopo"*, disertai daftar pejabat adat (Sadaha Toempoenoön, Hoekoem-Mayor, Panghoeloe, Kapitan Radja, Sengodji, Hoekoem, Kemalaba). Jadi teks adat itu, setidaknya sebagian, **bertanggal 1856**, dan **1893 adalah tahun terbit TBG**. Ada pula tambahan dari masa Johannis Manuel Menopo. **Fatsal 57 belum dicek masuk bagian yang mana** (bagian 1856 atau tambahan sesudahnya). | scan TBG 35 h. 497 | P |
 | 8 Sep 1858 | Kontrak Residen Manado – Raja Bolang Mongondo **"betreffende mijnwezen"** (pertambangan), disahkan Besluit 4 Jan 1859 no. 2; versi Indonesia & Belanda. Isi pasal belum dipegang. | ANRI K.74 No. 457 | K |
 | 15 Jul 1865 | Acte van bevestiging Raja **Johannis Manuel Manoppo**; dalam Verklaring, **butir 14**: raja tidak akan menyerahkan tanah kepada orang Eropa atau orang asing lain, dan tidak mengizinkan mereka menetap di luar pelabuhan, tanpa persetujuan Residen. | scan h. 30–31 (Overeenkomsten …, Zitting 1865–1866) | P |
 | 1866–1867 | **Wilken & Schwarz** (zendeling) melintasi Bolaang Mongondow. Catatan: (a) dari 4 panghulu, satu **mengawasi "Kotaboena en de daarbij gelegen goudmijnen"** dan harus berdarah raja; (b) raja menerima emas dari tiap penggali (±f 3/tahun per penggali); (c) panghulu Kotaboena dibantu **23 negeri** dataran Mongondow, masing-masing mengirim 1 orang selama setengah tahun; ia juga menerima padi & jagung dari keluarga yang berkebun di Kotaboena dan bagian tangkapan dari orang Mongondow yang menangkap ikan dan membuat garam di pantai itu; (d) tambang terkaya ±**2 paal di barat Kotaboena**, kedalaman 15–20 depa (ada yang 30), dinding dilapisi bambu belah; (e) warga pergi ke tambang Kotaboena untuk membayar pajak *hácil*; (f) tambang Kotaboena **sangat kaya setengah abad sebelumnya** — "pikol-pikol emas"; (g) pada 1867 masjid hanya ada di Kotabangon, Bolaang, dan **Kotabunan**. | scan p. 295–296, 379, 381 = *Mededeelingen van wege het Nederlandsche Zendelinggenootschap* jrg. XI (1867) (terkonfirmasi di Delpher); (g) via Lopez 2018 | P / S |
-| 1893 | Jurnal **TBG** (Bataviaasch Genootschap) memuat kitab adat/perjanjian Raja **Johannis Manuel Manoppo** (bahasa Melayu). **Fatsal 57** menyebut "Goenong lama, di **Tapai bedin**, di kaijoe mojondoe di Gantong dan di **pantai kota boenan**, di **Bojat** di bawah parintah Panghoeloe…"; Fatsal 60 menyebut "di kottaboenan". | scan TBG h. 495–496 | P |
+| 1893 | Jurnal **TBG** (Bataviaasch Genootschap) memuat kitab adat/perjanjian Raja **Johannis Manuel Manoppo** (bahasa Melayu). **Fatsal 57** menyebut "Goenong lama, di **Tapai bedin**, di kaijoe mojondoe di Gantong dan di **pantai kota boenan**, di **Bojat** di bawah parintah Panghoeloe…"; Fatsal 60 menyebut "di kottaboenan". *Catatan: 1893 adalah tahun terbit; teksnya bertanggal 2 Okt 1856 (lihat baris 1856).* | scan TBG h. 495–496 | P |
 
 ### 4.D Era kontrak politik & konsesi (1891–1942)
 
@@ -205,6 +206,7 @@ Kolom "Sumber" merujuk ke §11. Halaman "terj." = terjemahan R. Mokoginta atas D
 | 1 Jun 1906 | Uraian Raja Datoe Cornelis Manoppo sendiri (dimuat dalam *Bijdragen tot de memorie van den politieken en economischen toestand der afdeeling Bolang Mengondou*, Kotabaroe): jalan **Kotaboenan–Mongondow** sudah jauh lebih baik; didirikan gedung sekolah dan **los pasar di Mongondow, Bolaang, dan Kotaboenan**; rumah dokter & rumah sakit siap; ditetapkan tiap distrik — **Pasi, Lolajan, Bolaang, Kotaboenan** — punya satu **Panghoeloe**, satu **Majoor-Cadato**, para Sangadi dan Probis. | Dunnebier 1949, BKI 105: 262–263 (terj. hlm. 68) | S (mengutip dokumen 1906) |
 | 1910 | Dunnebier, "Een paar dagen op reis in het Bolaang-Mongondowsche" (catatan perjalanan). | Maandber. NZG 1910: 97 (rujukan Repertorium; isi belum dibaca) | L |
 | (masa kerajaan akhir) | **Onderdistrik Kotabunan** (pusat: Kotabunan) langsung di bawah Kerajaan, meliputi desa **Kotabunan, Buyat, Tutuyan, Nuangan, Molobok, Matabulu**; onderdistrik dikepalai *mayor kadato*. | Taniputera, *Ensiklopedi Kerajaan-Kerajaan Nusantara* jil. 2, hlm. 378–379 | S |
+| Apr–Agu 1921 | Petikan register *besluiten* Residen Manado: **izin kepada firma Neumann & Co** untuk *mijnbouwkundige opsporingen* (penyelidikan tambang) **di afdeeling Bolang Mongondow** "(met kaart)", dengan peta. Satu bundel; lokasi persis dalam afdeeling belum diketahui (perlu dibuka petanya). | ANRI Mijnwezen, Verbaal 1921 No. 7651–7840 (inventaris item 388); scan inventaris `S15_ANRI_Item388_1921_met_kaart.png` | K |
 | 1922–1923 | "nihil netto cijns over 1922 der mijnconcessie **Daoep en Goenoeng Lama**" + "werk en productie staat van de mijnconcessie Goenoeng Lama, **Koeta Boenan**". | ANRI Mijnwezen 1923 No. 477 | K |
 | 1925 | "metingen van de a.s. concessie aanvraag **Tapaibekin** en Menado" (pengukuran calon konsesi Tapaibekin). | ANRI Mijnwezen 1925 item 577 | K |
 | 1928 | **Tutur:** atas titah raja, pemilik kebun dikeluarkan "dengan alasan kepentingan kerajaan"; berdiri **Maskapai Tapa'i Beken**; masyarakat dikenalkan tambang semi-modern (lubang, **terowongan**, merkuri). | Blog Damopolii 2014 | T |
@@ -215,7 +217,9 @@ Kolom "Sumber" merujuk ke §11. Halaman "terj." = terjemahan R. Mokoginta atas D
 
 | Waktu | Peristiwa | Sumber | Status |
 |---|---|---|---|
+| 1942 | Peta AMS T541 lembar **Bintaoena**. | UT-Austin / Army Map Service; `1942_UT-Austin_T541_Bintaoena.jpg` di folder bukti Ka Dhani | P (isi lembar belum dirinci) |
 | 1943 | Peta AMS T541 lembar Amoerang–Kotaboenan. | UT-Austin / Army Map Service | P |
+| 1944 | Peta AMS T541 lembar **Kotamobagoe**. | UT-Austin / Army Map Service; `1944_UT-Austin_T541_Kotamobagoe.jpg` di folder bukti Ka Dhani | P (isi lembar belum dirinci) |
 | 13 Sep 1944 | Foto udara Sekutu **"Rata Totok to Kota Boenan"** (mosaic 257-Z-1): tampak permukiman Kota Boenan berpola grid, P. Kotaboenan (P. Koemeke), Boejat, Totok. | Monash 76613 (photo 48) & 77745 | P |
 | 1946–1949 | Berkas pengangkatan para *zelfbestuurder* landschap di Keresidenan Manado; laporan politik rahasia Residen Manado 1946–1949. | NA 2.10.29 inv. 711; 699–702 | K |
 | setelah 1945 (tiap 17 Agustus) | **O'uman/kesaksian:** menurut **Ba'ai Deong Manoppo**, adiknya **Aisya Manoppo (Nene Tinggi)**, dan **Aki Damo Damopolii (Tete Damo)**, ada kelompok orang pedalaman Mongondow di sekitar Kotabunan yang selalu turun ke kampung pada perayaan 17 Agustus; mereka dituturkan berpostur pendek, berkulit kusam agak gelap, berambut tak teratur, dan berbahasa Mongondow tua (**Mongondow *dolong***). | Keterangan lisan penyusun 3 Okt 2026 | T (lihat §5A.2 butir O7 dan §12) |
@@ -409,6 +413,8 @@ Penutur kesaksian "orang pedalaman 17 Agustus": **Ba'ai Deong Manoppo**, **Aisya
 **K8 — TBG 1893, h. 495 (kitab adat Raja Johannis Manuel Manoppo, bahasa Melayu)**
 > "Fatsal 57. Bagitoe lagi sebarang hal talaling tertimboel saperti di Goenong lama, di Tapai bedin, di kaijoe mojondoe di Gantong dan di pantai kota boenan, di Bojat di bawah parintah Panghoeloe…"
 
+*Catatan penanggalan:* tahun "1893" adalah tahun terbit TBG (jilid 35). Halaman 497 memuat tanda tangan bertanggal **2 Oktober 1856**, jadi teks adatnya (setidaknya sebagian) berasal dari 1856. Bagian mana yang memuat Fatsal 57 belum dicek.
+
 **K9 — Daftar pelabuhan 1900**
 > "Opgave van de havens van het landschap „Bolaäng-Mongondou", bedoeld in art. 13 van het contract van 22 October 1895. 1. Domisil. 2. Bolaäng. 3. Kotta-Boenan. Bolaäng, den 30sten September 1900."
 
@@ -598,7 +604,7 @@ Milik penyusun ("Document Pribadi"), 47 foto lapangan + foto penulis/sponsor. Fi
 - De Lange (1853). Laporan perjalanan ke Bolaang Mongondow, h. 174–178.
 - *Overeenkomsten met inlandsche vorsten in den Oost-Indischen Archipel* — Zitting 1865–1866 (acte J.M. Manoppo, h. 30–31); daftar pelabuhan 1900; Zitting 1902–1903 no. 174 (perjanjian pelabuhan 1901); nota 1902.
 - Wilken, N.P. & Schwarz, J.A. (1867). Laporan perjalanan ke Bolaang Mongondow, p. 295–296, 379, 381 (arsip asli: Het Utrechts Archief 1102-1 no. 1186/1221).
-- *Tijdschrift voor Indische Taal-, Land- en Volkenkunde* (TBG) 1893, h. 495–496 — kitab adat Raja Johannis Manuel Manoppo.
+- *Tijdschrift voor Indische Taal-, Land- en Volkenkunde* (TBG) 1893, h. 495–496 — kitab adat Raja Johannis Manuel Manoppo. (Jilid 35; h. 497 memuat tanda tangan bertanggal 2 Okt 1856.)
 - Schuller (1904), h. 185–186.
 - *Jaarboek van het Mijnwezen in Nederlandsch Oost-Indië* 1905, h. 112.
 - Maclaren, J.M. (1908). *Gold*, h. 298.
@@ -609,7 +615,7 @@ Milik penyusun ("Document Pribadi"), 47 foto lapangan + foto penulis/sponsor. Fi
 ### 11.B Inventaris/katalog resmi
 - ANRI, *Corpus Diplomaticum* (Heeres & Stapel): no. 606 (1699), 792 (1731), 994 (1756), 1055 (1767), 1069 (1770), 1086 (1773), 1187 (1795). https://sejarah-nusantara.anri.go.id/corpusdiplomaticum_contracts_search/?areaName=Molukken-Noord-Celebes
 - ANRI K.74 (Bolang Mongondo No. 454–471): No. 457 (1858 mijnwezen), 459 (1898 mijnverordeningen), 461–462 (1895), 465 (1901).
-- ANRI arsip Dinas Pertambangan: 1910 (Verbaal M 1851–2200), 1923 No. 477, 1925 item 577.
+- ANRI arsip Dinas Pertambangan: 1910 (Verbaal M 1851–2200), 1921 item 388 (Verbaal 1921 No. 7651–7840, izin penyelidikan Neumann & Co), 1923 No. 477, 1925 item 577.
 - Nationaal Archief: VOC 1.04.02 inv. 3357 (1772–1773); 1.10.59 inv. 405 (1795); peta F249–F251 (1908).
 - Nationaal Archief 2.10.39 *Memories van Overgave* (inventaris 196 hlm. dibaca penuh) — **Residentie Menado, koleksi MMK**: inv. 299 (P. van der Crab, 1875, 474 hlm.), 300 (P.A. Matthes, 1881), 301 (F.L. Wattendorff, 1883), 302 (S.J.M. van Geuns, 1906, 101 hlm.), 303 (J. van Hengel, 1910), **304 (F.H.W.J.R. Logeman, 1922, 182 hlm., dengan foto)**, 305 (J. Tideman, 1926, 198 hlm.), 306 (A.Ph. van Aken, 1932), 307 (F.H. Visman, 1935), 308 (M. van Rhijn, 1941, 288 hlm.). **Koleksi KIT**: inv. 1172 (Residentie Menado, A.Ph. van Aken, 244 hlm.), 1174 (*Regeling bestuur en politieke verhouding der 5 landschappen in de afdeling Bolaäng-Mongondo en van het landschap Bwool*, W. Verbeek, c. 1911, 17 hlm.), 1177–1178 (afd. Menado), **1179 (*Vervolg-memorie* onderafdeling Bolaäng-Mongondo, A. Hoff, 1938, 111 hlm.)** — semua sudah digital.
 - Nationaal Archief 2.10.29 (Rapportage Indonesië 1945–1950; inventaris 67 hlm. dibaca penuh): bagian 17 Noord-Celebes, inv. 699–713; inv. 711 = pengangkatan zelfbestuurders landschap di Keresidenan Menado 1946–1949.

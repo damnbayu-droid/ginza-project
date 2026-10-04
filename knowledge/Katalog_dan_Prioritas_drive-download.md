@@ -22,6 +22,7 @@ sesi lanjutan:
 | `Syamanisme BolaangMongondow.pdf` | 12 MB | Spiritualitas/perdukunan tradisional — pelengkap Adat_dan_Budaya |
 | `De zending in Bolaa_ng Mongondow.pdf` | 2.7 MB | Sejarah misi Kristen Belanda di Bolaang Mongondow (36 hal, sebagian scan) |
 | `FAKTOR-FAKTOR KEBERHASILAN PEMEKARAN.pdf` | 868 KB | Kecil, kemungkinan cepat diproses |
+| `Ariel Lopez_Disertasi di Leiden.pdf` | — | Ariel C. Lopez, *Conversion and Colonialism: Islam and Christianity in North Sulawesi, c. 1700–1900* (disertasi Leiden, 2018). **Bab 4 (hlm. 83–133) membahas khusus Islamisasi di Bolaang Mongondow** (±765 sebutan BMR). *Koreksi 4 Okt 2026:* sebelumnya keliru dicatat sebagai riset soal Filipina berprioritas rendah. Sudah dipakai untuk `Islamisasi_Bolaang_Mongondow.md` |
 
 ## Prioritas Sedang — konteks Sulawesi Utara/Gorontalo (tetangga)
 
@@ -38,8 +39,6 @@ sesi lanjutan:
 
 `A study of the Islamisation of South Sulawesi...pdf`, `ADRIAN LAPIAN - PETA PELAYARAN NUSANTARA...pdf`,
 `ANALISIS KONFLIK PEREBUTAN WILAYAH DI MALUKU UTARA.pdf`, `Aceh Membangun.pdf`,
-`Ariel Lopez_Disertasi di Leiden.pdf` (riset soal Filipina — relevan untuk klaim
-asal-usul Aksara Bicol, lihat `Aksara_Bolaang_Mongondow.md`, tapi bukan soal Mongondow langsung),
 `Buku Kerajaan Islam Nusantara abad XVII.pdf`, `Buku Sejarah_Kepulauan_Rempah_Rempah.pdf`,
 `Buku-panduan-desa1.pdf` & `Modul-Pemberdayaan-Masyarakat-Desa.pdf` (modul generik, bukan sejarah),
 `Laporan_Akhir_2016_1.pdf`, `Sejarah Kebangkitan Nasional Daerah Bengkulu.pdf`,
@@ -49,6 +48,8 @@ asal-usul Aksara Bicol, lihat `Aksara_Bolaang_Mongondow.md`, tapi bukan soal Mon
 `The_World_of_the_Pasisir_1400-1942.pdf`.
 
 ## Kendala teknis yang perlu diketahui
+
+> **Pembaruan 4 Okt 2026:** catatan di bawah ini berasal dari sesi Agustus dan sudah usang. Pada 4 Okt 2026 semua PDF di folder ini sudah diekstrak. PDF scan di-OCR ulang dengan OCR bawaan macOS (Vision) untuk bahasa Indonesia, Belanda, dan Inggris, yang jauh lebih akurat dari tesseract-Inggris. Hasilnya ada di `0 FILE MONGONDOW/_HASIL_EKSTRAKSI_2026-10-04/` (di luar repo), dan rekapnya di `LAPORAN_INVENTARIS_KNOWLEDGE_2026-10-04.md`.
 
 - OCR dijalankan lokal (tesseract) memakai model bahasa **Inggris** saja —
   sandbox saya tidak bisa mengunduh model Indonesia/Belanda (domain
